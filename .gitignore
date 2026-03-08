@@ -1,0 +1,5 @@
+# Non-deployment files
+*.md
+*.html
+!index.html
+!brand_assets/**
