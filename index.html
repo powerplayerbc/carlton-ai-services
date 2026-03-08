@@ -8,6 +8,9 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <link rel="preload" as="image" type="image/webp" href="brand_assets/optimized/Bradford_Walking_Down_Hallway-1920w.webp" media="(min-width: 769px)">
+    <link rel="preload" as="image" type="image/webp" href="brand_assets/optimized/Bradford_Walking_Down_Hallway-768w.webp" media="(max-width: 768px)">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400;1,700&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -72,8 +75,13 @@
 
         /* ── Hero ── */
         .hero-bg {
-            background: url('brand_assets/Bradford_Walking_Down_Hallway.png') center 30% / cover no-repeat;
+            background: url('brand_assets/optimized/Bradford_Walking_Down_Hallway-1920w.webp') center 30% / cover no-repeat;
             position: relative;
+        }
+        @media (max-width: 768px) {
+            .hero-bg {
+                background-image: url('brand_assets/optimized/Bradford_Walking_Down_Hallway-768w.webp');
+            }
         }
         .hero-bg::before {
             content: '';
@@ -475,7 +483,11 @@
                     <p>Your assistant manually updates the CRM after every call. Your marketing person copies the same post to five different platforms, one at a time. Your office manager routes every exception to you — not because you need to see it, but because <span class="highlight">there's no system. Just habit.</span></p>
                 </div>
 
-                <img src="brand_assets/Robot_On_Treadmill.png" alt="Stuck on the treadmill of manual work" class="narrative-img w-full max-w-lg mx-auto my-10">
+                <img src="brand_assets/optimized/Robot_On_Treadmill-1024w.webp"
+                     srcset="brand_assets/optimized/Robot_On_Treadmill-480w.webp 480w, brand_assets/optimized/Robot_On_Treadmill-1024w.webp 1024w"
+                     sizes="(max-width: 640px) 100vw, 512px"
+                     alt="Stuck on the treadmill of manual work" class="narrative-img w-full max-w-lg mx-auto my-10"
+                     loading="lazy" decoding="async">
 
                 <div class="reveal">
                     <p>Someone on your team spends half their day chasing invoices. Another spends hours entering data that exists in three other systems. Your receptionist answers 40 calls, transfers 30, and loses the notes for 10.</p>
@@ -489,7 +501,11 @@
                     <p>It's not. And <span class="highlight">you're paying for it every single week.</span></p>
                 </div>
 
-                <img src="brand_assets/Robot_Swamped_With_Work.png" alt="Overwhelmed by work — there's a better way" class="narrative-img w-full max-w-lg mx-auto my-10">
+                <img src="brand_assets/optimized/Robot_Swamped_With_Work-1024w.webp"
+                     srcset="brand_assets/optimized/Robot_Swamped_With_Work-480w.webp 480w, brand_assets/optimized/Robot_Swamped_With_Work-1024w.webp 1024w"
+                     sizes="(max-width: 640px) 100vw, 512px"
+                     alt="Overwhelmed by work — there's a better way" class="narrative-img w-full max-w-lg mx-auto my-10"
+                     loading="lazy" decoding="async">
             </div>
         </section>
 
@@ -515,7 +531,11 @@
                     <p><strong>Those aren't just inefficiencies. They're lost revenue.</strong></p>
                 </div>
 
-                <img src="brand_assets/Robot_With_Todo_List.png" alt="Overwhelmed by endless tasks" class="narrative-img-light w-full max-w-lg mx-auto my-10">
+                <img src="brand_assets/optimized/Robot_With_Todo_List-1024w.webp"
+                     srcset="brand_assets/optimized/Robot_With_Todo_List-480w.webp 480w, brand_assets/optimized/Robot_With_Todo_List-1024w.webp 1024w"
+                     sizes="(max-width: 640px) 100vw, 512px"
+                     alt="Overwhelmed by endless tasks" class="narrative-img-light w-full max-w-lg mx-auto my-10"
+                     loading="lazy" decoding="async">
 
                 <h3 class="reveal font-heading font-bold text-xl md:text-2xl text-text-dark tracking-[-0.01em] mt-12 mb-6">Meanwhile, Your Competitors Are Pulling Ahead</h3>
 
@@ -559,7 +579,11 @@
                 <div class="max-w-6xl mx-auto px-5 sm:px-6 mb-12">
                     <p class="section-label reveal" style="font-size: 1.6rem; letter-spacing: 0.18em;">003 / The Expert</p>
                     <div class="reveal-left md:grid md:grid-cols-[300px_1fr] gap-8 md:gap-12">
-                        <img src="brand_assets/Bradford_Leading_Team_Meeting.png" alt="Dr. Bradford Carlton leading a team session" class="narrative-img w-full md:h-[340px] object-cover rounded-2xl mb-6 md:mb-0">
+                        <img src="brand_assets/optimized/Bradford_Leading_Team_Meeting-800w.webp"
+                             srcset="brand_assets/optimized/Bradford_Leading_Team_Meeting-480w.webp 480w, brand_assets/optimized/Bradford_Leading_Team_Meeting-800w.webp 800w"
+                             sizes="(max-width: 640px) 100vw, 400px"
+                             alt="Dr. Bradford Carlton leading a team session" class="narrative-img w-full md:h-[340px] object-cover rounded-2xl mb-6 md:mb-0"
+                             loading="lazy" decoding="async">
                         <div class="flex flex-col justify-center">
                             <h2 class="font-heading font-bold italic text-warm bradford-quote tracking-[-0.02em] mb-3">
                                 "The Question To Ask Is 'Why Are YOU Doing The Work?'"
@@ -577,7 +601,11 @@
                     <!-- As Seen On — between first and second bio paragraphs -->
                     <div class="reveal my-10 md:my-12">
                         <div class="img-white-wrap max-w-md mx-auto">
-                            <img src="brand_assets/As_Seen_On_Collage.png" alt="As seen on NBC, ABC, CBS, FOX, CW, AP, Digital Journal, Benzinga, and more" class="w-full">
+                            <img src="brand_assets/optimized/As_Seen_On_Collage-800w.webp"
+                                 srcset="brand_assets/optimized/As_Seen_On_Collage-480w.webp 480w, brand_assets/optimized/As_Seen_On_Collage-800w.webp 800w"
+                                 sizes="(max-width: 640px) 100vw, 400px"
+                                 alt="As seen on NBC, ABC, CBS, FOX, CW, AP, Digital Journal, Benzinga, and more" class="w-full"
+                                 loading="lazy" decoding="async">
                         </div>
                     </div>
 
@@ -594,28 +622,28 @@
                             <div class="absolute left-0 top-0 bottom-0 w-16 md:w-28 bg-gradient-to-r from-foundation to-transparent z-10 pointer-events-none"></div>
                             <div class="absolute right-0 top-0 bottom-0 w-16 md:w-28 bg-gradient-to-l from-foundation to-transparent z-10 pointer-events-none"></div>
                             <div class="marquee-track flex items-center gap-20 md:gap-24 w-max px-8">
-                                <img src="brand_assets/HubSpot.png" alt="HubSpot" class="h-20 md:h-28 w-auto object-contain">
-                                <img src="brand_assets/The_Home_Depot.png" alt="Home Depot" class="h-20 md:h-28 w-auto object-contain">
-                                <img src="brand_assets/Hewlett_Packard_Enterprise.png" alt="HPE" class="h-20 md:h-28 w-auto object-contain">
-                                <img src="brand_assets/Tailored_Brands.png" alt="Tailored Brands" class="h-20 md:h-28 w-auto object-contain">
-                                <img src="brand_assets/Omnissa.png" alt="Omnissa" class="h-20 md:h-28 w-auto object-contain">
-                                <img src="brand_assets/ICT_Legal_Consulting.png" alt="ICT Legal" class="h-20 md:h-28 w-auto object-contain">
-                                <img src="brand_assets/Norfolk_Railroad.png" alt="Norfolk Railroad" class="h-20 md:h-28 w-auto object-contain">
-                                <img src="brand_assets/AEMO.png" alt="AEMO" class="h-20 md:h-28 w-auto object-contain">
-                                <img src="brand_assets/Maui_Life_Vacations.png" alt="Maui Life Vacations" class="h-20 md:h-28 w-auto object-contain">
-                                <img src="brand_assets/Paramount_Mortgage_Group.png" alt="Paramount Mortgage" class="h-20 md:h-28 w-auto object-contain">
-                                <img src="brand_assets/Armed_Forces_Chamber_Logo.png" alt="Armed Forces Chamber" class="h-20 md:h-28 w-auto object-contain">
-                                <img src="brand_assets/HubSpot.png" alt="HubSpot" class="h-20 md:h-28 w-auto object-contain">
-                                <img src="brand_assets/The_Home_Depot.png" alt="Home Depot" class="h-20 md:h-28 w-auto object-contain">
-                                <img src="brand_assets/Hewlett_Packard_Enterprise.png" alt="HPE" class="h-20 md:h-28 w-auto object-contain">
-                                <img src="brand_assets/Tailored_Brands.png" alt="Tailored Brands" class="h-20 md:h-28 w-auto object-contain">
-                                <img src="brand_assets/Omnissa.png" alt="Omnissa" class="h-20 md:h-28 w-auto object-contain">
-                                <img src="brand_assets/ICT_Legal_Consulting.png" alt="ICT Legal" class="h-20 md:h-28 w-auto object-contain">
-                                <img src="brand_assets/Norfolk_Railroad.png" alt="Norfolk Railroad" class="h-20 md:h-28 w-auto object-contain">
-                                <img src="brand_assets/AEMO.png" alt="AEMO" class="h-20 md:h-28 w-auto object-contain">
-                                <img src="brand_assets/Maui_Life_Vacations.png" alt="Maui Life Vacations" class="h-20 md:h-28 w-auto object-contain">
-                                <img src="brand_assets/Paramount_Mortgage_Group.png" alt="Paramount Mortgage" class="h-20 md:h-28 w-auto object-contain">
-                                <img src="brand_assets/Armed_Forces_Chamber_Logo.png" alt="Armed Forces Chamber" class="h-20 md:h-28 w-auto object-contain">
+                                <img src="brand_assets/optimized/HubSpot-224h.webp" alt="HubSpot" class="h-20 md:h-28 w-auto object-contain" loading="lazy" decoding="async">
+                                <img src="brand_assets/optimized/The_Home_Depot-224h.webp" alt="Home Depot" class="h-20 md:h-28 w-auto object-contain" loading="lazy" decoding="async">
+                                <img src="brand_assets/optimized/Hewlett_Packard_Enterprise-224h.webp" alt="HPE" class="h-20 md:h-28 w-auto object-contain" loading="lazy" decoding="async">
+                                <img src="brand_assets/optimized/Tailored_Brands-224h.webp" alt="Tailored Brands" class="h-20 md:h-28 w-auto object-contain" loading="lazy" decoding="async">
+                                <img src="brand_assets/optimized/Omnissa-224h.webp" alt="Omnissa" class="h-20 md:h-28 w-auto object-contain" loading="lazy" decoding="async">
+                                <img src="brand_assets/optimized/ICT_Legal_Consulting-224h.webp" alt="ICT Legal" class="h-20 md:h-28 w-auto object-contain" loading="lazy" decoding="async">
+                                <img src="brand_assets/optimized/Norfolk_Railroad-224h.webp" alt="Norfolk Railroad" class="h-20 md:h-28 w-auto object-contain" loading="lazy" decoding="async">
+                                <img src="brand_assets/optimized/AEMO-224h.webp" alt="AEMO" class="h-20 md:h-28 w-auto object-contain" loading="lazy" decoding="async">
+                                <img src="brand_assets/optimized/Maui_Life_Vacations-224h.webp" alt="Maui Life Vacations" class="h-20 md:h-28 w-auto object-contain" loading="lazy" decoding="async">
+                                <img src="brand_assets/optimized/Paramount_Mortgage_Group-224h.webp" alt="Paramount Mortgage" class="h-20 md:h-28 w-auto object-contain" loading="lazy" decoding="async">
+                                <img src="brand_assets/optimized/Armed_Forces_Chamber_Logo-224h.webp" alt="Armed Forces Chamber" class="h-20 md:h-28 w-auto object-contain" loading="lazy" decoding="async">
+                                <img src="brand_assets/optimized/HubSpot-224h.webp" alt="HubSpot" class="h-20 md:h-28 w-auto object-contain" loading="lazy" decoding="async">
+                                <img src="brand_assets/optimized/The_Home_Depot-224h.webp" alt="Home Depot" class="h-20 md:h-28 w-auto object-contain" loading="lazy" decoding="async">
+                                <img src="brand_assets/optimized/Hewlett_Packard_Enterprise-224h.webp" alt="HPE" class="h-20 md:h-28 w-auto object-contain" loading="lazy" decoding="async">
+                                <img src="brand_assets/optimized/Tailored_Brands-224h.webp" alt="Tailored Brands" class="h-20 md:h-28 w-auto object-contain" loading="lazy" decoding="async">
+                                <img src="brand_assets/optimized/Omnissa-224h.webp" alt="Omnissa" class="h-20 md:h-28 w-auto object-contain" loading="lazy" decoding="async">
+                                <img src="brand_assets/optimized/ICT_Legal_Consulting-224h.webp" alt="ICT Legal" class="h-20 md:h-28 w-auto object-contain" loading="lazy" decoding="async">
+                                <img src="brand_assets/optimized/Norfolk_Railroad-224h.webp" alt="Norfolk Railroad" class="h-20 md:h-28 w-auto object-contain" loading="lazy" decoding="async">
+                                <img src="brand_assets/optimized/AEMO-224h.webp" alt="AEMO" class="h-20 md:h-28 w-auto object-contain" loading="lazy" decoding="async">
+                                <img src="brand_assets/optimized/Maui_Life_Vacations-224h.webp" alt="Maui Life Vacations" class="h-20 md:h-28 w-auto object-contain" loading="lazy" decoding="async">
+                                <img src="brand_assets/optimized/Paramount_Mortgage_Group-224h.webp" alt="Paramount Mortgage" class="h-20 md:h-28 w-auto object-contain" loading="lazy" decoding="async">
+                                <img src="brand_assets/optimized/Armed_Forces_Chamber_Logo-224h.webp" alt="Armed Forces Chamber" class="h-20 md:h-28 w-auto object-contain" loading="lazy" decoding="async">
                             </div>
                         </div>
                     </div>
@@ -648,7 +676,11 @@
                     </div>
                 </div>
 
-                <img src="brand_assets/Before-After_Calls.png" alt="Before and after: chaotic calls vs automated AI call dashboard" class="narrative-img-light w-full mx-auto my-10">
+                <img src="brand_assets/optimized/Before-After_Calls-1400w.webp"
+                     srcset="brand_assets/optimized/Before-After_Calls-480w.webp 480w, brand_assets/optimized/Before-After_Calls-1024w.webp 1024w, brand_assets/optimized/Before-After_Calls-1400w.webp 1400w"
+                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 672px"
+                     alt="Before and after: chaotic calls vs automated AI call dashboard" class="narrative-img-light w-full mx-auto my-10"
+                     loading="lazy" decoding="async">
 
                 <!-- B/A 2: Onboarding — single column -->
                 <div class="reveal-right ba-block my-10">
@@ -662,7 +694,11 @@
                     </div>
                 </div>
 
-                <img src="brand_assets/Robot_With_Workflow_Pipeline.png" alt="Automated workflow pipeline" class="img-clean w-full max-w-2xl mx-auto my-10">
+                <img src="brand_assets/optimized/Robot_With_Workflow_Pipeline-1400w.webp"
+                     srcset="brand_assets/optimized/Robot_With_Workflow_Pipeline-480w.webp 480w, brand_assets/optimized/Robot_With_Workflow_Pipeline-1024w.webp 1024w, brand_assets/optimized/Robot_With_Workflow_Pipeline-1400w.webp 1400w"
+                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 672px"
+                     alt="Automated workflow pipeline" class="img-clean w-full max-w-2xl mx-auto my-10"
+                     loading="lazy" decoding="async">
 
                 <!-- B/A 3: Internal -->
                 <div class="reveal ba-block my-10">
@@ -723,7 +759,11 @@
             </div>
 
             <div class="narrative px-5 sm:px-6">
-                <img src="brand_assets/Bradford_Presenting_Dashboard.png" alt="Dr. Bradford Carlton presenting automation results" class="narrative-img w-full max-w-md mx-auto my-8 rounded-2xl">
+                <img src="brand_assets/optimized/Bradford_Presenting_Dashboard-896w.webp"
+                     srcset="brand_assets/optimized/Bradford_Presenting_Dashboard-480w.webp 480w, brand_assets/optimized/Bradford_Presenting_Dashboard-896w.webp 896w"
+                     sizes="(max-width: 640px) 100vw, 448px"
+                     alt="Dr. Bradford Carlton presenting automation results" class="narrative-img w-full max-w-md mx-auto my-8 rounded-2xl"
+                     loading="lazy" decoding="async">
 
                 <div class="reveal">
                     <p><strong class="text-text-primary">Whether it's your sales team, operations, HR, accounting, or front office staff, there is no aspect of your business that couldn't benefit from advanced automations right now!</strong></p>
@@ -784,7 +824,11 @@
                 </div>
 
                 <!-- Call Me Robot — clean, no box -->
-                <img src="brand_assets/Call_Me_Robot.png" alt="Ready to help you automate" class="img-clean w-full max-w-2xl mx-auto my-10">
+                <img src="brand_assets/optimized/Call_Me_Robot-1400w.webp"
+                     srcset="brand_assets/optimized/Call_Me_Robot-480w.webp 480w, brand_assets/optimized/Call_Me_Robot-1024w.webp 1024w, brand_assets/optimized/Call_Me_Robot-1400w.webp 1400w"
+                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 672px"
+                     alt="Ready to help you automate" class="img-clean w-full max-w-2xl mx-auto my-10"
+                     loading="lazy" decoding="async">
 
                 <!-- Main CTA -->
                 <div class="reveal text-center mb-8">
@@ -842,7 +886,7 @@
     <div id="chatWidget" class="fixed bottom-10 right-5 z-[70]">
         <div id="chatWindow" class="chat-window absolute bottom-[72px] right-0 w-[340px] sm:w-[360px] bg-surface rounded-2xl border border-white/[0.08] shadow-[0_8px_48px_rgba(0,0,0,0.5)] overflow-hidden">
             <div class="flex items-center gap-3 px-5 py-4 border-b border-white/[0.06] bg-surface-elevated">
-                <img src="brand_assets/Robot_character_in_circle.png" alt="Carlton AI Assistant" class="w-9 h-9 rounded-full object-cover">
+                <img src="brand_assets/optimized/Robot_character_in_circle-72w.webp" alt="Carlton AI Assistant" class="w-9 h-9 rounded-full object-cover">
                 <div>
                     <p class="font-body font-semibold text-sm text-text-primary">Carlton AI Assistant</p>
                     <p class="font-mono text-[10px] text-emerald-400 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span> Online</p>
@@ -851,7 +895,7 @@
             </div>
             <div id="chatMessages" class="p-5 min-h-[200px] max-h-[320px] overflow-y-auto">
                 <div class="flex gap-2.5 mb-4">
-                    <img src="brand_assets/Robot_character_in_circle.png" alt="" class="w-7 h-7 rounded-full object-cover flex-shrink-0 mt-0.5">
+                    <img src="brand_assets/optimized/Robot_character_in_circle-72w.webp" alt="" class="w-7 h-7 rounded-full object-cover flex-shrink-0 mt-0.5">
                     <div class="bg-white/[0.06] rounded-2xl rounded-tl-md px-4 py-3 max-w-[85%]">
                         <p class="font-body text-sm text-text-primary leading-relaxed">Hi! I'm an example of what we build. I'm the Carlton AI Assistant — I can answer questions about our services, help you identify automation opportunities, or schedule a call with Dr. Carlton. What would you like to know?</p>
                     </div>
@@ -872,7 +916,7 @@
         <div class="relative">
             <span class="absolute -top-8 right-0 font-mono text-[10px] text-accent/60 whitespace-nowrap cursor-pointer hover:text-accent transition-colors" onclick="toggleChat()">See our automation in action</span>
             <button id="chatTrigger" onclick="toggleChat()" class="chatbot-trigger w-14 h-14 rounded-full overflow-hidden shadow-[0_4px_24px_rgba(14,165,233,0.3)] hover:shadow-[0_4px_32px_rgba(14,165,233,0.45)] transition-shadow" aria-label="Open chat">
-                <img src="brand_assets/Robot_character_in_circle.png" alt="Chat with us" class="w-full h-full object-cover">
+                <img src="brand_assets/optimized/Robot_character_in_circle-72w.webp" alt="Chat with us" class="w-full h-full object-cover">
             </button>
         </div>
     </div>
@@ -997,7 +1041,7 @@
             wrapper.className = 'flex gap-2.5 mb-4' + (isUser ? ' justify-end' : '');
             if (!isUser) {
                 wrapper.innerHTML =
-                    '<img src="brand_assets/Robot_character_in_circle.png" alt="" class="w-7 h-7 rounded-full object-cover flex-shrink-0 mt-0.5">' +
+                    '<img src="brand_assets/optimized/Robot_character_in_circle-72w.webp" alt="" class="w-7 h-7 rounded-full object-cover flex-shrink-0 mt-0.5">' +
                     '<div class="bg-white/[0.06] rounded-2xl rounded-tl-md px-4 py-3 max-w-[85%]">' +
                     '<p class="font-body text-sm text-text-primary leading-relaxed">' + escapeHtml(text) + '</p></div>';
             } else {
@@ -1020,7 +1064,7 @@
             el.id = 'typingIndicator';
             el.className = 'flex gap-2.5 mb-4';
             el.innerHTML =
-                '<img src="brand_assets/Robot_character_in_circle.png" alt="" class="w-7 h-7 rounded-full object-cover flex-shrink-0 mt-0.5">' +
+                '<img src="brand_assets/optimized/Robot_character_in_circle-72w.webp" alt="" class="w-7 h-7 rounded-full object-cover flex-shrink-0 mt-0.5">' +
                 '<div class="bg-white/[0.06] rounded-2xl rounded-tl-md px-4 py-3">' +
                 '<div class="typing-dots"><span></span><span></span><span></span></div></div>';
             chatMessages.appendChild(el);
