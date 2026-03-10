@@ -4,3 +4,7 @@
 !index.html
 !our-workflows.html
 !brand_assets/**
+
+# Allow deployment config
+!Dockerfile
+!nginx.conf
