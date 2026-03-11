@@ -4,6 +4,7 @@
 !index.html
 !our-workflows.html
 !brand_assets/**
+!rdgr/**
 
 # Allow deployment config
 !Dockerfile
