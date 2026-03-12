@@ -328,34 +328,6 @@
             font-size: 0.85rem;
         }
 
-        /* ── Toggle switch ── */
-        .toggle-track {
-            position: relative;
-            width: 36px; height: 20px;
-            border-radius: 10px;
-            background: rgba(255,255,255,0.08);
-            border: 1px solid #2A2E3D;
-            cursor: pointer;
-            transition: background 0.25s ease, border-color 0.25s ease;
-            flex-shrink: 0;
-        }
-        .toggle-track.active {
-            background: rgba(6,214,160,0.25);
-            border-color: rgba(6,214,160,0.4);
-        }
-        .toggle-track .toggle-thumb {
-            position: absolute;
-            top: 2px; left: 2px;
-            width: 14px; height: 14px;
-            border-radius: 50%;
-            background: #525E73;
-            transition: transform 0.2s ease, background 0.2s ease;
-        }
-        .toggle-track.active .toggle-thumb {
-            transform: translateX(16px);
-            background: #06D6A0;
-        }
-        .toggle-track.busy { opacity: 0.5; pointer-events: none; }
 
         /* ── Workflow grid ── */
         .wf-grid {
@@ -375,6 +347,27 @@
         .wf-card:hover { border-color: #2A2E3D; }
         .wf-card.error { border-left: 2px solid #FF6B6B; }
         .wf-card.inactive { border-left: 2px solid #525E73; }
+
+        /* ── Activate buttons ── */
+        .wf-activate-btn {
+            display: inline-flex; align-items: center; gap: 0.375rem;
+            padding: 0.4rem 0.85rem;
+            font-size: 0.75rem; font-weight: 500;
+            border-radius: 0.375rem; cursor: pointer;
+            border: 1px solid rgba(6,214,160,0.35);
+            background: rgba(6,214,160,0.1);
+            color: #06D6A0;
+            transition: background 0.2s, border-color 0.2s, opacity 0.2s;
+        }
+        .wf-activate-btn:hover { background: rgba(6,214,160,0.2); border-color: rgba(6,214,160,0.5); }
+        .wf-activate-btn:active { transform: scale(0.97); }
+        .wf-activate-btn.busy { opacity: 0.5; pointer-events: none; }
+        .wf-activate-btn-secondary {
+            border-color: rgba(138,149,169,0.25);
+            background: rgba(138,149,169,0.06);
+            color: #8A95A9;
+        }
+        .wf-activate-btn-secondary:hover { background: rgba(138,149,169,0.12); border-color: rgba(138,149,169,0.4); }
 
         /* ── Collapsible ── */
         .collapse-btn {
@@ -494,6 +487,21 @@
                     </div>
                 </div>
                 <div class="panel-body" id="wfPanel">
+                    <!-- Quick activate buttons -->
+                    <div class="flex flex-wrap items-center gap-2 mb-3">
+                        <button onclick="activateWorkflows('all')" id="wfBtnAll" class="wf-activate-btn">
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                            Activate All (24)
+                        </button>
+                        <button onclick="activateWorkflows('core')" id="wfBtnCore" class="wf-activate-btn wf-activate-btn-secondary">
+                            Core (12)
+                        </button>
+                        <button onclick="activateWorkflows('infrastructure')" id="wfBtnInfra" class="wf-activate-btn wf-activate-btn-secondary">
+                            Infrastructure (4)
+                        </button>
+                        <div id="wfResultBadge" class="hidden items-center gap-1.5 ml-auto text-xs font-mono"></div>
+                    </div>
+                    <!-- Workflow list -->
                     <div id="wfGrid" class="wf-grid">
                         <div class="empty-state" style="grid-column: 1 / -1;">
                             <div class="skeleton h-10 w-full mb-2"></div>
@@ -732,7 +740,7 @@
         sheets: 'https://n8n.carltonaiservices.com/webhook/update-google-sheet',
         approve: 'https://n8n.carltonaiservices.com/webhook/rdgr-approve',
         intake: 'https://n8n.carltonaiservices.com/webhook/rdgr-intake',
-        workflows: 'https://n8n.carltonaiservices.com/webhook/workflow-control',
+        activate: 'https://n8n.carltonaiservices.com/webhook/rdgr-activate',
     };
     const DASHBOARD_SHEET = '1fVGTkjk7Zt1vYgaUh5Daw9QiZZAKMIYNF0ssDM9XSGM';
 
@@ -751,7 +759,6 @@
 
     // Workflow control state
     let workflowRegistry = [];
-    let n8nWorkflows = {};
     let wfPanelOpen = true;
 
     // ═══════════════════════════════════════
@@ -1436,184 +1443,178 @@ ${esc(content)}
     // ═══════════════════════════════════════
     // WORKFLOW CONTROL
     // ═══════════════════════════════════════
+    let lastActivateResult = null;
+
     function toggleWfPanel() {
         wfPanelOpen = !wfPanelOpen;
         document.getElementById('wfPanel').style.display = wfPanelOpen ? '' : 'none';
         document.getElementById('wfCollapseBtn').classList.toggle('open', wfPanelOpen);
     }
 
-    // Fetch workflow list from system_registry + live n8n status via webhook
+    // Fetch workflow list from system_registry
     async function fetchWorkflows() {
-        // Fetch both sources in parallel
-        const [registryResult, liveResult] = await Promise.all([
-            fetchJSON(API.supabase, {
-                operation: 'select',
-                table: 'system_registry',
-                filters: 'category=eq.workflow&select=name,metadata&order=name.asc',
-            }),
-            fetchJSON(API.workflows, { action: 'list' }),
-        ]);
+        const result = await fetchJSON(API.supabase, {
+            operation: 'select',
+            table: 'system_registry',
+            filters: 'category=eq.workflow&select=name,metadata&order=name.asc',
+        });
 
-        // Parse registry
-        if (registryResult && registryResult.success && registryResult.data) {
-            workflowRegistry = registryResult.data;
-        } else if (Array.isArray(registryResult)) {
-            workflowRegistry = registryResult;
+        if (result && result.success && result.data) {
+            workflowRegistry = result.data;
+        } else if (Array.isArray(result)) {
+            workflowRegistry = result;
         } else {
             workflowRegistry = [];
-        }
-
-        // Parse live n8n data
-        n8nWorkflows = {};
-        const liveData = liveResult?.data || liveResult;
-        if (Array.isArray(liveData)) {
-            liveData.forEach(wf => {
-                n8nWorkflows[wf.id] = { active: wf.active, name: wf.name, id: wf.id };
-            });
         }
 
         renderWorkflows();
     }
 
-    async function toggleWorkflow(workflowId, activate) {
-        const trackEl = document.getElementById(`wf-toggle-${workflowId}`);
-        if (trackEl) trackEl.classList.add('busy');
+    // Call rdgr-activate webhook
+    async function activateWorkflows(mode) {
+        const btnId = mode === 'all' ? 'wfBtnAll' : mode === 'core' ? 'wfBtnCore' : 'wfBtnInfra';
+        const btn = document.getElementById(btnId);
 
-        const action = activate ? 'activate' : 'deactivate';
+        // Disable all buttons
+        document.querySelectorAll('.wf-activate-btn').forEach(b => b.classList.add('busy'));
+        if (btn) btn.textContent = 'Activating...';
+
         try {
-            const result = await fetchJSON(API.workflows, {
-                action: action,
-                workflow_id: workflowId,
-            });
+            const result = await fetchJSON(API.activate, { mode });
+            lastActivateResult = result;
 
-            if (result && (result.success || result.active !== undefined)) {
-                const isActive = result.active !== undefined ? result.active : activate;
-                n8nWorkflows[workflowId] = { ...n8nWorkflows[workflowId], active: isActive };
-                toast(`${n8nWorkflows[workflowId]?.name || workflowId} ${activate ? 'activated' : 'deactivated'}`, 'success');
+            if (result && result.success) {
+                toast(`${result.activated_count}/${result.total} workflows activated`, 'success');
+            } else if (result && !result.success) {
+                toast(`${result.activated_count}/${result.total} activated — ${result.failed_count} failed`, 'error');
             } else {
-                toast(`Failed to ${action}: ${result?.error || 'Unknown error'}`, 'error');
+                toast('Activation request sent', 'success');
             }
+
+            renderActivateResult(result);
             renderWorkflows();
         } catch (err) {
-            toast(`Toggle failed: ${err.message}`, 'error');
+            toast(`Activation failed: ${err.message}`, 'error');
         } finally {
-            if (trackEl) trackEl.classList.remove('busy');
+            document.querySelectorAll('.wf-activate-btn').forEach(b => b.classList.remove('busy'));
+            // Restore button text
+            document.getElementById('wfBtnAll').innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Activate All (24)';
+            document.getElementById('wfBtnCore').textContent = 'Core (12)';
+            document.getElementById('wfBtnInfra').textContent = 'Infrastructure (4)';
         }
     }
 
-    async function activateAllWorkflows() {
-        const inactive = Object.values(n8nWorkflows).filter(wf => !wf.active);
-        if (inactive.length === 0) { toast('All workflows already active', 'success'); return; }
+    function renderActivateResult(result) {
+        const badge = document.getElementById('wfResultBadge');
+        if (!result) { badge.classList.add('hidden'); return; }
 
-        toast(`Activating ${inactive.length} workflows...`, 'success');
-        for (const wf of inactive) {
-            await toggleWorkflow(wf.id, true);
+        const isOk = result.success;
+        const color = isOk ? '#06D6A0' : '#FF6B6B';
+        const icon = isOk
+            ? '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+            : '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+
+        let html = `<span style="color:${color}">${icon}</span>`;
+        html += `<span style="color:${color}">${result.activated_count}/${result.total} active</span>`;
+
+        if (result.failed && result.failed.length > 0) {
+            const failNames = result.failed.map(f => f.name || f.error || 'unknown').join(', ');
+            html += `<span class="text-alert" title="${esc(failNames)}">· ${result.failed_count} failed</span>`;
         }
+
+        if (result.timestamp) {
+            const t = new Date(result.timestamp);
+            html += `<span class="text-txt-3 ml-1">${t.toLocaleTimeString()}</span>`;
+        }
+
+        badge.innerHTML = html;
+        badge.classList.remove('hidden');
+        badge.classList.add('flex');
     }
 
     function renderWorkflows() {
         const grid = document.getElementById('wfGrid');
         const countEl = document.getElementById('wfActiveCount');
-        const hasLiveData = Object.keys(n8nWorkflows).length > 0;
 
-        // Merge registry info with live n8n data
-        const merged = [];
-        const seenIds = new Set();
-
-        workflowRegistry.forEach(entry => {
+        // Build list from registry
+        const workflows = workflowRegistry.map(entry => {
             const meta = entry.metadata || {};
-            const wfId = meta.workflow_id;
-            if (wfId) seenIds.add(wfId);
-
-            const live = wfId ? n8nWorkflows[wfId] : null;
-            merged.push({
-                id: wfId,
+            return {
+                id: meta.workflow_id,
                 name: entry.name || meta.name || 'Unknown',
                 description: meta.description || '',
-                registryStatus: meta.status || 'unknown',
-                active: live ? live.active : null,
-                hasLiveData: !!live,
+                status: meta.status || 'unknown',
                 trigger: meta.trigger || '',
-            });
+            };
         });
 
-        // Add any n8n workflows not in registry
-        Object.values(n8nWorkflows).forEach(wf => {
-            if (!seenIds.has(wf.id)) {
-                merged.push({
-                    id: wf.id,
-                    name: wf.name || wf.id,
-                    description: '',
-                    registryStatus: 'unregistered',
-                    active: wf.active,
-                    hasLiveData: true,
-                    trigger: '',
-                });
-            }
-        });
+        // If we have a recent activate result, mark which are activated
+        const activatedNames = lastActivateResult?.activated ? new Set(lastActivateResult.activated) : null;
+        const failedNames = lastActivateResult?.failed ? new Map(lastActivateResult.failed.map(f => [f.name, f.error])) : null;
 
-        // Counts
-        const totalLive = merged.filter(w => w.hasLiveData).length;
-        const activeLive = merged.filter(w => w.active === true).length;
-        const inactiveLive = merged.filter(w => w.active === false).length;
-        countEl.textContent = hasLiveData ? `${activeLive}/${totalLive} active` : `${merged.length} registered`;
+        countEl.textContent = activatedNames
+            ? `${lastActivateResult.activated_count}/${lastActivateResult.total} active`
+            : `${workflows.length} registered`;
 
-        if (merged.length === 0) {
-            grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;">No workflows found</div>';
+        if (workflows.length === 0) {
+            grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;">No workflows found in registry</div>';
             return;
         }
 
-        // Sort: inactive first (needs attention), then active, then unknown
-        merged.sort((a, b) => {
-            if (a.active === false && b.active !== false) return -1;
-            if (a.active !== false && b.active === false) return 1;
-            return (a.name || '').localeCompare(b.name || '');
+        // Sort: failed first, then by name
+        workflows.sort((a, b) => {
+            const aFailed = failedNames?.has(a.name);
+            const bFailed = failedNames?.has(b.name);
+            if (aFailed && !bFailed) return -1;
+            if (!aFailed && bFailed) return 1;
+            return a.name.localeCompare(b.name);
         });
 
-        // Activate All button
-        const activateAllBtn = inactiveLive > 0
-            ? `<div style="grid-column: 1 / -1; margin-bottom: 0.25rem;">
-                <button onclick="activateAllWorkflows()" class="btn btn-approve text-xs py-1.5 px-3 flex items-center gap-1.5">
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    Activate All Inactive (${inactiveLive})
-                </button>
-               </div>`
-            : '';
+        grid.innerHTML = workflows.map(wf => {
+            const isFailed = failedNames?.has(wf.name);
+            const isActivated = activatedNames?.has(wf.name);
+            const failError = isFailed ? failedNames.get(wf.name) : null;
 
-        grid.innerHTML = activateAllBtn + merged.map(wf => {
-            const isActive = wf.active === true;
-            const isInactive = wf.active === false;
-            const isUnknown = wf.active === null;
-            const cardClass = isInactive ? 'error' : isUnknown ? 'inactive' : '';
+            // Card border color
+            const cardClass = isFailed ? 'error'
+                : wf.status === 'broken' ? 'error'
+                : wf.status === 'inactive' || wf.status === 'inactive_pending_credentials' ? 'inactive'
+                : '';
 
-            const regBadge = wf.registryStatus === 'broken'
+            // Status dot
+            let dotColor, dotTitle;
+            if (isFailed) {
+                dotColor = '#FF6B6B'; dotTitle = `Failed: ${failError}`;
+            } else if (isActivated) {
+                dotColor = '#06D6A0'; dotTitle = 'Active';
+            } else if (wf.status === 'active') {
+                dotColor = 'rgba(6,214,160,0.4)'; dotTitle = 'Registered active';
+            } else if (wf.status === 'broken') {
+                dotColor = '#FF6B6B'; dotTitle = 'Broken';
+            } else {
+                dotColor = '#525E73'; dotTitle = wf.status;
+            }
+
+            // Registry badge
+            const regBadge = wf.status === 'broken'
                 ? '<span class="badge badge-failed">broken</span>'
-                : wf.registryStatus === 'inactive' || wf.registryStatus === 'inactive_pending_credentials'
+                : wf.status === 'inactive' || wf.status === 'inactive_pending_credentials'
                     ? '<span class="badge badge-blocked">inactive</span>'
-                    : wf.registryStatus === 'unregistered'
-                        ? '<span class="badge" style="background:rgba(168,85,247,0.12);color:#A855F7;">unregistered</span>'
-                        : '';
-
-            const toggleHtml = wf.id && hasLiveData
-                ? `<div class="toggle-track ${isActive ? 'active' : ''}" id="wf-toggle-${wf.id}"
-                        onclick="toggleWorkflow('${wf.id}', ${!isActive})"
-                        title="${isActive ? 'Click to deactivate' : 'Click to activate'}">
-                       <div class="toggle-thumb"></div>
-                   </div>`
-                : `<div class="toggle-track" style="opacity: 0.3; pointer-events: none;">
-                       <div class="toggle-thumb"></div>
-                   </div>`;
+                    : '';
 
             return `
-                <div class="wf-card ${cardClass}">
-                    <div class="min-w-0 flex-1">
-                        <div class="flex items-center gap-1.5 flex-wrap">
-                            <span class="text-xs font-medium text-txt truncate" title="${esc(wf.description)}">${esc(wf.name)}</span>
-                            ${regBadge}
+                <div class="wf-card ${cardClass}" title="${esc(wf.description)}">
+                    <div class="flex items-center gap-2 min-w-0 flex-1">
+                        <div class="w-2 h-2 rounded-full flex-shrink-0" style="background:${dotColor}" title="${esc(dotTitle)}"></div>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="text-xs font-medium text-txt truncate">${esc(wf.name)}</span>
+                                ${regBadge}
+                            </div>
+                            ${wf.id ? `<span class="text-[0.6rem] font-mono text-txt-3">${esc(wf.id)}</span>` : ''}
                         </div>
-                        ${wf.id ? `<span class="text-[0.6rem] font-mono text-txt-3">${esc(wf.id)}</span>` : ''}
                     </div>
-                    ${toggleHtml}
+                    ${isFailed ? `<span class="text-[0.6rem] text-alert truncate max-w-[120px]" title="${esc(failError)}">${esc(failError)}</span>` : ''}
                 </div>
             `;
         }).join('');
