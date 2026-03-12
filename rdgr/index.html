@@ -384,29 +384,6 @@
         .collapse-btn:hover { color: #E8ECF1; }
         .collapse-btn.open svg { transform: rotate(180deg); }
 
-        /* ── API key prompt ── */
-        .api-key-bar {
-            display: flex; align-items: center; gap: 0.5rem;
-            padding: 0.5rem 0.75rem;
-            background: rgba(255,217,61,0.06);
-            border: 1px solid rgba(255,217,61,0.15);
-            border-radius: 0.375rem;
-            font-size: 0.75rem;
-            color: #FFD93D;
-        }
-        .api-key-bar input {
-            background: rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,217,61,0.2);
-            border-radius: 0.25rem;
-            padding: 0.25rem 0.5rem;
-            color: #E8ECF1;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
-            outline: none;
-            flex: 1;
-            max-width: 300px;
-        }
-        .api-key-bar input:focus { border-color: rgba(255,217,61,0.4); }
 
         /* ── Responsive ── */
         @media (max-width: 1199px) {
@@ -511,19 +488,12 @@
                         <span class="badge" style="background: rgba(255,217,61,0.12); color: #FFD93D;" id="wfActiveCount">—</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="text-xs text-txt-3 font-mono" id="wfConnectionStatus">Not connected</span>
                         <button class="collapse-btn open" id="wfCollapseBtn" onclick="toggleWfPanel()">
                             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
                         </button>
                     </div>
                 </div>
                 <div class="panel-body" id="wfPanel">
-                    <div id="wfApiKeyBar" class="api-key-bar mb-3">
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7.5 4.5a2.5 2.5 0 10-3.54 3.54l-2.46 2.46v1h1.5v-1h1v-1h1l.96-.96A2.5 2.5 0 007.5 4.5z" stroke="currentColor" stroke-width="1"/><circle cx="7.5" cy="4" r="0.75" fill="currentColor"/></svg>
-                        <span>n8n API key required for workflow control</span>
-                        <input type="password" id="wfApiKeyInput" placeholder="Paste n8n API key..." autocomplete="off">
-                        <button onclick="connectN8nApi()" class="btn btn-ghost text-xs py-1 px-2" style="color: #FFD93D; border-color: rgba(255,217,61,0.25);">Connect</button>
-                    </div>
                     <div id="wfGrid" class="wf-grid">
                         <div class="empty-state" style="grid-column: 1 / -1;">
                             <div class="skeleton h-10 w-full mb-2"></div>
@@ -762,6 +732,7 @@
         sheets: 'https://n8n.carltonaiservices.com/webhook/update-google-sheet',
         approve: 'https://n8n.carltonaiservices.com/webhook/rdgr-approve',
         intake: 'https://n8n.carltonaiservices.com/webhook/rdgr-intake',
+        workflows: 'https://n8n.carltonaiservices.com/webhook/workflow-control',
     };
     const DASHBOARD_SHEET = '1fVGTkjk7Zt1vYgaUh5Daw9QiZZAKMIYNF0ssDM9XSGM';
 
@@ -779,8 +750,6 @@
     let currentModifyTaskId = null;
 
     // Workflow control state
-    const N8N_API = 'https://n8n.carltonaiservices.com/api/v1';
-    let n8nApiKey = sessionStorage.getItem('n8n-api-key') || '';
     let workflowRegistry = [];
     let n8nWorkflows = {};
     let wfPanelOpen = true;
@@ -816,8 +785,7 @@
     // ═══════════════════════════════════════
     function initDashboard() {
         refreshAll();
-        fetchWorkflowRegistry();
-        if (n8nApiKey) fetchN8nWorkflows();
+        fetchWorkflows();
         startAutoRefresh();
     }
 
@@ -1474,96 +1442,57 @@ ${esc(content)}
         document.getElementById('wfCollapseBtn').classList.toggle('open', wfPanelOpen);
     }
 
-    function connectN8nApi() {
-        const key = document.getElementById('wfApiKeyInput').value.trim();
-        if (!key) { toast('Please enter an API key', 'error'); return; }
-        n8nApiKey = key;
-        sessionStorage.setItem('n8n-api-key', key);
-        fetchN8nWorkflows();
-    }
+    // Fetch workflow list from system_registry + live n8n status via webhook
+    async function fetchWorkflows() {
+        // Fetch both sources in parallel
+        const [registryResult, liveResult] = await Promise.all([
+            fetchJSON(API.supabase, {
+                operation: 'select',
+                table: 'system_registry',
+                filters: 'category=eq.workflow&select=name,metadata&order=name.asc',
+            }),
+            fetchJSON(API.workflows, { action: 'list' }),
+        ]);
 
-    // Fetch workflow list from system_registry
-    async function fetchWorkflowRegistry() {
-        const result = await fetchJSON(API.supabase, {
-            operation: 'select',
-            table: 'system_registry',
-            filters: 'category=eq.workflow&select=name,metadata&order=name.asc',
-        });
-
-        if (result && result.success && result.data) {
-            workflowRegistry = result.data;
-        } else if (Array.isArray(result)) {
-            workflowRegistry = result;
+        // Parse registry
+        if (registryResult && registryResult.success && registryResult.data) {
+            workflowRegistry = registryResult.data;
+        } else if (Array.isArray(registryResult)) {
+            workflowRegistry = registryResult;
         } else {
             workflowRegistry = [];
         }
 
-        renderWorkflows();
-    }
-
-    // Fetch live workflow statuses from n8n API
-    async function fetchN8nWorkflows() {
-        if (!n8nApiKey) {
-            renderWorkflows();
-            return;
-        }
-
-        try {
-            const res = await fetch(`${N8N_API}/workflows`, {
-                headers: { 'X-N8N-API-KEY': n8nApiKey },
-            });
-            if (!res.ok) {
-                if (res.status === 401) {
-                    toast('Invalid API key', 'error');
-                    n8nApiKey = '';
-                    sessionStorage.removeItem('n8n-api-key');
-                } else {
-                    toast(`n8n API error: ${res.status}`, 'error');
-                }
-                renderWorkflows();
-                return;
-            }
-            const data = await res.json();
-            const list = data.data || data;
-            n8nWorkflows = {};
-            (Array.isArray(list) ? list : []).forEach(wf => {
+        // Parse live n8n data
+        n8nWorkflows = {};
+        const liveData = liveResult?.data || liveResult;
+        if (Array.isArray(liveData)) {
+            liveData.forEach(wf => {
                 n8nWorkflows[wf.id] = { active: wf.active, name: wf.name, id: wf.id };
             });
-
-            document.getElementById('wfApiKeyBar').style.display = 'none';
-            document.getElementById('wfConnectionStatus').innerHTML = '<span style="color: #06D6A0;">Connected</span>';
-        } catch (err) {
-            toast(`Cannot reach n8n API: ${err.message}`, 'error');
         }
 
         renderWorkflows();
     }
 
     async function toggleWorkflow(workflowId, activate) {
-        if (!n8nApiKey) {
-            toast('Connect n8n API key first', 'error');
-            return;
-        }
-
         const trackEl = document.getElementById(`wf-toggle-${workflowId}`);
         if (trackEl) trackEl.classList.add('busy');
 
         const action = activate ? 'activate' : 'deactivate';
         try {
-            const res = await fetch(`${N8N_API}/workflows/${workflowId}/${action}`, {
-                method: 'POST',
-                headers: { 'X-N8N-API-KEY': n8nApiKey },
+            const result = await fetchJSON(API.workflows, {
+                action: action,
+                workflow_id: workflowId,
             });
 
-            if (!res.ok) {
-                const errBody = await res.text();
-                toast(`Failed to ${action}: ${res.status} ${errBody.substring(0, 100)}`, 'error');
-                return;
+            if (result && (result.success || result.active !== undefined)) {
+                const isActive = result.active !== undefined ? result.active : activate;
+                n8nWorkflows[workflowId] = { ...n8nWorkflows[workflowId], active: isActive };
+                toast(`${n8nWorkflows[workflowId]?.name || workflowId} ${activate ? 'activated' : 'deactivated'}`, 'success');
+            } else {
+                toast(`Failed to ${action}: ${result?.error || 'Unknown error'}`, 'error');
             }
-
-            const result = await res.json();
-            n8nWorkflows[workflowId] = { ...n8nWorkflows[workflowId], active: result.active };
-            toast(`${result.name || workflowId} ${activate ? 'activated' : 'deactivated'}`, 'success');
             renderWorkflows();
         } catch (err) {
             toast(`Toggle failed: ${err.message}`, 'error');
@@ -1573,7 +1502,6 @@ ${esc(content)}
     }
 
     async function activateAllWorkflows() {
-        if (!n8nApiKey) { toast('Connect n8n API key first', 'error'); return; }
         const inactive = Object.values(n8nWorkflows).filter(wf => !wf.active);
         if (inactive.length === 0) { toast('All workflows already active', 'success'); return; }
 
@@ -1586,12 +1514,12 @@ ${esc(content)}
     function renderWorkflows() {
         const grid = document.getElementById('wfGrid');
         const countEl = document.getElementById('wfActiveCount');
+        const hasLiveData = Object.keys(n8nWorkflows).length > 0;
 
         // Merge registry info with live n8n data
         const merged = [];
         const seenIds = new Set();
 
-        // First, add all registry workflows
         workflowRegistry.forEach(entry => {
             const meta = entry.metadata || {};
             const wfId = meta.workflow_id;
@@ -1606,7 +1534,6 @@ ${esc(content)}
                 active: live ? live.active : null,
                 hasLiveData: !!live,
                 trigger: meta.trigger || '',
-                nodes: meta.nodes || '',
             });
         });
 
@@ -1621,7 +1548,6 @@ ${esc(content)}
                     active: wf.active,
                     hasLiveData: true,
                     trigger: '',
-                    nodes: '',
                 });
             }
         });
@@ -1630,10 +1556,10 @@ ${esc(content)}
         const totalLive = merged.filter(w => w.hasLiveData).length;
         const activeLive = merged.filter(w => w.active === true).length;
         const inactiveLive = merged.filter(w => w.active === false).length;
-        countEl.textContent = n8nApiKey ? `${activeLive}/${totalLive} active` : `${merged.length} registered`;
+        countEl.textContent = hasLiveData ? `${activeLive}/${totalLive} active` : `${merged.length} registered`;
 
         if (merged.length === 0) {
-            grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;">No workflows found in system registry</div>';
+            grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;">No workflows found</div>';
             return;
         }
 
@@ -1645,8 +1571,7 @@ ${esc(content)}
         });
 
         // Activate All button
-        const hasInactive = merged.some(w => w.active === false);
-        const activateAllBtn = hasInactive && n8nApiKey
+        const activateAllBtn = inactiveLive > 0
             ? `<div style="grid-column: 1 / -1; margin-bottom: 0.25rem;">
                 <button onclick="activateAllWorkflows()" class="btn btn-approve text-xs py-1.5 px-3 flex items-center gap-1.5">
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1660,6 +1585,7 @@ ${esc(content)}
             const isInactive = wf.active === false;
             const isUnknown = wf.active === null;
             const cardClass = isInactive ? 'error' : isUnknown ? 'inactive' : '';
+
             const regBadge = wf.registryStatus === 'broken'
                 ? '<span class="badge badge-failed">broken</span>'
                 : wf.registryStatus === 'inactive' || wf.registryStatus === 'inactive_pending_credentials'
@@ -1668,13 +1594,13 @@ ${esc(content)}
                         ? '<span class="badge" style="background:rgba(168,85,247,0.12);color:#A855F7;">unregistered</span>'
                         : '';
 
-            const toggleHtml = wf.id && n8nApiKey
+            const toggleHtml = wf.id && hasLiveData
                 ? `<div class="toggle-track ${isActive ? 'active' : ''}" id="wf-toggle-${wf.id}"
                         onclick="toggleWorkflow('${wf.id}', ${!isActive})"
                         title="${isActive ? 'Click to deactivate' : 'Click to activate'}">
                        <div class="toggle-thumb"></div>
                    </div>`
-                : `<div class="toggle-track ${isUnknown ? '' : isActive ? 'active' : ''}" style="opacity: 0.3; pointer-events: none;">
+                : `<div class="toggle-track" style="opacity: 0.3; pointer-events: none;">
                        <div class="toggle-thumb"></div>
                    </div>`;
 
@@ -1698,15 +1624,9 @@ ${esc(content)}
     refreshAll = async function() {
         await Promise.all([
             _origRefreshAll(),
-            fetchWorkflowRegistry(),
-            n8nApiKey ? fetchN8nWorkflows() : Promise.resolve(),
+            fetchWorkflows(),
         ]);
     };
-
-    // On init, if API key is cached, auto-connect
-    if (n8nApiKey) {
-        document.getElementById('wfApiKeyInput').value = '••••••••';
-    }
     </script>
 
 </body>
