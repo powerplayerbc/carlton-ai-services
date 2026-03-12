@@ -328,6 +328,86 @@
             font-size: 0.85rem;
         }
 
+        /* ── Toggle switch ── */
+        .toggle-track {
+            position: relative;
+            width: 36px; height: 20px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid #2A2E3D;
+            cursor: pointer;
+            transition: background 0.25s ease, border-color 0.25s ease;
+            flex-shrink: 0;
+        }
+        .toggle-track.active {
+            background: rgba(6,214,160,0.25);
+            border-color: rgba(6,214,160,0.4);
+        }
+        .toggle-track .toggle-thumb {
+            position: absolute;
+            top: 2px; left: 2px;
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: #525E73;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+        .toggle-track.active .toggle-thumb {
+            transform: translateX(16px);
+            background: #06D6A0;
+        }
+        .toggle-track.busy { opacity: 0.5; pointer-events: none; }
+
+        /* ── Workflow grid ── */
+        .wf-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 0.5rem;
+        }
+        .wf-card {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid #1E2130;
+            transition: border-color 0.2s ease;
+        }
+        .wf-card:hover { border-color: #2A2E3D; }
+        .wf-card.error { border-left: 2px solid #FF6B6B; }
+        .wf-card.inactive { border-left: 2px solid #525E73; }
+
+        /* ── Collapsible ── */
+        .collapse-btn {
+            background: none; border: none; cursor: pointer; padding: 0.25rem;
+            color: #8A95A9; transition: color 0.2s, transform 0.2s;
+        }
+        .collapse-btn:hover { color: #E8ECF1; }
+        .collapse-btn.open svg { transform: rotate(180deg); }
+
+        /* ── API key prompt ── */
+        .api-key-bar {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: rgba(255,217,61,0.06);
+            border: 1px solid rgba(255,217,61,0.15);
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            color: #FFD93D;
+        }
+        .api-key-bar input {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,217,61,0.2);
+            border-radius: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            color: #E8ECF1;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            outline: none;
+            flex: 1;
+            max-width: 300px;
+        }
+        .api-key-bar input:focus { border-color: rgba(255,217,61,0.4); }
+
         /* ── Responsive ── */
         @media (max-width: 1199px) {
             .dashboard-grid { grid-template-columns: 1fr 1fr !important; }
@@ -416,6 +496,40 @@
                     <div>
                         <div class="stat-value text-warn" id="statBlocked">—</div>
                         <div class="stat-label">Blocked</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Workflow Control ── -->
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 pb-3">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="flex items-center gap-2">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M2 7h10M2 11h10" stroke="#FFD93D" stroke-width="1.2" stroke-linecap="round"/></svg>
+                        <h2 class="font-heading font-semibold text-sm tracking-wide uppercase">Workflow Control</h2>
+                        <span class="badge" style="background: rgba(255,217,61,0.12); color: #FFD93D;" id="wfActiveCount">—</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-txt-3 font-mono" id="wfConnectionStatus">Not connected</span>
+                        <button class="collapse-btn open" id="wfCollapseBtn" onclick="toggleWfPanel()">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="panel-body" id="wfPanel">
+                    <div id="wfApiKeyBar" class="api-key-bar mb-3">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7.5 4.5a2.5 2.5 0 10-3.54 3.54l-2.46 2.46v1h1.5v-1h1v-1h1l.96-.96A2.5 2.5 0 007.5 4.5z" stroke="currentColor" stroke-width="1"/><circle cx="7.5" cy="4" r="0.75" fill="currentColor"/></svg>
+                        <span>n8n API key required for workflow control</span>
+                        <input type="password" id="wfApiKeyInput" placeholder="Paste n8n API key..." autocomplete="off">
+                        <button onclick="connectN8nApi()" class="btn btn-ghost text-xs py-1 px-2" style="color: #FFD93D; border-color: rgba(255,217,61,0.25);">Connect</button>
+                    </div>
+                    <div id="wfGrid" class="wf-grid">
+                        <div class="empty-state" style="grid-column: 1 / -1;">
+                            <div class="skeleton h-10 w-full mb-2"></div>
+                            <div class="skeleton h-10 w-full mb-2"></div>
+                            <div class="skeleton h-10 w-2/3"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -664,6 +778,13 @@
     let autoRefreshInterval = null;
     let currentModifyTaskId = null;
 
+    // Workflow control state
+    const N8N_API = 'https://n8n.carltonaiservices.com/api/v1';
+    let n8nApiKey = sessionStorage.getItem('n8n-api-key') || '';
+    let workflowRegistry = [];
+    let n8nWorkflows = {};
+    let wfPanelOpen = true;
+
     // ═══════════════════════════════════════
     // AUTH GATE
     // ═══════════════════════════════════════
@@ -695,6 +816,8 @@
     // ═══════════════════════════════════════
     function initDashboard() {
         refreshAll();
+        fetchWorkflowRegistry();
+        if (n8nApiKey) fetchN8nWorkflows();
         startAutoRefresh();
     }
 
@@ -1340,6 +1463,249 @@ ${esc(content)}
         el.textContent = message;
         container.appendChild(el);
         setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 4000);
+    }
+
+    // ═══════════════════════════════════════
+    // WORKFLOW CONTROL
+    // ═══════════════════════════════════════
+    function toggleWfPanel() {
+        wfPanelOpen = !wfPanelOpen;
+        document.getElementById('wfPanel').style.display = wfPanelOpen ? '' : 'none';
+        document.getElementById('wfCollapseBtn').classList.toggle('open', wfPanelOpen);
+    }
+
+    function connectN8nApi() {
+        const key = document.getElementById('wfApiKeyInput').value.trim();
+        if (!key) { toast('Please enter an API key', 'error'); return; }
+        n8nApiKey = key;
+        sessionStorage.setItem('n8n-api-key', key);
+        fetchN8nWorkflows();
+    }
+
+    // Fetch workflow list from system_registry
+    async function fetchWorkflowRegistry() {
+        const result = await fetchJSON(API.supabase, {
+            operation: 'select',
+            table: 'system_registry',
+            filters: 'category=eq.workflow&select=name,metadata&order=name.asc',
+        });
+
+        if (result && result.success && result.data) {
+            workflowRegistry = result.data;
+        } else if (Array.isArray(result)) {
+            workflowRegistry = result;
+        } else {
+            workflowRegistry = [];
+        }
+
+        renderWorkflows();
+    }
+
+    // Fetch live workflow statuses from n8n API
+    async function fetchN8nWorkflows() {
+        if (!n8nApiKey) {
+            renderWorkflows();
+            return;
+        }
+
+        try {
+            const res = await fetch(`${N8N_API}/workflows`, {
+                headers: { 'X-N8N-API-KEY': n8nApiKey },
+            });
+            if (!res.ok) {
+                if (res.status === 401) {
+                    toast('Invalid API key', 'error');
+                    n8nApiKey = '';
+                    sessionStorage.removeItem('n8n-api-key');
+                } else {
+                    toast(`n8n API error: ${res.status}`, 'error');
+                }
+                renderWorkflows();
+                return;
+            }
+            const data = await res.json();
+            const list = data.data || data;
+            n8nWorkflows = {};
+            (Array.isArray(list) ? list : []).forEach(wf => {
+                n8nWorkflows[wf.id] = { active: wf.active, name: wf.name, id: wf.id };
+            });
+
+            document.getElementById('wfApiKeyBar').style.display = 'none';
+            document.getElementById('wfConnectionStatus').innerHTML = '<span style="color: #06D6A0;">Connected</span>';
+        } catch (err) {
+            toast(`Cannot reach n8n API: ${err.message}`, 'error');
+        }
+
+        renderWorkflows();
+    }
+
+    async function toggleWorkflow(workflowId, activate) {
+        if (!n8nApiKey) {
+            toast('Connect n8n API key first', 'error');
+            return;
+        }
+
+        const trackEl = document.getElementById(`wf-toggle-${workflowId}`);
+        if (trackEl) trackEl.classList.add('busy');
+
+        const action = activate ? 'activate' : 'deactivate';
+        try {
+            const res = await fetch(`${N8N_API}/workflows/${workflowId}/${action}`, {
+                method: 'POST',
+                headers: { 'X-N8N-API-KEY': n8nApiKey },
+            });
+
+            if (!res.ok) {
+                const errBody = await res.text();
+                toast(`Failed to ${action}: ${res.status} ${errBody.substring(0, 100)}`, 'error');
+                return;
+            }
+
+            const result = await res.json();
+            n8nWorkflows[workflowId] = { ...n8nWorkflows[workflowId], active: result.active };
+            toast(`${result.name || workflowId} ${activate ? 'activated' : 'deactivated'}`, 'success');
+            renderWorkflows();
+        } catch (err) {
+            toast(`Toggle failed: ${err.message}`, 'error');
+        } finally {
+            if (trackEl) trackEl.classList.remove('busy');
+        }
+    }
+
+    async function activateAllWorkflows() {
+        if (!n8nApiKey) { toast('Connect n8n API key first', 'error'); return; }
+        const inactive = Object.values(n8nWorkflows).filter(wf => !wf.active);
+        if (inactive.length === 0) { toast('All workflows already active', 'success'); return; }
+
+        toast(`Activating ${inactive.length} workflows...`, 'success');
+        for (const wf of inactive) {
+            await toggleWorkflow(wf.id, true);
+        }
+    }
+
+    function renderWorkflows() {
+        const grid = document.getElementById('wfGrid');
+        const countEl = document.getElementById('wfActiveCount');
+
+        // Merge registry info with live n8n data
+        const merged = [];
+        const seenIds = new Set();
+
+        // First, add all registry workflows
+        workflowRegistry.forEach(entry => {
+            const meta = entry.metadata || {};
+            const wfId = meta.workflow_id;
+            if (wfId) seenIds.add(wfId);
+
+            const live = wfId ? n8nWorkflows[wfId] : null;
+            merged.push({
+                id: wfId,
+                name: entry.name || meta.name || 'Unknown',
+                description: meta.description || '',
+                registryStatus: meta.status || 'unknown',
+                active: live ? live.active : null,
+                hasLiveData: !!live,
+                trigger: meta.trigger || '',
+                nodes: meta.nodes || '',
+            });
+        });
+
+        // Add any n8n workflows not in registry
+        Object.values(n8nWorkflows).forEach(wf => {
+            if (!seenIds.has(wf.id)) {
+                merged.push({
+                    id: wf.id,
+                    name: wf.name || wf.id,
+                    description: '',
+                    registryStatus: 'unregistered',
+                    active: wf.active,
+                    hasLiveData: true,
+                    trigger: '',
+                    nodes: '',
+                });
+            }
+        });
+
+        // Counts
+        const totalLive = merged.filter(w => w.hasLiveData).length;
+        const activeLive = merged.filter(w => w.active === true).length;
+        const inactiveLive = merged.filter(w => w.active === false).length;
+        countEl.textContent = n8nApiKey ? `${activeLive}/${totalLive} active` : `${merged.length} registered`;
+
+        if (merged.length === 0) {
+            grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;">No workflows found in system registry</div>';
+            return;
+        }
+
+        // Sort: inactive first (needs attention), then active, then unknown
+        merged.sort((a, b) => {
+            if (a.active === false && b.active !== false) return -1;
+            if (a.active !== false && b.active === false) return 1;
+            return (a.name || '').localeCompare(b.name || '');
+        });
+
+        // Activate All button
+        const hasInactive = merged.some(w => w.active === false);
+        const activateAllBtn = hasInactive && n8nApiKey
+            ? `<div style="grid-column: 1 / -1; margin-bottom: 0.25rem;">
+                <button onclick="activateAllWorkflows()" class="btn btn-approve text-xs py-1.5 px-3 flex items-center gap-1.5">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Activate All Inactive (${inactiveLive})
+                </button>
+               </div>`
+            : '';
+
+        grid.innerHTML = activateAllBtn + merged.map(wf => {
+            const isActive = wf.active === true;
+            const isInactive = wf.active === false;
+            const isUnknown = wf.active === null;
+            const cardClass = isInactive ? 'error' : isUnknown ? 'inactive' : '';
+            const regBadge = wf.registryStatus === 'broken'
+                ? '<span class="badge badge-failed">broken</span>'
+                : wf.registryStatus === 'inactive' || wf.registryStatus === 'inactive_pending_credentials'
+                    ? '<span class="badge badge-blocked">inactive</span>'
+                    : wf.registryStatus === 'unregistered'
+                        ? '<span class="badge" style="background:rgba(168,85,247,0.12);color:#A855F7;">unregistered</span>'
+                        : '';
+
+            const toggleHtml = wf.id && n8nApiKey
+                ? `<div class="toggle-track ${isActive ? 'active' : ''}" id="wf-toggle-${wf.id}"
+                        onclick="toggleWorkflow('${wf.id}', ${!isActive})"
+                        title="${isActive ? 'Click to deactivate' : 'Click to activate'}">
+                       <div class="toggle-thumb"></div>
+                   </div>`
+                : `<div class="toggle-track ${isUnknown ? '' : isActive ? 'active' : ''}" style="opacity: 0.3; pointer-events: none;">
+                       <div class="toggle-thumb"></div>
+                   </div>`;
+
+            return `
+                <div class="wf-card ${cardClass}">
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="text-xs font-medium text-txt truncate" title="${esc(wf.description)}">${esc(wf.name)}</span>
+                            ${regBadge}
+                        </div>
+                        ${wf.id ? `<span class="text-[0.6rem] font-mono text-txt-3">${esc(wf.id)}</span>` : ''}
+                    </div>
+                    ${toggleHtml}
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Add workflow fetching to refreshAll
+    const _origRefreshAll = refreshAll;
+    refreshAll = async function() {
+        await Promise.all([
+            _origRefreshAll(),
+            fetchWorkflowRegistry(),
+            n8nApiKey ? fetchN8nWorkflows() : Promise.resolve(),
+        ]);
+    };
+
+    // On init, if API key is cached, auto-connect
+    if (n8nApiKey) {
+        document.getElementById('wfApiKeyInput').value = '••••••••';
     }
     </script>
 
