@@ -1346,9 +1346,15 @@ document.addEventListener('keydown', e => {
 let treeZoom = null;
 let collapsedNodes = new Set();
 let treeInitialized = false;
+let savedTransform = null; // preserve zoom/pan across re-renders
 
 function renderTreeView() {
     const container = document.getElementById('treeContainer');
+    // Save current zoom/pan before destroying the SVG
+    const existingSvg = container.querySelector('svg');
+    if (existingSvg && treeZoom) {
+        savedTransform = d3.zoomTransform(existingSvg);
+    }
     container.innerHTML = '';
 
     if (treeRoots.length === 0) {
@@ -1427,12 +1433,16 @@ function renderTreeView() {
 
     svg.call(treeZoom);
 
-    // Initial transform — comfortable zoom starting at root
-    const initialScale = Math.min(width / (treeW + 80), height / (treeH + 80), 0.85);
-    const finalScale = Math.max(initialScale, 0.5); // never smaller than 0.5
-    const tx = 40;
-    const ty = -x0 * finalScale + height / 2 - (treeH * finalScale) / 2;
-    svg.call(treeZoom.transform, d3.zoomIdentity.translate(tx, ty).scale(finalScale));
+    // Restore saved zoom/pan or compute initial transform
+    if (savedTransform) {
+        svg.call(treeZoom.transform, savedTransform);
+    } else {
+        const initialScale = Math.min(width / (treeW + 80), height / (treeH + 80), 0.85);
+        const finalScale = Math.max(initialScale, 0.5);
+        const tx = 40;
+        const ty = -x0 * finalScale + height / 2 - (treeH * finalScale) / 2;
+        svg.call(treeZoom.transform, d3.zoomIdentity.translate(tx, ty).scale(finalScale));
+    }
 
     // Links
     g.selectAll('.tree-link')
