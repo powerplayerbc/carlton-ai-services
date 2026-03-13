@@ -1350,11 +1350,6 @@ let savedTransform = null; // preserve zoom/pan across re-renders
 
 function renderTreeView() {
     const container = document.getElementById('treeContainer');
-    // Save current zoom/pan before destroying the SVG
-    const existingSvg = container.querySelector('svg');
-    if (existingSvg && treeZoom) {
-        savedTransform = d3.zoomTransform(existingSvg);
-    }
     container.innerHTML = '';
 
     if (treeRoots.length === 0) {
@@ -1424,11 +1419,12 @@ function renderTreeView() {
 
     const g = svg.append('g');
 
-    // Zoom
+    // Zoom — save transform on every zoom event so it persists across re-renders
     treeZoom = d3.zoom()
         .scaleExtent([0.1, 3])
         .on('zoom', (event) => {
             g.attr('transform', event.transform);
+            savedTransform = event.transform;
         });
 
     svg.call(treeZoom);
