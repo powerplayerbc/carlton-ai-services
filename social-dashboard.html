@@ -1,0 +1,1962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Social Dashboard | Carlton AI</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        base: '#08090D',
+                        surface: '#11131A',
+                        'surface-el': '#1A1D28',
+                        'surface-hi': '#242836',
+                        border: '#2A2E3D',
+                        accent: '#06D6A0',
+                        'accent-dim': 'rgba(6,214,160,0.15)',
+                        alert: '#FF6B6B',
+                        'alert-dim': 'rgba(255,107,107,0.15)',
+                        warn: '#FFD93D',
+                        'warn-dim': 'rgba(255,217,61,0.15)',
+                        info: '#4CC9F0',
+                        'info-dim': 'rgba(76,201,240,0.15)',
+                        txt: '#E8ECF1',
+                        'txt-2': '#8A95A9',
+                        'txt-3': '#525E73',
+                    },
+                    fontFamily: {
+                        heading: ['"Chakra Petch"', 'system-ui', 'sans-serif'],
+                        body: ['"IBM Plex Sans"', 'system-ui', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style>
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'IBM Plex Sans', system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            background: #08090D;
+            color: #E8ECF1;
+        }
+
+        /* ── Grain ── */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9998;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            background-repeat: repeat;
+            background-size: 256px 256px;
+        }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #2A2E3D; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3A3E4D; }
+
+        /* ── Gate ── */
+        .gate-overlay {
+            position: fixed; inset: 0; z-index: 9999;
+            background: radial-gradient(ellipse at center, #0D0F16 0%, #08090D 70%);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .gate-overlay.hidden { display: none; }
+        .gate-input {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 0.5rem;
+            padding: 0.875rem 1rem;
+            color: #E8ECF1;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease;
+            width: 100%;
+        }
+        .gate-input:focus {
+            border-color: rgba(6,214,160,0.4);
+            box-shadow: 0 0 0 3px rgba(6,214,160,0.08);
+        }
+        .gate-input::placeholder { color: #525E73; }
+        .gate-error { color: #FF6B6B; font-size: 0.8rem; margin-top: 0.5rem; opacity: 0; transition: opacity 0.2s; }
+        .gate-error.show { opacity: 1; }
+
+        /* ── Pulse ── */
+        @keyframes pulse-live {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(6,214,160,0.5); }
+            50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(6,214,160,0); }
+        }
+        .pulse-dot {
+            width: 8px; height: 8px; border-radius: 50%; background: #06D6A0;
+            animation: pulse-live 2s ease-in-out infinite;
+        }
+
+        /* ── Stat chip ── */
+        .stat-chip {
+            background: #11131A;
+            border: 1px solid #1E2130;
+            border-radius: 0.5rem;
+            padding: 0.625rem 1rem;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .stat-value { font-family: 'Chakra Petch', system-ui; font-weight: 700; font-size: 1.4rem; line-height: 1; }
+        .stat-label { font-size: 0.7rem; color: #8A95A9; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500; }
+
+        /* ── Buttons ── */
+        .btn {
+            font-family: 'Chakra Petch', system-ui;
+            font-weight: 600;
+            font-size: 0.8rem;
+            letter-spacing: 0.03em;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+            border: none;
+            text-transform: uppercase;
+        }
+        .btn-primary { background: rgba(6,214,160,0.15); color: #06D6A0; border: 1px solid rgba(6,214,160,0.3); }
+        .btn-primary:hover { background: rgba(6,214,160,0.25); }
+        .btn-ghost { background: transparent; color: #8A95A9; border: 1px solid #2A2E3D; }
+        .btn-ghost:hover { background: rgba(255,255,255,0.03); color: #E8ECF1; }
+        .btn-ghost.active { background: rgba(6,214,160,0.1); color: #06D6A0; border-color: rgba(6,214,160,0.3); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .btn-approve { background: rgba(6,214,160,0.15); color: #06D6A0; border: 1px solid rgba(6,214,160,0.25); }
+        .btn-approve:hover { background: rgba(6,214,160,0.25); box-shadow: 0 0 12px rgba(6,214,160,0.1); }
+        .btn-deny { background: rgba(255,107,107,0.15); color: #FF6B6B; border: 1px solid rgba(255,107,107,0.25); }
+        .btn-deny:hover { background: rgba(255,107,107,0.25); box-shadow: 0 0 12px rgba(255,107,107,0.1); }
+        .btn-schedule { background: rgba(76,201,240,0.15); color: #4CC9F0; border: 1px solid rgba(76,201,240,0.25); }
+        .btn-schedule:hover { background: rgba(76,201,240,0.25); box-shadow: 0 0 12px rgba(76,201,240,0.1); }
+        .btn-regenerate { background: rgba(168,85,247,0.15); color: #A855F7; border: 1px solid rgba(168,85,247,0.25); }
+        .btn-regenerate:hover { background: rgba(168,85,247,0.25); box-shadow: 0 0 12px rgba(168,85,247,0.1); }
+
+        /* ── Filter buttons ── */
+        .view-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            background: transparent;
+            color: #8A95A9;
+            border: 1px solid transparent;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+        .view-btn:hover { color: #E8ECF1; background: rgba(255,255,255,0.03); }
+        .view-btn.active { color: #06D6A0; background: rgba(6,214,160,0.1); border-color: rgba(6,214,160,0.2); }
+
+        .status-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            padding: 0.3rem 0.625rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            background: transparent;
+            color: #525E73;
+            border: 1px solid transparent;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+        .status-btn:hover { color: #8A95A9; }
+        .status-btn.active { color: #E8ECF1; background: rgba(255,255,255,0.05); border-color: #2A2E3D; }
+
+        /* ── Search ── */
+        .search-input {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid #2A2E3D;
+            border-radius: 0.375rem;
+            padding: 0.5rem 0.75rem 0.5rem 2rem;
+            color: #E8ECF1;
+            font-family: 'IBM Plex Sans', system-ui;
+            font-size: 0.8rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            width: 100%;
+            max-width: 240px;
+        }
+        .search-input:focus { border-color: rgba(6,214,160,0.4); box-shadow: 0 0 0 2px rgba(6,214,160,0.08); }
+        .search-input::placeholder { color: #525E73; }
+
+        /* ── Form input ── */
+        .form-input {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid #2A2E3D;
+            border-radius: 0.375rem;
+            padding: 0.5rem 0.75rem;
+            color: #E8ECF1;
+            font-family: 'IBM Plex Sans', system-ui;
+            font-size: 0.8rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+        .form-input:focus { border-color: rgba(6,214,160,0.4); box-shadow: 0 0 0 2px rgba(6,214,160,0.08); }
+        .form-input::placeholder { color: #525E73; }
+        textarea.form-input { resize: vertical; min-height: 100px; font-family: 'IBM Plex Sans', system-ui; }
+        select.form-input { cursor: pointer; }
+        select.form-input option { background: #1A1D28; color: #E8ECF1; }
+
+        /* ── Badges ── */
+        .badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            padding: 0.15rem 0.4rem;
+            border-radius: 0.2rem;
+            line-height: 1.2;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        /* Platform badges */
+        .badge-linkedin { background: rgba(10,102,194,0.15); color: #3B9BF5; }
+        .badge-twitter { background: rgba(29,161,242,0.15); color: #1DA1F2; }
+        .badge-facebook { background: rgba(24,119,242,0.15); color: #5B9CF5; }
+        .badge-instagram { background: linear-gradient(135deg, rgba(225,48,108,0.15), rgba(131,58,180,0.15)); color: #E1306C; }
+
+        /* Status badges */
+        .badge-draft { background: rgba(107,114,128,0.15); color: #9CA3AF; }
+        .badge-pending_approval { background: rgba(255,217,61,0.15); color: #FFD93D; }
+        .badge-approved { background: rgba(6,214,160,0.15); color: #06D6A0; }
+        .badge-scheduled { background: rgba(76,201,240,0.15); color: #4CC9F0; }
+        .badge-posting { background: rgba(245,158,11,0.15); color: #F59E0B; }
+        .badge-posted { background: rgba(16,185,129,0.15); color: #10B981; }
+        .badge-failed { background: rgba(255,107,107,0.15); color: #FF6B6B; }
+
+        /* Priority badges */
+        .badge-p1 { background: rgba(255,107,107,0.15); color: #FF6B6B; }
+        .badge-p2 { background: rgba(255,217,61,0.15); color: #FFD93D; }
+        .badge-p3 { background: rgba(107,114,128,0.15); color: #9CA3AF; }
+
+        /* ── Panels & Cards ── */
+        .panel {
+            background: #11131A;
+            border: 1px solid #1E2130;
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+
+        .post-card {
+            background: #11131A;
+            border: 1px solid #1E2130;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .post-card:hover { border-color: #2A2E3D; background: #131620; }
+
+        /* ── Table ── */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+        .data-table th {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            font-weight: 500;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #525E73;
+            text-align: left;
+            padding: 0.625rem 0.75rem;
+            border-bottom: 1px solid #1E2130;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+        .data-table th:hover { color: #8A95A9; }
+        .data-table th.sorted { color: #06D6A0; }
+        .data-table td {
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid rgba(30,33,48,0.5);
+            vertical-align: middle;
+        }
+        .data-table tbody tr { cursor: pointer; transition: background 0.15s; }
+        .data-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+        /* ── Slide-out panel ── */
+        .detail-backdrop {
+            position: fixed; inset: 0; z-index: 80;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(3px);
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .detail-backdrop.open { opacity: 1; visibility: visible; }
+
+        .detail-panel {
+            position: fixed; top: 0; right: 0; bottom: 0; z-index: 81;
+            width: 480px; max-width: 95vw;
+            background: #0D0F16;
+            border-left: 1px solid #1E2130;
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        .detail-panel.open { transform: translateX(0); }
+
+        /* ── Modal ── */
+        .modal-backdrop {
+            position: fixed; inset: 0; z-index: 100;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.25s, visibility 0.25s;
+        }
+        .modal-backdrop.active { opacity: 1; visibility: visible; }
+        .modal-content {
+            background: #11131A; border: 1px solid #2A2E3D; border-radius: 0.75rem;
+            width: 90%; max-width: 620px; max-height: 90vh; overflow-y: auto;
+            transform: translateY(20px); transition: transform 0.25s ease;
+        }
+        .modal-backdrop.active .modal-content { transform: translateY(0); }
+
+        /* ── Toast ── */
+        .toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 200; display: flex; flex-direction: column; gap: 0.5rem; }
+        .toast {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            font-family: 'IBM Plex Sans', system-ui;
+            animation: toast-in 0.3s ease forwards;
+            max-width: 380px;
+        }
+        .toast-success { background: rgba(6,214,160,0.15); border: 1px solid rgba(6,214,160,0.3); color: #06D6A0; }
+        .toast-error { background: rgba(255,107,107,0.15); border: 1px solid rgba(255,107,107,0.3); color: #FF6B6B; }
+        .toast-info { background: rgba(76,201,240,0.15); border: 1px solid rgba(76,201,240,0.3); color: #4CC9F0; }
+        @keyframes toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ── Skeleton ── */
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .skeleton {
+            background: linear-gradient(90deg, #1A1D28 25%, #242836 50%, #1A1D28 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 0.25rem;
+        }
+
+        /* ── Dept select ── */
+        .dept-select {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid #2A2E3D;
+            border-radius: 0.375rem;
+            padding: 0.4rem 0.625rem;
+            color: #E8ECF1;
+            font-family: 'IBM Plex Sans', system-ui;
+            font-size: 0.8rem;
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .dept-select:focus { border-color: rgba(6,214,160,0.4); }
+        .dept-select option { background: #1A1D28; color: #E8ECF1; }
+
+        /* ── Pill ── */
+        .pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 9999px;
+            background: rgba(255,255,255,0.05);
+            color: #8A95A9;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+
+        /* ── Empty state ── */
+        .empty-state {
+            text-align: center; padding: 3rem 1rem; color: #525E73;
+            font-size: 0.85rem;
+        }
+
+        /* ── Calendar ── */
+        .cal-header {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            font-weight: 500;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #525E73;
+            padding: 0.5rem;
+            text-align: center;
+            border-bottom: 1px solid #1E2130;
+        }
+        .cal-cell {
+            min-height: 120px;
+            border: 1px solid #1E2130;
+            padding: 0.375rem;
+            vertical-align: top;
+            transition: background 0.15s;
+        }
+        .cal-cell:hover { background: rgba(255,255,255,0.015); }
+        .cal-cell.today { background: rgba(6,214,160,0.03); border-color: rgba(6,214,160,0.15); }
+        .cal-cell.other-month { opacity: 0.3; }
+        .cal-day-num {
+            font-family: 'Chakra Petch', system-ui;
+            font-weight: 600;
+            font-size: 0.75rem;
+            color: #8A95A9;
+            margin-bottom: 0.25rem;
+        }
+        .cal-event {
+            font-size: 0.65rem;
+            padding: 0.2rem 0.35rem;
+            border-radius: 0.2rem;
+            margin-bottom: 0.2rem;
+            cursor: pointer;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            transition: opacity 0.15s;
+            border-left: 2px solid;
+        }
+        .cal-event:hover { opacity: 0.8; }
+
+        /* ── Char counter ── */
+        .char-count { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: #525E73; }
+        .char-count.over { color: #FF6B6B; }
+        .char-count.near { color: #FFD93D; }
+
+        /* ── Bulk bar ── */
+        .bulk-bar {
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 60;
+            background: rgba(17,19,26,0.95); backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(6,214,160,0.2);
+            padding: 0.75rem 1.5rem;
+            display: flex; align-items: center; justify-content: center; gap: 1rem;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .bulk-bar.visible { transform: translateY(0); }
+
+        /* ── Checkbox ── */
+        .post-checkbox {
+            appearance: none;
+            width: 16px; height: 16px;
+            border: 1px solid #2A2E3D;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.03);
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+            position: relative;
+        }
+        .post-checkbox:checked {
+            background: rgba(6,214,160,0.2);
+            border-color: rgba(6,214,160,0.5);
+        }
+        .post-checkbox:checked::after {
+            content: '';
+            position: absolute;
+            top: 2px; left: 5px;
+            width: 4px; height: 8px;
+            border: solid #06D6A0;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .stat-bar { flex-wrap: wrap; }
+            .filter-row { flex-direction: column; gap: 0.5rem; }
+            .search-input { max-width: 100%; }
+            .cal-cell { min-height: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ═══ PASSWORD GATE ═══ -->
+    <div id="gate" class="gate-overlay">
+        <div class="max-w-sm w-full px-6">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center gap-2 mb-4">
+                    <div class="w-2 h-2 rounded-full bg-accent opacity-60"></div>
+                    <span class="font-mono text-xs text-accent tracking-widest uppercase">Social Media</span>
+                </div>
+                <h1 class="font-heading text-3xl font-bold tracking-tight mb-2">Social Dashboard</h1>
+                <p class="text-txt-2 text-sm">Enter the access code to continue</p>
+            </div>
+            <form id="gateForm" onsubmit="return handleGate(event)">
+                <input type="password" id="gateInput" class="gate-input" placeholder="Access code" autocomplete="off" autofocus>
+                <p id="gateError" class="gate-error">Incorrect code. Try again.</p>
+                <button type="submit" class="btn btn-primary w-full py-3 mt-4">Authenticate</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══ MAIN CONTENT ═══ -->
+    <div id="mainContent" style="opacity: 0;">
+
+        <!-- ── Top Nav ── -->
+        <nav class="sticky top-0 z-50 border-b border-border" style="background: rgba(8,9,13,0.92); backdrop-filter: blur(20px);">
+            <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="pulse-dot"></div>
+                    <h1 class="font-heading font-bold text-base sm:text-lg tracking-wide">SOCIAL <span class="text-txt-3 font-normal">Dashboard</span></h1>
+                </div>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <a href="/rdgr" class="btn btn-ghost text-xs py-2 px-3 hidden sm:flex items-center gap-1.5">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        RDGR
+                    </a>
+                    <a href="/org-chart" class="btn btn-ghost text-xs py-2 px-3 hidden sm:flex items-center gap-1.5">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v3M6 8v3M1 6h3M8 6h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                        Org Map
+                    </a>
+                    <button onclick="openQuickPost()" class="btn btn-primary text-xs py-2 px-3 flex items-center gap-1.5">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        New Post
+                    </button>
+                    <button onclick="refreshData()" class="btn btn-ghost text-xs py-2 px-3 flex items-center gap-1.5" id="refreshBtn">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 6a4.5 4.5 0 018.18-2.6M10.5 6a4.5 4.5 0 01-8.18 2.6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M9.5 1v2.5H7M2.5 11V8.5H5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- ── Stats Bar ── -->
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-4">
+            <div class="stat-bar flex gap-3 overflow-x-auto pb-1" id="statsBar">
+                <div class="stat-chip flex-1 min-w-[120px]">
+                    <div>
+                        <div class="stat-value text-warn" id="statPending">—</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                </div>
+                <div class="stat-chip flex-1 min-w-[120px]">
+                    <div>
+                        <div class="stat-value text-info" id="statScheduled">—</div>
+                        <div class="stat-label">Scheduled</div>
+                    </div>
+                </div>
+                <div class="stat-chip flex-1 min-w-[120px]">
+                    <div>
+                        <div class="stat-value text-accent" id="statApproved">—</div>
+                        <div class="stat-label">Approved</div>
+                    </div>
+                </div>
+                <div class="stat-chip flex-1 min-w-[120px]">
+                    <div>
+                        <div class="stat-value" style="color: #10B981;" id="statPosted">—</div>
+                        <div class="stat-label">Posted</div>
+                    </div>
+                </div>
+                <div class="stat-chip flex-1 min-w-[120px]">
+                    <div>
+                        <div class="stat-value text-alert" id="statFailed">—</div>
+                        <div class="stat-label">Failed</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Filter Bar ── -->
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 pb-3">
+            <div class="filter-row flex flex-wrap items-center gap-3">
+                <!-- View Switcher -->
+                <div class="flex items-center gap-1 bg-surface rounded-lg p-1 border border-border/50">
+                    <button class="view-btn active" data-view="approvals" onclick="switchView('approvals')">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" class="inline mr-1 -mt-px"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Approvals
+                    </button>
+                    <button class="view-btn" data-view="calendar" onclick="switchView('calendar')">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" class="inline mr-1 -mt-px"><rect x="1" y="2" width="10" height="9" rx="1" stroke="currentColor" stroke-width="1"/><path d="M1 5h10M4 1v2M8 1v2" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>
+                        Calendar
+                    </button>
+                    <button class="view-btn" data-view="queue" onclick="switchView('queue')">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" class="inline mr-1 -mt-px"><path d="M1.5 3h9M1.5 6h9M1.5 9h9" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>
+                        Queue
+                    </button>
+                    <button class="view-btn" data-view="analytics" onclick="switchView('analytics')">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" class="inline mr-1 -mt-px"><path d="M2 9V5M5 9V3M8 9V6M11 9V4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        Analytics
+                    </button>
+                </div>
+
+                <!-- Platform Filter -->
+                <select class="dept-select" id="platformFilter" onchange="applyFilters()">
+                    <option value="">All Platforms</option>
+                    <option value="linkedin">LinkedIn</option>
+                    <option value="twitter">Twitter / X</option>
+                    <option value="facebook">Facebook</option>
+                    <option value="instagram">Instagram</option>
+                </select>
+
+                <!-- Status Filter -->
+                <div class="flex items-center gap-1 flex-wrap">
+                    <button class="status-btn active" data-status="all" onclick="setStatusFilter('all')">All</button>
+                    <button class="status-btn" data-status="pending_approval" onclick="setStatusFilter('pending_approval')">Pending</button>
+                    <button class="status-btn" data-status="scheduled" onclick="setStatusFilter('scheduled')">Scheduled</button>
+                    <button class="status-btn" data-status="approved" onclick="setStatusFilter('approved')">Approved</button>
+                    <button class="status-btn" data-status="posted" onclick="setStatusFilter('posted')">Posted</button>
+                    <button class="status-btn" data-status="failed" onclick="setStatusFilter('failed')">Failed</button>
+                </div>
+
+                <!-- Search -->
+                <div class="relative ml-auto">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-txt-3">
+                        <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.2"/>
+                        <path d="M9.5 9.5L12.5 12.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                    </svg>
+                    <input type="text" class="search-input" placeholder="Search posts..." id="searchInput" oninput="applyFilters()">
+                </div>
+            </div>
+        </div>
+
+        <!-- ── View Containers ── -->
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 pb-8">
+
+            <!-- Approval Queue View -->
+            <div id="viewApprovals" class="view-container">
+                <div id="approvalGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div class="empty-state col-span-full"><div class="skeleton w-48 h-4 mx-auto mb-3"></div><div class="skeleton w-32 h-3 mx-auto"></div></div>
+                </div>
+            </div>
+
+            <!-- Calendar View -->
+            <div id="viewCalendar" class="view-container hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <button onclick="calNav(-1)" class="btn btn-ghost text-xs py-1.5 px-2.5">
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6l4 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                        <span id="calTitle" class="font-heading font-bold text-sm sm:text-base tracking-wide min-w-[180px] text-center"></span>
+                        <button onclick="calNav(1)" class="btn btn-ghost text-xs py-1.5 px-2.5">
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2l4 4-4 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                        <button onclick="calToday()" class="btn btn-ghost text-xs py-1.5 px-2.5">Today</button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button class="view-btn active" data-cal="week" onclick="setCalView('week')">Week</button>
+                        <button class="view-btn" data-cal="month" onclick="setCalView('month')">Month</button>
+                    </div>
+                </div>
+                <div id="calendarGrid" class="panel overflow-hidden"></div>
+            </div>
+
+            <!-- Queue View -->
+            <div id="viewQueue" class="view-container hidden">
+                <div class="panel overflow-x-auto">
+                    <table class="data-table" id="queueTable">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable('platform')" data-col="platform">Platform <span class="sort-arrow"></span></th>
+                                <th onclick="sortTable('post_type')" data-col="post_type">Type <span class="sort-arrow"></span></th>
+                                <th onclick="sortTable('status')" data-col="status">Status <span class="sort-arrow"></span></th>
+                                <th>Content</th>
+                                <th onclick="sortTable('scheduled_at')" data-col="scheduled_at">Scheduled <span class="sort-arrow"></span></th>
+                                <th onclick="sortTable('posted_at')" data-col="posted_at">Posted <span class="sort-arrow"></span></th>
+                                <th onclick="sortTable('priority')" data-col="priority">Priority <span class="sort-arrow"></span></th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="queueBody">
+                            <tr><td colspan="8" class="text-center py-8"><div class="skeleton w-48 h-4 mx-auto"></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="paginationBar" class="flex items-center justify-between mt-3 px-1">
+                    <span class="text-xs text-txt-3 font-mono" id="paginationInfo">—</span>
+                    <div class="flex gap-2">
+                        <button class="btn btn-ghost text-xs py-1.5 px-3" id="prevPageBtn" onclick="changePage(-1)" disabled>Prev</button>
+                        <button class="btn btn-ghost text-xs py-1.5 px-3" id="nextPageBtn" onclick="changePage(1)">Next</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics View -->
+            <div id="viewAnalytics" class="view-container hidden">
+                <div class="panel p-8 text-center">
+                    <div class="mb-4 opacity-20">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" class="mx-auto"><path d="M8 36V20M16 36V12M24 36V24M32 36V16M40 36V8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+                    </div>
+                    <h3 class="font-heading text-xl font-bold mb-2">Analytics Coming Soon</h3>
+                    <p class="text-txt-2 text-sm max-w-md mx-auto">
+                        Post performance metrics, engagement data, and content insights
+                        will be available once engagement tracking is live.
+                    </p>
+                    <div class="mt-6 flex items-center justify-center gap-3">
+                        <span class="badge badge-scheduled">Phase 2C</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ DETAIL SLIDE-OUT PANEL ═══ -->
+    <div class="detail-backdrop" id="detailBackdrop" onclick="closeDetail()"></div>
+    <div class="detail-panel" id="detailPanel">
+        <div class="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-border" style="background: rgba(13,15,22,0.95); backdrop-filter: blur(12px);">
+            <span class="font-heading font-bold text-sm tracking-wide uppercase text-txt-2">Post Detail</span>
+            <button onclick="closeDetail()" class="text-txt-3 hover:text-txt transition-colors p-1">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div id="detailContent" class="p-5 space-y-5"></div>
+    </div>
+
+    <!-- ═══ QUICK POST MODAL ═══ -->
+    <div class="modal-backdrop" id="quickPostModal">
+        <div class="modal-content">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-border">
+                <h3 class="font-heading font-bold text-sm tracking-wide uppercase">New Post</h3>
+                <button onclick="closeQuickPost()" class="text-txt-3 hover:text-txt transition-colors p-1">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+            <form id="quickPostForm" onsubmit="return handleQuickPost(event)" class="p-5 space-y-4">
+                <!-- Platforms -->
+                <div>
+                    <label class="block text-xs text-txt-2 font-mono uppercase tracking-wide mb-2">Platforms</label>
+                    <div class="flex flex-wrap gap-3">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="platforms" value="linkedin" class="post-checkbox">
+                            <span class="text-sm" style="color: #3B9BF5;">LinkedIn</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="platforms" value="twitter" class="post-checkbox">
+                            <span class="text-sm" style="color: #1DA1F2;">Twitter / X</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="platforms" value="facebook" class="post-checkbox">
+                            <span class="text-sm" style="color: #5B9CF5;">Facebook</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="platforms" value="instagram" class="post-checkbox">
+                            <span class="text-sm" style="color: #E1306C;">Instagram</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Content -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-xs text-txt-2 font-mono uppercase tracking-wide">Content</label>
+                        <span class="char-count" id="qpCharCount">0</span>
+                    </div>
+                    <textarea class="form-input" id="qpContent" name="content_text" placeholder="Write your post content..." oninput="updateCharCount()"></textarea>
+                </div>
+
+                <!-- Hashtags -->
+                <div>
+                    <label class="block text-xs text-txt-2 font-mono uppercase tracking-wide mb-2">Hashtags</label>
+                    <input type="text" class="form-input" id="qpHashtags" name="hashtags" placeholder="#ai, #marketing, #business">
+                </div>
+
+                <!-- Schedule -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-txt-2 font-mono uppercase tracking-wide mb-2">Schedule</label>
+                        <input type="datetime-local" class="form-input" id="qpSchedule" name="scheduled_at">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-txt-2 font-mono uppercase tracking-wide mb-2">Priority</label>
+                        <select class="form-input" id="qpPriority" name="priority">
+                            <option value="3">Flexible</option>
+                            <option value="2">Preferred</option>
+                            <option value="1">Required</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Category & Post Type -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-txt-2 font-mono uppercase tracking-wide mb-2">Category</label>
+                        <input type="text" class="form-input" id="qpCategory" name="content_category" placeholder="e.g., thought-leadership">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-txt-2 font-mono uppercase tracking-wide mb-2">Post Type</label>
+                        <select class="form-input" id="qpPostType" name="post_type">
+                            <option value="text">Text</option>
+                            <option value="image">Image</option>
+                            <option value="link">Link</option>
+                            <option value="carousel">Carousel</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-full py-2.5 mt-2">Create Post</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══ SCHEDULE MODAL ═══ -->
+    <div class="modal-backdrop" id="scheduleModal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-border">
+                <h3 class="font-heading font-bold text-sm tracking-wide uppercase">Schedule Post</h3>
+                <button onclick="closeScheduleModal()" class="text-txt-3 hover:text-txt transition-colors p-1">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div>
+                    <label class="block text-xs text-txt-2 font-mono uppercase tracking-wide mb-2">Date & Time</label>
+                    <input type="datetime-local" class="form-input" id="scheduleDateTime">
+                </div>
+                <button onclick="confirmSchedule()" class="btn btn-schedule w-full py-2.5">Schedule</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ BULK BAR ═══ -->
+    <div class="bulk-bar" id="bulkBar">
+        <span class="text-xs font-mono text-txt-2" id="bulkCount">0 selected</span>
+        <button onclick="bulkApprove()" class="btn btn-approve text-xs py-1.5 px-3">Approve All</button>
+        <button onclick="bulkScheduleOpen()" class="btn btn-schedule text-xs py-1.5 px-3">Schedule All</button>
+        <button onclick="bulkDeselect()" class="btn btn-ghost text-xs py-1.5 px-3">Deselect</button>
+    </div>
+
+    <!-- ═══ TOAST ═══ -->
+    <div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ═══════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════
+const SUPABASE_URL = 'https://yrwrswyjawmgtxrgbnim.supabase.co';
+const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlyd3Jzd3lqYXdtZ3R4cmdibmltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzYzODY2MzMsImV4cCI6MjA1MTk2MjYzM30.CjKVHdkFnxFDyZSN4_5nTeX6K7SEu-DjvBH2lzfVrX8';
+const headers = {
+    'apikey': ANON_KEY,
+    'Authorization': `Bearer ${ANON_KEY}`,
+    'Content-Type': 'application/json'
+};
+
+const PLATFORMS = {
+    linkedin:  { label: 'LinkedIn',    color: '#0A66C2', dimBg: 'rgba(10,102,194,0.08)',  charLimit: 3000 },
+    twitter:   { label: 'Twitter / X', color: '#1DA1F2', dimBg: 'rgba(29,161,242,0.08)',  charLimit: 280 },
+    facebook:  { label: 'Facebook',    color: '#1877F2', dimBg: 'rgba(24,119,242,0.08)',   charLimit: 63206 },
+    instagram: { label: 'Instagram',   color: '#E1306C', dimBg: 'rgba(225,48,108,0.08)',   charLimit: 2200 },
+};
+
+const STATUS_CONFIG = {
+    draft:            { label: 'Draft',    badgeClass: 'badge-draft' },
+    pending_approval: { label: 'Pending',  badgeClass: 'badge-pending_approval' },
+    approved:         { label: 'Approved', badgeClass: 'badge-approved' },
+    scheduled:        { label: 'Scheduled',badgeClass: 'badge-scheduled' },
+    posting:          { label: 'Posting',  badgeClass: 'badge-posting' },
+    posted:           { label: 'Posted',   badgeClass: 'badge-posted' },
+    failed:           { label: 'Failed',   badgeClass: 'badge-failed' },
+};
+
+const PRIORITY_MAP = {
+    1: { label: 'Required',  badgeClass: 'badge-p1' },
+    2: { label: 'Preferred', badgeClass: 'badge-p2' },
+    3: { label: 'Flexible',  badgeClass: 'badge-p3' },
+};
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let allPosts = [];
+let calendarConfig = {};
+let imageCache = new Map();
+let currentView = 'approvals';
+let currentSort = { col: 'created_at', dir: 'desc' };
+let filters = { platform: '', status: 'all', search: '' };
+let selectedPosts = new Set();
+let calendarViewMode = 'week';
+let calendarDate = new Date();
+let queuePage = 0;
+const PAGE_SIZE = 50;
+let scheduleTargetId = null;
+let editingPostId = null;
+
+// ═══════════════════════════════════════
+// AUTH GATE
+// ═══════════════════════════════════════
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('auth') === 'rdgr') {
+    sessionStorage.setItem('registry-auth', 'true');
+    window.history.replaceState({}, '', window.location.pathname);
+}
+
+function handleGate(e) {
+    e.preventDefault();
+    const input = document.getElementById('gateInput').value;
+    if (input === 'Advance1!') {
+        sessionStorage.setItem('registry-auth', 'true');
+        document.getElementById('gate').classList.add('hidden');
+        document.getElementById('mainContent').style.opacity = '1';
+        initDashboard();
+        return false;
+    }
+    document.getElementById('gateError').classList.add('show');
+    document.getElementById('gateInput').value = '';
+    document.getElementById('gateInput').focus();
+    setTimeout(() => document.getElementById('gateError').classList.remove('show'), 2000);
+    return false;
+}
+
+if (sessionStorage.getItem('registry-auth') === 'true') {
+    document.getElementById('gate').classList.add('hidden');
+    document.getElementById('mainContent').style.opacity = '1';
+    initDashboard();
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+function initDashboard() {
+    refreshData();
+}
+
+// ═══════════════════════════════════════
+// DATA FETCH
+// ═══════════════════════════════════════
+async function refreshData() {
+    const btn = document.getElementById('refreshBtn');
+    btn.disabled = true;
+    try {
+        const [postsRes, configRes] = await Promise.all([
+            fetch(`${SUPABASE_URL}/rest/v1/social_content_queue?order=created_at.desc&select=*`, { headers }),
+            fetch(`${SUPABASE_URL}/rest/v1/social_calendar_config?brand_id=eq.carlton&select=*`, { headers }),
+        ]);
+
+        const postsData = await postsRes.json();
+        const configData = await configRes.json();
+
+        allPosts = Array.isArray(postsData) ? postsData : [];
+        calendarConfig = Array.isArray(configData) && configData.length > 0 ? configData[0] : {};
+
+        updateStats();
+        renderCurrentView();
+        showToast(`Loaded ${allPosts.length} posts`, 'success');
+    } catch (err) {
+        console.error('Fetch error:', err);
+        showToast('Failed to load data: ' + err.message, 'error');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+// ═══════════════════════════════════════
+// WRITE API (direct Supabase, n8n-swappable)
+// ═══════════════════════════════════════
+async function writeApi(action, payload) {
+    const { id, ...data } = payload;
+
+    switch (action) {
+        case 'approve':
+            return supabasePatch(id, { status: 'approved', approved_at: new Date().toISOString(), approved_by: 'manual' });
+        case 'schedule':
+            return supabasePatch(id, { status: 'scheduled', scheduled_at: data.scheduled_at, approved_at: new Date().toISOString() });
+        case 'deny':
+            return supabasePatch(id, { status: 'failed', error_message: 'Denied by reviewer' });
+        case 'edit':
+            return supabasePatch(id, data);
+        case 'delete':
+            return supabaseDelete(id);
+        case 'reschedule':
+            return supabasePatch(id, { scheduled_at: data.scheduled_at });
+        case 'retry':
+            return supabasePatch(id, { status: 'approved', error_message: null });
+        case 'create':
+            return supabaseInsert(data);
+        default:
+            throw new Error('Unknown action: ' + action);
+    }
+}
+
+async function supabasePatch(id, data) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/social_content_queue?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: { ...headers, 'Prefer': 'return=representation' },
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+}
+
+async function supabaseDelete(id) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/social_content_queue?id=eq.${id}`, {
+        method: 'DELETE',
+        headers,
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return true;
+}
+
+async function supabaseInsert(data) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/social_content_queue`, {
+        method: 'POST',
+        headers: { ...headers, 'Prefer': 'return=representation' },
+        body: JSON.stringify({ brand_id: 'carlton', ...data }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+}
+
+// ═══════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════
+function updateStats() {
+    const counts = { pending_approval: 0, scheduled: 0, approved: 0, posted: 0, failed: 0 };
+    allPosts.forEach(p => {
+        if (counts.hasOwnProperty(p.status)) counts[p.status]++;
+    });
+    document.getElementById('statPending').textContent = counts.pending_approval;
+    document.getElementById('statScheduled').textContent = counts.scheduled;
+    document.getElementById('statApproved').textContent = counts.approved;
+    document.getElementById('statPosted').textContent = counts.posted;
+    document.getElementById('statFailed').textContent = counts.failed;
+}
+
+// ═══════════════════════════════════════
+// FILTERS & VIEW SWITCHING
+// ═══════════════════════════════════════
+function switchView(view) {
+    currentView = view;
+    document.querySelectorAll('.view-btn[data-view]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.view === view);
+    });
+    document.querySelectorAll('.view-container').forEach(el => el.classList.add('hidden'));
+    const viewMap = { approvals: 'viewApprovals', calendar: 'viewCalendar', queue: 'viewQueue', analytics: 'viewAnalytics' };
+    document.getElementById(viewMap[view]).classList.remove('hidden');
+    renderCurrentView();
+}
+
+function setStatusFilter(status) {
+    filters.status = status;
+    document.querySelectorAll('.status-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.status === status);
+    });
+    queuePage = 0;
+    renderCurrentView();
+}
+
+function applyFilters() {
+    filters.platform = document.getElementById('platformFilter').value;
+    filters.search = document.getElementById('searchInput').value.toLowerCase();
+    queuePage = 0;
+    renderCurrentView();
+}
+
+function getFilteredPosts() {
+    return allPosts.filter(p => {
+        if (filters.platform && p.platform !== filters.platform) return false;
+        if (filters.status !== 'all' && p.status !== filters.status) return false;
+        if (filters.search) {
+            const text = `${p.content_text || ''} ${p.platform || ''} ${(p.hashtags || []).join(' ')} ${p.content_category || ''}`.toLowerCase();
+            if (!text.includes(filters.search)) return false;
+        }
+        return true;
+    });
+}
+
+function renderCurrentView() {
+    switch (currentView) {
+        case 'approvals': renderApprovalQueue(); break;
+        case 'calendar': renderCalendar(); break;
+        case 'queue': renderQueueTable(); break;
+    }
+}
+
+// ═══════════════════════════════════════
+// APPROVAL QUEUE VIEW
+// ═══════════════════════════════════════
+function renderApprovalQueue() {
+    const container = document.getElementById('approvalGrid');
+    let posts = getFilteredPosts();
+
+    // Default to pending_approval for this view if no status filter set
+    if (filters.status === 'all') {
+        const pending = posts.filter(p => p.status === 'pending_approval');
+        if (pending.length > 0) posts = pending;
+    }
+
+    if (posts.length === 0) {
+        container.innerHTML = '<div class="empty-state col-span-full py-16">No posts matching your filters</div>';
+        updateBulkBar();
+        return;
+    }
+
+    container.innerHTML = posts.map(post => renderPostCard(post)).join('');
+    updateBulkBar();
+    initImageObserver();
+}
+
+function renderPostCard(post) {
+    const platform = PLATFORMS[post.platform] || { label: post.platform, color: '#8A95A9', charLimit: 5000 };
+    const statusCfg = STATUS_CONFIG[post.status] || { label: post.status, badgeClass: 'badge-draft' };
+    const priorityCfg = PRIORITY_MAP[post.priority] || PRIORITY_MAP[3];
+    const charCount = (post.content_text || '').length;
+    const hashtags = Array.isArray(post.hashtags) ? post.hashtags : [];
+    const isSelected = selectedPosts.has(post.id);
+    const imgHtml = getImageHtml(post);
+    const scheduledStr = post.scheduled_at ? formatDateTime(post.scheduled_at) : 'Not scheduled';
+
+    return `
+        <div class="post-card" style="border-left: 3px solid ${platform.color};" id="card-${post.id}">
+            <div class="p-4">
+                <!-- Header -->
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="badge badge-${post.platform}">${platform.label}</span>
+                        <span class="badge ${statusCfg.badgeClass}">${statusCfg.label}</span>
+                        <span class="badge ${priorityCfg.badgeClass}">${priorityCfg.label}</span>
+                    </div>
+                    <input type="checkbox" class="post-checkbox" ${isSelected ? 'checked' : ''} onchange="toggleSelect('${post.id}')">
+                </div>
+
+                <!-- Content -->
+                <div class="mb-3" id="content-display-${post.id}">
+                    <p class="text-sm leading-relaxed text-txt mb-1">${escapeHtml(truncate(post.content_text || '', 200))}</p>
+                    <span class="char-count ${charCount > platform.charLimit ? 'over' : charCount > platform.charLimit * 0.9 ? 'near' : ''}">${charCount}/${platform.charLimit}</span>
+                </div>
+
+                <!-- Hashtags -->
+                ${hashtags.length > 0 ? `
+                    <div class="flex flex-wrap gap-1 mb-3">
+                        ${hashtags.map(h => `<span class="pill">${escapeHtml(h)}</span>`).join('')}
+                    </div>
+                ` : ''}
+
+                <!-- Image -->
+                ${imgHtml}
+
+                <!-- Meta -->
+                <div class="flex items-center gap-3 text-xs text-txt-3 mb-3">
+                    <span>${scheduledStr}</span>
+                    ${post.content_category ? `<span class="pill">${escapeHtml(post.content_category)}</span>` : ''}
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-center gap-2 flex-wrap">
+                    ${post.status === 'pending_approval' || post.status === 'draft' ? `
+                        <button onclick="approvePost('${post.id}')" class="btn btn-approve text-xs py-1.5 px-2.5">Approve</button>
+                        <button onclick="openScheduleModal('${post.id}')" class="btn btn-schedule text-xs py-1.5 px-2.5">Schedule</button>
+                        <button onclick="startEdit('${post.id}')" class="btn btn-ghost text-xs py-1.5 px-2.5">Edit</button>
+                        <button onclick="denyPost('${post.id}')" class="btn btn-deny text-xs py-1.5 px-2.5">Deny</button>
+                    ` : post.status === 'failed' ? `
+                        <button onclick="retryPost('${post.id}')" class="btn btn-approve text-xs py-1.5 px-2.5">Retry</button>
+                        <button onclick="deletePost('${post.id}')" class="btn btn-deny text-xs py-1.5 px-2.5">Delete</button>
+                    ` : `
+                        <button onclick="openDetail('${post.id}')" class="btn btn-ghost text-xs py-1.5 px-2.5">View</button>
+                        ${post.status === 'scheduled' || post.status === 'approved' ? `<button onclick="openScheduleModal('${post.id}')" class="btn btn-schedule text-xs py-1.5 px-2.5">Reschedule</button>` : ''}
+                    `}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function getImageHtml(post) {
+    if (post.media_urls && Array.isArray(post.media_urls) && post.media_urls.length > 0) {
+        return `<div class="mb-3 rounded overflow-hidden"><img src="${escapeHtml(post.media_urls[0])}" class="w-full h-40 object-cover" loading="eager"></div>`;
+    }
+    if (post.image_session_id) {
+        if (imageCache.has(post.image_session_id)) {
+            const cached = imageCache.get(post.image_session_id);
+            return `<div class="mb-3 rounded overflow-hidden"><img src="data:${cached.mime};base64,${cached.data}" class="w-full h-40 object-cover"></div>`;
+        }
+        return `<div class="mb-3 rounded overflow-hidden img-placeholder" data-session="${post.image_session_id}"><div class="skeleton w-full" style="height:160px;"></div></div>`;
+    }
+    return '';
+}
+
+function initImageObserver() {
+    const placeholders = document.querySelectorAll('.img-placeholder[data-session]');
+    if (placeholders.length === 0) return;
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const el = entry.target;
+                const sessionId = el.dataset.session;
+                loadBase64Image(sessionId, el);
+                observer.unobserve(el);
+            }
+        });
+    }, { rootMargin: '200px' });
+
+    placeholders.forEach(el => observer.observe(el));
+}
+
+async function loadBase64Image(sessionId, el) {
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/image_sessions?session_id=eq.${sessionId}&select=image_base64,mime_type&limit=1`, { headers });
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0 && data[0].image_base64) {
+            const mime = data[0].mime_type || 'image/png';
+            imageCache.set(sessionId, { data: data[0].image_base64, mime });
+            el.innerHTML = `<img src="data:${mime};base64,${data[0].image_base64}" class="w-full h-40 object-cover">`;
+        } else {
+            el.innerHTML = '<div class="w-full flex items-center justify-center text-txt-3 text-xs" style="height:160px;">No image</div>';
+        }
+    } catch (err) {
+        el.innerHTML = '<div class="w-full flex items-center justify-center text-txt-3 text-xs" style="height:160px;">Image load failed</div>';
+    }
+}
+
+// ═══════════════════════════════════════
+// POST ACTIONS
+// ═══════════════════════════════════════
+async function approvePost(id) {
+    try {
+        await writeApi('approve', { id });
+        const post = allPosts.find(p => p.id === id);
+        if (post) { post.status = 'approved'; post.approved_at = new Date().toISOString(); }
+        updateStats();
+        renderCurrentView();
+        showToast('Post approved', 'success');
+    } catch (err) {
+        showToast('Failed to approve: ' + err.message, 'error');
+    }
+}
+
+async function denyPost(id) {
+    try {
+        await writeApi('deny', { id });
+        const post = allPosts.find(p => p.id === id);
+        if (post) { post.status = 'failed'; post.error_message = 'Denied by reviewer'; }
+        updateStats();
+        renderCurrentView();
+        showToast('Post denied', 'success');
+    } catch (err) {
+        showToast('Failed to deny: ' + err.message, 'error');
+    }
+}
+
+async function retryPost(id) {
+    try {
+        await writeApi('retry', { id });
+        const post = allPosts.find(p => p.id === id);
+        if (post) { post.status = 'approved'; post.error_message = null; }
+        updateStats();
+        renderCurrentView();
+        showToast('Post queued for retry', 'success');
+    } catch (err) {
+        showToast('Failed to retry: ' + err.message, 'error');
+    }
+}
+
+async function deletePost(id) {
+    if (!confirm('Delete this post permanently?')) return;
+    try {
+        await writeApi('delete', { id });
+        allPosts = allPosts.filter(p => p.id !== id);
+        selectedPosts.delete(id);
+        updateStats();
+        renderCurrentView();
+        showToast('Post deleted', 'success');
+    } catch (err) {
+        showToast('Failed to delete: ' + err.message, 'error');
+    }
+}
+
+// ═══════════════════════════════════════
+// INLINE EDITING
+// ═══════════════════════════════════════
+function startEdit(id) {
+    const post = allPosts.find(p => p.id === id);
+    if (!post) return;
+    editingPostId = id;
+    const card = document.getElementById(`card-${id}`);
+    if (!card) return;
+
+    const display = document.getElementById(`content-display-${id}`);
+    if (!display) return;
+
+    const hashtags = Array.isArray(post.hashtags) ? post.hashtags.join(', ') : '';
+
+    display.innerHTML = `
+        <textarea class="form-input mb-2" id="edit-content-${id}" rows="4">${escapeHtml(post.content_text || '')}</textarea>
+        <input type="text" class="form-input mb-2" id="edit-hashtags-${id}" value="${escapeHtml(hashtags)}" placeholder="Hashtags (comma-separated)">
+        <div class="flex gap-2">
+            <button onclick="saveEdit('${id}')" class="btn btn-approve text-xs py-1.5 px-2.5">Save</button>
+            <button onclick="cancelEdit('${id}')" class="btn btn-ghost text-xs py-1.5 px-2.5">Cancel</button>
+        </div>
+    `;
+}
+
+async function saveEdit(id) {
+    const contentEl = document.getElementById(`edit-content-${id}`);
+    const hashtagsEl = document.getElementById(`edit-hashtags-${id}`);
+    if (!contentEl) return;
+
+    const content_text = contentEl.value;
+    const hashtags = hashtagsEl.value.split(',').map(h => h.trim()).filter(h => h);
+
+    try {
+        await writeApi('edit', { id, content_text, hashtags });
+        const post = allPosts.find(p => p.id === id);
+        if (post) { post.content_text = content_text; post.hashtags = hashtags; }
+        editingPostId = null;
+        renderCurrentView();
+        showToast('Post updated', 'success');
+    } catch (err) {
+        showToast('Failed to save: ' + err.message, 'error');
+    }
+}
+
+function cancelEdit(id) {
+    editingPostId = null;
+    renderCurrentView();
+}
+
+// ═══════════════════════════════════════
+// SCHEDULE MODAL
+// ═══════════════════════════════════════
+function openScheduleModal(id) {
+    scheduleTargetId = id;
+    const post = allPosts.find(p => p.id === id);
+    const input = document.getElementById('scheduleDateTime');
+    if (post && post.scheduled_at) {
+        input.value = post.scheduled_at.slice(0, 16);
+    } else {
+        const now = new Date();
+        now.setHours(now.getHours() + 1, 0, 0, 0);
+        input.value = toLocalDateTimeString(now);
+    }
+    document.getElementById('scheduleModal').classList.add('active');
+}
+
+function closeScheduleModal() {
+    document.getElementById('scheduleModal').classList.remove('active');
+    scheduleTargetId = null;
+}
+
+async function confirmSchedule() {
+    if (!scheduleTargetId) return;
+    const dt = document.getElementById('scheduleDateTime').value;
+    if (!dt) { showToast('Please select a date and time', 'error'); return; }
+
+    const scheduled_at = new Date(dt).toISOString();
+    try {
+        await writeApi('schedule', { id: scheduleTargetId, scheduled_at });
+        const post = allPosts.find(p => p.id === scheduleTargetId);
+        if (post) { post.status = 'scheduled'; post.scheduled_at = scheduled_at; post.approved_at = new Date().toISOString(); }
+        closeScheduleModal();
+        updateStats();
+        renderCurrentView();
+        showToast('Post scheduled', 'success');
+    } catch (err) {
+        showToast('Failed to schedule: ' + err.message, 'error');
+    }
+}
+
+// ═══════════════════════════════════════
+// BULK ACTIONS
+// ═══════════════════════════════════════
+function toggleSelect(id) {
+    if (selectedPosts.has(id)) {
+        selectedPosts.delete(id);
+    } else {
+        selectedPosts.add(id);
+    }
+    updateBulkBar();
+}
+
+function updateBulkBar() {
+    const bar = document.getElementById('bulkBar');
+    const count = selectedPosts.size;
+    document.getElementById('bulkCount').textContent = `${count} selected`;
+    bar.classList.toggle('visible', count > 0);
+}
+
+function bulkDeselect() {
+    selectedPosts.clear();
+    updateBulkBar();
+    renderCurrentView();
+}
+
+async function bulkApprove() {
+    const ids = [...selectedPosts];
+    let success = 0;
+    for (const id of ids) {
+        try {
+            await writeApi('approve', { id });
+            const post = allPosts.find(p => p.id === id);
+            if (post) { post.status = 'approved'; post.approved_at = new Date().toISOString(); }
+            success++;
+        } catch (e) { /* continue */ }
+    }
+    selectedPosts.clear();
+    updateStats();
+    renderCurrentView();
+    showToast(`Approved ${success} of ${ids.length} posts`, 'success');
+}
+
+function bulkScheduleOpen() {
+    scheduleTargetId = '__bulk__';
+    const now = new Date();
+    now.setHours(now.getHours() + 1, 0, 0, 0);
+    document.getElementById('scheduleDateTime').value = toLocalDateTimeString(now);
+    document.getElementById('scheduleModal').classList.add('active');
+}
+
+// Override confirmSchedule for bulk
+const _origConfirmSchedule = confirmSchedule;
+confirmSchedule = async function() {
+    if (scheduleTargetId !== '__bulk__') return _origConfirmSchedule();
+
+    const dt = document.getElementById('scheduleDateTime').value;
+    if (!dt) { showToast('Please select a date and time', 'error'); return; }
+
+    const baseDate = new Date(dt);
+    const ids = [...selectedPosts];
+    let success = 0;
+
+    for (let i = 0; i < ids.length; i++) {
+        const scheduled_at = new Date(baseDate.getTime() + i * 60 * 60 * 1000).toISOString();
+        try {
+            await writeApi('schedule', { id: ids[i], scheduled_at });
+            const post = allPosts.find(p => p.id === ids[i]);
+            if (post) { post.status = 'scheduled'; post.scheduled_at = scheduled_at; }
+            success++;
+        } catch (e) { /* continue */ }
+    }
+
+    selectedPosts.clear();
+    closeScheduleModal();
+    updateStats();
+    renderCurrentView();
+    showToast(`Scheduled ${success} of ${ids.length} posts (1 hour apart)`, 'success');
+};
+
+// ═══════════════════════════════════════
+// QUEUE TABLE VIEW
+// ═══════════════════════════════════════
+function renderQueueTable() {
+    const body = document.getElementById('queueBody');
+    let posts = getFilteredPosts();
+
+    // Sort
+    posts.sort((a, b) => {
+        let va = a[currentSort.col];
+        let vb = b[currentSort.col];
+        if (va == null) va = '';
+        if (vb == null) vb = '';
+        if (typeof va === 'string') va = va.toLowerCase();
+        if (typeof vb === 'string') vb = vb.toLowerCase();
+        if (va < vb) return currentSort.dir === 'asc' ? -1 : 1;
+        if (va > vb) return currentSort.dir === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    // Paginate
+    const total = posts.length;
+    const start = queuePage * PAGE_SIZE;
+    const paged = posts.slice(start, start + PAGE_SIZE);
+    const end = Math.min(start + PAGE_SIZE, total);
+
+    document.getElementById('paginationInfo').textContent = total > 0 ? `${start + 1}–${end} of ${total}` : 'No posts';
+    document.getElementById('prevPageBtn').disabled = queuePage === 0;
+    document.getElementById('nextPageBtn').disabled = end >= total;
+
+    // Update sort indicators
+    document.querySelectorAll('#queueTable th').forEach(th => {
+        th.classList.toggle('sorted', th.dataset.col === currentSort.col);
+        const arrow = th.querySelector('.sort-arrow');
+        if (arrow) arrow.textContent = th.dataset.col === currentSort.col ? (currentSort.dir === 'asc' ? ' ↑' : ' ↓') : '';
+    });
+
+    if (paged.length === 0) {
+        body.innerHTML = '<tr><td colspan="8" class="empty-state py-8">No posts matching your filters</td></tr>';
+        return;
+    }
+
+    body.innerHTML = paged.map(post => {
+        const platform = PLATFORMS[post.platform] || { label: post.platform, color: '#8A95A9' };
+        const statusCfg = STATUS_CONFIG[post.status] || { label: post.status, badgeClass: 'badge-draft' };
+        const priorityCfg = PRIORITY_MAP[post.priority] || PRIORITY_MAP[3];
+
+        return `
+            <tr onclick="openDetail('${post.id}')">
+                <td><span class="badge badge-${post.platform}">${platform.label}</span></td>
+                <td class="text-txt-2 text-xs">${escapeHtml(post.post_type || '—')}</td>
+                <td><span class="badge ${statusCfg.badgeClass}">${statusCfg.label}</span></td>
+                <td class="text-sm max-w-[200px] truncate">${escapeHtml(truncate(post.content_text || '', 60))}</td>
+                <td class="text-xs text-txt-2 whitespace-nowrap">${post.scheduled_at ? formatDateTime(post.scheduled_at) : '—'}</td>
+                <td class="text-xs text-txt-2 whitespace-nowrap">${post.posted_at ? formatDateTime(post.posted_at) : '—'}</td>
+                <td><span class="badge ${priorityCfg.badgeClass}">${priorityCfg.label}</span></td>
+                <td onclick="event.stopPropagation()">
+                    <div class="flex items-center gap-1">
+                        <button onclick="openDetail('${post.id}')" class="btn btn-ghost text-xs py-1 px-2" title="View">
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="3" stroke="currentColor" stroke-width="1"/><path d="M1 6c1.5-3 3.5-4 5-4s3.5 1 5 4c-1.5 3-3.5 4-5 4S2.5 9 1 6z" stroke="currentColor" stroke-width="1"/></svg>
+                        </button>
+                        <button onclick="deletePost('${post.id}')" class="btn btn-ghost text-xs py-1 px-2 hover:text-alert" title="Delete">
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                        </button>
+                        ${post.status === 'failed' ? `
+                            <button onclick="retryPost('${post.id}')" class="btn btn-ghost text-xs py-1 px-2 hover:text-accent" title="Retry">
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 6a4.5 4.5 0 018.18-2.6M10.5 6a4.5 4.5 0 01-8.18 2.6" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>
+                            </button>
+                        ` : ''}
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function sortTable(col) {
+    if (currentSort.col === col) {
+        currentSort.dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+        currentSort.col = col;
+        currentSort.dir = 'asc';
+    }
+    renderQueueTable();
+}
+
+function changePage(delta) {
+    queuePage = Math.max(0, queuePage + delta);
+    renderQueueTable();
+}
+
+// ═══════════════════════════════════════
+// CALENDAR VIEW
+// ═══════════════════════════════════════
+function renderCalendar() {
+    if (calendarViewMode === 'week') {
+        renderWeekView();
+    } else {
+        renderMonthView();
+    }
+}
+
+function setCalView(mode) {
+    calendarViewMode = mode;
+    document.querySelectorAll('.view-btn[data-cal]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.cal === mode);
+    });
+    renderCalendar();
+}
+
+function calNav(delta) {
+    if (calendarViewMode === 'week') {
+        calendarDate.setDate(calendarDate.getDate() + delta * 7);
+    } else {
+        calendarDate.setMonth(calendarDate.getMonth() + delta);
+    }
+    renderCalendar();
+}
+
+function calToday() {
+    calendarDate = new Date();
+    renderCalendar();
+}
+
+function getMonday(d) {
+    const date = new Date(d);
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+    date.setDate(diff);
+    date.setHours(0, 0, 0, 0);
+    return date;
+}
+
+function renderWeekView() {
+    const container = document.getElementById('calendarGrid');
+    const monday = getMonday(calendarDate);
+    const sunday = new Date(monday);
+    sunday.setDate(sunday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+
+    document.getElementById('calTitle').textContent = `${formatDateShort(monday)} — ${formatDateShort(sunday)}`;
+
+    const weekPosts = allPosts.filter(p => {
+        if (!p.scheduled_at || p.status === 'failed') return false;
+        const d = new Date(p.scheduled_at);
+        return d >= monday && d <= sunday;
+    });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(monday);
+        d.setDate(d.getDate() + i);
+        days.push(d);
+    }
+
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    let html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);">';
+
+    // Headers
+    days.forEach((d, i) => {
+        const isToday = d.getTime() === today.getTime();
+        html += `<div class="cal-header ${isToday ? 'text-accent' : ''}">${dayNames[i]} ${d.getDate()}</div>`;
+    });
+
+    // Cells
+    days.forEach(d => {
+        const dayStart = new Date(d);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(d);
+        dayEnd.setHours(23, 59, 59, 999);
+        const isToday = d.getTime() === today.getTime();
+
+        const dayPosts = weekPosts.filter(p => {
+            const pd = new Date(p.scheduled_at);
+            return pd >= dayStart && pd <= dayEnd;
+        }).sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at));
+
+        html += `<div class="cal-cell ${isToday ? 'today' : ''}">`;
+        dayPosts.forEach(post => {
+            const platform = PLATFORMS[post.platform] || { label: post.platform, color: '#8A95A9', dimBg: 'rgba(138,149,169,0.08)' };
+            const time = new Date(post.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const statusIcon = post.status === 'posted' ? '&#10003;' : post.status === 'failed' ? '&#10007;' : '&#9679;';
+            const statusColor = post.status === 'posted' ? '#10B981' : post.status === 'failed' ? '#FF6B6B' : '#8A95A9';
+
+            html += `<div class="cal-event" style="background:${platform.dimBg};border-left-color:${platform.color};color:${platform.color};" onclick="openDetail('${post.id}')" title="${escapeHtml(post.content_text || '')}">
+                <span style="color:${statusColor};font-size:0.55rem;margin-right:2px;">${statusIcon}</span>
+                <span style="color:#8A95A9;margin-right:3px;">${time}</span>
+                ${truncate(post.content_text || '', 25)}
+            </div>`;
+        });
+
+        if (dayPosts.length === 0) {
+            html += '<div class="text-xs text-txt-3 opacity-40 pt-4 text-center">—</div>';
+        }
+        html += '</div>';
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function renderMonthView() {
+    const container = document.getElementById('calendarGrid');
+    const year = calendarDate.getFullYear();
+    const month = calendarDate.getMonth();
+
+    document.getElementById('calTitle').textContent = calendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDow = (firstDay.getDay() + 6) % 7; // Monday = 0
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Get posts for this month (with some padding)
+    const monthStart = new Date(year, month, 1 - startDow);
+    const totalCells = Math.ceil((startDow + lastDay.getDate()) / 7) * 7;
+    const monthEnd = new Date(monthStart);
+    monthEnd.setDate(monthEnd.getDate() + totalCells);
+
+    const monthPosts = allPosts.filter(p => {
+        if (!p.scheduled_at) return false;
+        const d = new Date(p.scheduled_at);
+        return d >= monthStart && d < monthEnd;
+    });
+
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    let html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);">';
+
+    // Headers
+    dayNames.forEach(name => {
+        html += `<div class="cal-header">${name}</div>`;
+    });
+
+    // Cells
+    const cellDate = new Date(monthStart);
+    for (let i = 0; i < totalCells; i++) {
+        const isCurrentMonth = cellDate.getMonth() === month;
+        const cellStart = new Date(cellDate);
+        cellStart.setHours(0, 0, 0, 0);
+        const cellEnd = new Date(cellDate);
+        cellEnd.setHours(23, 59, 59, 999);
+        const isToday = cellStart.getTime() === today.getTime();
+
+        const dayPosts = monthPosts.filter(p => {
+            const pd = new Date(p.scheduled_at);
+            return pd >= cellStart && pd <= cellEnd;
+        });
+
+        // Count per platform
+        const platformCounts = {};
+        dayPosts.forEach(p => {
+            platformCounts[p.platform] = (platformCounts[p.platform] || 0) + 1;
+        });
+
+        html += `<div class="cal-cell ${isToday ? 'today' : ''} ${!isCurrentMonth ? 'other-month' : ''}" style="min-height:80px;">`;
+        html += `<div class="cal-day-num ${isToday ? 'text-accent' : ''}">${cellDate.getDate()}</div>`;
+
+        if (dayPosts.length > 0) {
+            html += '<div class="flex flex-wrap gap-1">';
+            Object.entries(platformCounts).forEach(([platform, count]) => {
+                const color = (PLATFORMS[platform] || {}).color || '#8A95A9';
+                html += `<span class="inline-flex items-center gap-0.5" style="font-size:0.55rem;color:${color};"><span style="width:5px;height:5px;border-radius:50%;background:${color};display:inline-block;"></span>${count}</span>`;
+            });
+            html += '</div>';
+        }
+
+        html += '</div>';
+        cellDate.setDate(cellDate.getDate() + 1);
+    }
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// ═══════════════════════════════════════
+// DETAIL SLIDE-OUT PANEL
+// ═══════════════════════════════════════
+function openDetail(id) {
+    const post = allPosts.find(p => p.id === id);
+    if (!post) return;
+
+    const panel = document.getElementById('detailPanel');
+    const content = document.getElementById('detailContent');
+    const platform = PLATFORMS[post.platform] || { label: post.platform, color: '#8A95A9', charLimit: 5000 };
+    const statusCfg = STATUS_CONFIG[post.status] || { label: post.status, badgeClass: 'badge-draft' };
+    const priorityCfg = PRIORITY_MAP[post.priority] || PRIORITY_MAP[3];
+    const hashtags = Array.isArray(post.hashtags) ? post.hashtags : [];
+    const charCount = (post.content_text || '').length;
+
+    let imgHtml = '';
+    if (post.media_urls && Array.isArray(post.media_urls) && post.media_urls.length > 0) {
+        imgHtml = `<div class="rounded-lg overflow-hidden border border-border"><img src="${escapeHtml(post.media_urls[0])}" class="w-full" loading="eager"></div>`;
+    } else if (post.image_session_id && imageCache.has(post.image_session_id)) {
+        const cached = imageCache.get(post.image_session_id);
+        imgHtml = `<div class="rounded-lg overflow-hidden border border-border"><img src="data:${cached.mime};base64,${cached.data}" class="w-full"></div>`;
+    }
+
+    content.innerHTML = `
+        <!-- Badges -->
+        <div class="flex flex-wrap items-center gap-2">
+            <span class="badge badge-${post.platform}" style="font-size:0.7rem;padding:0.25rem 0.5rem;">${platform.label}</span>
+            <span class="badge ${statusCfg.badgeClass}" style="font-size:0.7rem;padding:0.25rem 0.5rem;">${statusCfg.label}</span>
+            <span class="badge ${priorityCfg.badgeClass}" style="font-size:0.7rem;padding:0.25rem 0.5rem;">${priorityCfg.label}</span>
+        </div>
+
+        <!-- Content -->
+        <div>
+            <div class="text-xs text-txt-3 font-mono uppercase tracking-wide mb-2">Content</div>
+            <p class="text-sm leading-relaxed text-txt whitespace-pre-wrap">${escapeHtml(post.content_text || 'No content')}</p>
+            <span class="char-count mt-1 ${charCount > platform.charLimit ? 'over' : ''}">${charCount}/${platform.charLimit}</span>
+        </div>
+
+        <!-- Hashtags -->
+        ${hashtags.length > 0 ? `
+            <div>
+                <div class="text-xs text-txt-3 font-mono uppercase tracking-wide mb-2">Hashtags</div>
+                <div class="flex flex-wrap gap-1">
+                    ${hashtags.map(h => `<span class="pill">${escapeHtml(h)}</span>`).join('')}
+                </div>
+            </div>
+        ` : ''}
+
+        <!-- Image -->
+        ${imgHtml}
+
+        <!-- Metadata -->
+        <div>
+            <div class="text-xs text-txt-3 font-mono uppercase tracking-wide mb-2">Details</div>
+            <div class="space-y-1.5 text-sm">
+                ${post.content_category ? `<div class="flex justify-between"><span class="text-txt-3">Category</span><span class="pill">${escapeHtml(post.content_category)}</span></div>` : ''}
+                ${post.post_type ? `<div class="flex justify-between"><span class="text-txt-3">Type</span><span class="text-txt-2">${escapeHtml(post.post_type)}</span></div>` : ''}
+                <div class="flex justify-between"><span class="text-txt-3">Created</span><span class="text-txt-2">${post.created_at ? formatDateTime(post.created_at) : '—'}</span></div>
+                <div class="flex justify-between"><span class="text-txt-3">Scheduled</span><span class="text-txt-2">${post.scheduled_at ? formatDateTime(post.scheduled_at) : '—'}</span></div>
+                ${post.approved_at ? `<div class="flex justify-between"><span class="text-txt-3">Approved</span><span class="text-txt-2">${formatDateTime(post.approved_at)}</span></div>` : ''}
+                ${post.posted_at ? `<div class="flex justify-between"><span class="text-txt-3">Posted</span><span class="text-txt-2">${formatDateTime(post.posted_at)}</span></div>` : ''}
+                ${post.error_message ? `<div class="mt-2 p-2 rounded border border-alert/20 bg-alert-dim text-alert text-xs">${escapeHtml(post.error_message)}</div>` : ''}
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-wrap gap-2 pt-2 border-t border-border">
+            ${post.status === 'pending_approval' || post.status === 'draft' ? `
+                <button onclick="approvePost('${post.id}');closeDetail();" class="btn btn-approve text-xs py-1.5 px-3">Approve</button>
+                <button onclick="openScheduleModal('${post.id}')" class="btn btn-schedule text-xs py-1.5 px-3">Schedule</button>
+                <button onclick="denyPost('${post.id}');closeDetail();" class="btn btn-deny text-xs py-1.5 px-3">Deny</button>
+            ` : post.status === 'scheduled' || post.status === 'approved' ? `
+                <button onclick="openScheduleModal('${post.id}')" class="btn btn-schedule text-xs py-1.5 px-3">Reschedule</button>
+            ` : post.status === 'failed' ? `
+                <button onclick="retryPost('${post.id}');closeDetail();" class="btn btn-approve text-xs py-1.5 px-3">Retry</button>
+            ` : ''}
+            <button onclick="deletePost('${post.id}');closeDetail();" class="btn btn-deny text-xs py-1.5 px-3">Delete</button>
+        </div>
+
+        <!-- ID -->
+        <div class="text-xs text-txt-3 font-mono opacity-50 pt-2">${post.id || ''}</div>
+    `;
+
+    document.getElementById('detailBackdrop').classList.add('open');
+    panel.classList.add('open');
+}
+
+function closeDetail() {
+    document.getElementById('detailBackdrop').classList.remove('open');
+    document.getElementById('detailPanel').classList.remove('open');
+}
+
+// ═══════════════════════════════════════
+// QUICK POST MODAL
+// ═══════════════════════════════════════
+function openQuickPost() {
+    document.getElementById('quickPostForm').reset();
+    document.getElementById('qpCharCount').textContent = '0';
+    document.getElementById('qpCharCount').className = 'char-count';
+    document.getElementById('quickPostModal').classList.add('active');
+}
+
+function closeQuickPost() {
+    document.getElementById('quickPostModal').classList.remove('active');
+}
+
+function updateCharCount() {
+    const textarea = document.getElementById('qpContent');
+    const len = textarea.value.length;
+    const checked = document.querySelectorAll('input[name="platforms"]:checked');
+    let minLimit = 63206;
+    checked.forEach(cb => {
+        const p = PLATFORMS[cb.value];
+        if (p && p.charLimit < minLimit) minLimit = p.charLimit;
+    });
+    if (checked.length === 0) minLimit = 5000;
+
+    const counter = document.getElementById('qpCharCount');
+    counter.textContent = `${len}/${minLimit}`;
+    counter.className = 'char-count' + (len > minLimit ? ' over' : len > minLimit * 0.9 ? ' near' : '');
+}
+
+// Update char count when platform checkboxes change
+document.querySelectorAll('input[name="platforms"]').forEach(cb => {
+    cb.addEventListener('change', updateCharCount);
+});
+
+async function handleQuickPost(e) {
+    e.preventDefault();
+    const form = e.target;
+    const platforms = [...form.querySelectorAll('input[name="platforms"]:checked')].map(cb => cb.value);
+    if (platforms.length === 0) { showToast('Select at least one platform', 'error'); return false; }
+
+    const content_text = form.content_text.value.trim();
+    if (!content_text) { showToast('Content is required', 'error'); return false; }
+
+    const hashtagsRaw = form.hashtags.value;
+    const hashtags = hashtagsRaw ? hashtagsRaw.split(',').map(h => h.trim().replace(/^#?/, '#')).filter(h => h.length > 1) : [];
+    const scheduled_at = form.scheduled_at.value ? new Date(form.scheduled_at.value).toISOString() : null;
+    const priority = parseInt(form.priority.value) || 3;
+    const content_category = form.content_category.value.trim() || null;
+    const post_type = form.post_type.value;
+
+    let created = 0;
+    for (const platform of platforms) {
+        try {
+            const status = scheduled_at ? 'scheduled' : 'pending_approval';
+            await writeApi('create', {
+                platform,
+                content_text,
+                hashtags,
+                scheduled_at,
+                priority,
+                content_category,
+                post_type,
+                status,
+            });
+            created++;
+        } catch (err) {
+            showToast(`Failed for ${platform}: ${err.message}`, 'error');
+        }
+    }
+
+    if (created > 0) {
+        closeQuickPost();
+        showToast(`Created ${created} post(s)`, 'success');
+        await refreshData();
+    }
+    return false;
+}
+
+// ═══════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════
+function truncate(str, max) {
+    if (!str) return '';
+    return str.length > max ? str.substring(0, max - 1) + '\u2026' : str;
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function formatDateTime(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' +
+           d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatDateShort(d) {
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function toLocalDateTimeString(d) {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const mins = String(d.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${mins}`;
+}
+
+function showToast(msg, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = msg;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3500);
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        closeDetail();
+        closeQuickPost();
+        closeScheduleModal();
+    }
+});
+
+// Close modals on backdrop click
+document.querySelectorAll('.modal-backdrop').forEach(el => {
+    el.addEventListener('click', (e) => {
+        if (e.target === el) el.classList.remove('active');
+    });
+});
+</script>
+</body>
+</html>
