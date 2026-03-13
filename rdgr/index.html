@@ -369,6 +369,81 @@
         }
         .wf-activate-btn-secondary:hover { background: rgba(138,149,169,0.12); border-color: rgba(138,149,169,0.4); }
 
+        /* ── Directive cards ── */
+        .directive-card {
+            padding: 0.875rem 1rem;
+            border-radius: 0.5rem;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid #1E2130;
+            border-left: 3px solid #525E73;
+            margin-bottom: 0.5rem;
+            transition: border-color 0.2s ease;
+        }
+        .directive-card:hover { border-color: #2A2E3D; }
+        .directive-card.risk-high { border-left-color: #FF6B6B; }
+        .directive-card.risk-medium { border-left-color: #FFD93D; }
+        .directive-card.risk-low { border-left-color: #06D6A0; }
+        .directive-detail {
+            display: none;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        .directive-detail.open { display: block; }
+        .criteria-list {
+            list-style: none; padding: 0; margin: 0.25rem 0 0 0;
+        }
+        .criteria-list li {
+            position: relative;
+            padding-left: 1rem;
+            font-size: 0.75rem;
+            color: #8A95A9;
+            line-height: 1.6;
+        }
+        .criteria-list li::before {
+            content: ''; position: absolute; left: 0; top: 0.5em;
+            width: 4px; height: 4px; border-radius: 50%;
+            background: #525E73;
+        }
+        .domain-chip {
+            display: inline-block;
+            padding: 0.125rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.65rem;
+            font-weight: 500;
+            background: rgba(76,201,240,0.1);
+            color: #4CC9F0;
+            border: 1px solid rgba(76,201,240,0.15);
+        }
+        .directive-actions {
+            display: flex; align-items: flex-start; gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+        .directive-actions textarea {
+            flex: 1;
+            background: rgba(0,0,0,0.25);
+            border: 1px solid #2A2E3D;
+            border-radius: 0.375rem;
+            padding: 0.5rem 0.625rem;
+            color: #E8ECF1;
+            font-size: 0.75rem;
+            font-family: 'IBM Plex Sans', sans-serif;
+            resize: vertical;
+            min-height: 2.5rem;
+            max-height: 6rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .directive-actions textarea:focus { border-color: rgba(6,214,160,0.4); }
+        .directive-actions textarea::placeholder { color: #525E73; }
+        .history-row {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.4rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            font-size: 0.75rem;
+        }
+        .history-row:last-child { border-bottom: none; }
+
         /* ── Collapsible ── */
         .collapse-btn {
             background: none; border: none; cursor: pointer; padding: 0.25rem;
@@ -510,6 +585,32 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- ── Directive Approvals ── -->
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 pb-3">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="flex items-center gap-2">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1L14 4.5V11.5L8 15L2 11.5V4.5L8 1Z" stroke="#FFD93D" stroke-width="1.2" fill="none"/><path d="M8 5v3.5M8 10.5v.5" stroke="#FFD93D" stroke-width="1.2" stroke-linecap="round"/></svg>
+                        <h2 class="font-heading font-semibold text-sm tracking-wide uppercase">Directive Approvals</h2>
+                        <span class="badge" style="background: rgba(255,217,61,0.12); color: #FFD93D;" id="directiveCount">0</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button class="text-xs text-txt-3 hover:text-txt transition-colors" onclick="toggleDirHistory()" id="dirHistoryToggle">History</button>
+                        <button class="collapse-btn open" id="dirCollapseBtn" onclick="toggleDirPanel()">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="panel-body" id="directivePanel">
+                    <div class="empty-state">
+                        <div class="skeleton h-16 w-full mb-2"></div>
+                        <div class="skeleton h-16 w-full mb-2"></div>
+                    </div>
+                </div>
+                <div class="panel-body border-t border-border" id="directiveHistoryPanel" style="display: none;"></div>
             </div>
         </div>
 
@@ -754,8 +855,11 @@
     let taskData = [];
     let reviewData = [];
     let activityData = [];
+    let directiveData = [];
+    let directiveHistory = [];
     let autoRefreshInterval = null;
     let currentModifyTaskId = null;
+    let dirPanelOpen = true;
 
     // Workflow control state
     let workflowRegistry = [];
@@ -835,6 +939,7 @@
         await Promise.all([
             fetchTaskQueue(),
             fetchHumanReview(),
+            fetchDirectives(),
             fetchActivity(),
             fetchHealth(),
             fetchRevenue(),
@@ -890,6 +995,40 @@
         renderReviews();
     }
 
+    async function fetchDirectives() {
+        const [pendingResult, historyResult] = await Promise.all([
+            fetchJSON(API.supabase, {
+                operation: 'select',
+                table: 'autonomous_directives',
+                filters: 'status=eq.pending_approval&order=created_at.desc&select=id,directive_id,project_id,title,objective,acceptance_criteria,domain,target_domains,priority,risk_level,context,created_at',
+            }),
+            fetchJSON(API.supabase, {
+                operation: 'select',
+                table: 'autonomous_directives',
+                filters: 'approved_at=not.is.null&order=approved_at.desc&limit=10&select=directive_id,title,status,risk_level,approved_by,approved_at,approval_notes',
+            }),
+        ]);
+
+        if (pendingResult && pendingResult.success && pendingResult.data) {
+            directiveData = pendingResult.data;
+        } else if (Array.isArray(pendingResult)) {
+            directiveData = pendingResult;
+        } else {
+            directiveData = [];
+        }
+
+        if (historyResult && historyResult.success && historyResult.data) {
+            directiveHistory = historyResult.data;
+        } else if (Array.isArray(historyResult)) {
+            directiveHistory = historyResult;
+        } else {
+            directiveHistory = [];
+        }
+
+        renderDirectives();
+        updateStatusBar();
+    }
+
     async function fetchActivity() {
         const result = await fetchJSON(API.supabase, {
             operation: 'select',
@@ -942,7 +1081,7 @@
     function updateStatusBar() {
         const today = new Date().toISOString().split('T')[0];
         const active = taskData.filter(t => ['ready', 'in_progress'].includes(t.status)).length;
-        const review = reviewData.length;
+        const review = reviewData.length + directiveData.length;
         const completed = taskData.filter(t => t.status === 'completed' && (t.completed_at || t.updated_at || '').startsWith(today)).length;
         const failed = taskData.filter(t => t.status === 'failed' && (t.completed_at || t.updated_at || '').startsWith(today)).length;
         const blocked = taskData.filter(t => t.status === 'blocked').length;
@@ -957,6 +1096,191 @@
         const pulse = document.getElementById('systemPulse');
         if (failed > 3) { pulse.className = 'pulse-dot error'; }
         else { pulse.className = 'pulse-dot'; }
+    }
+
+    // ═══════════════════════════════════════
+    // RENDER: DIRECTIVE APPROVALS
+    // ═══════════════════════════════════════
+    function toggleDirPanel() {
+        dirPanelOpen = !dirPanelOpen;
+        document.getElementById('directivePanel').style.display = dirPanelOpen ? '' : 'none';
+        document.getElementById('dirCollapseBtn').classList.toggle('open', dirPanelOpen);
+    }
+
+    function toggleDirHistory() {
+        const panel = document.getElementById('directiveHistoryPanel');
+        const isHidden = panel.style.display === 'none';
+        panel.style.display = isHidden ? '' : 'none';
+        document.getElementById('dirHistoryToggle').textContent = isHidden ? 'Hide History' : 'History';
+    }
+
+    function toggleDirectiveDetail(idx) {
+        const el = document.getElementById(`dir-detail-${idx}`);
+        if (el) el.classList.toggle('open');
+    }
+
+    function renderDirectives() {
+        const panel = document.getElementById('directivePanel');
+        const countEl = document.getElementById('directiveCount');
+        const histPanel = document.getElementById('directiveHistoryPanel');
+
+        countEl.textContent = directiveData.length;
+
+        // Pending approvals
+        if (directiveData.length === 0) {
+            panel.innerHTML = '<div class="text-center py-4 text-txt-3 text-sm">No directives pending approval</div>';
+        } else {
+            panel.innerHTML = directiveData.map((d, i) => {
+                const riskClass = d.risk_level === 'high' ? 'risk-high' : d.risk_level === 'medium' ? 'risk-medium' : 'risk-low';
+                const riskBadge = d.risk_level === 'high'
+                    ? '<span class="badge badge-failed">HIGH</span>'
+                    : d.risk_level === 'medium'
+                        ? '<span class="badge badge-blocked">MEDIUM</span>'
+                        : '<span class="badge" style="background:rgba(6,214,160,0.12);color:#06D6A0;">LOW</span>';
+
+                const priorityBadge = `<span class="badge badge-p${d.priority || 3}">P${d.priority || 3}</span>`;
+
+                // Acceptance criteria
+                let criteriaHtml = '';
+                if (d.acceptance_criteria) {
+                    const criteria = Array.isArray(d.acceptance_criteria) ? d.acceptance_criteria : [];
+                    if (criteria.length > 0) {
+                        criteriaHtml = `
+                            <div class="mt-2">
+                                <span class="text-[0.65rem] font-semibold text-txt-3 uppercase tracking-wider">Acceptance Criteria</span>
+                                <ul class="criteria-list">${criteria.map(c => `<li>${esc(typeof c === 'string' ? c : c.criterion || JSON.stringify(c))}</li>`).join('')}</ul>
+                            </div>`;
+                    }
+                }
+
+                // Target domains
+                let domainsHtml = '';
+                const domains = d.target_domains || (d.domain ? [d.domain] : []);
+                if (domains.length > 0) {
+                    domainsHtml = `<div class="flex flex-wrap gap-1 mt-2">${domains.map(dm => `<span class="domain-chip">${esc(dm)}</span>`).join('')}</div>`;
+                }
+
+                // Context
+                let contextHtml = '';
+                if (d.context && typeof d.context === 'object') {
+                    const parts = [];
+                    if (d.context.why_now) parts.push(`<div><span class="text-txt-3 text-[0.65rem] uppercase font-semibold">Why now:</span> <span class="text-txt-2 text-xs">${esc(d.context.why_now)}</span></div>`);
+                    if (d.context.constraints) parts.push(`<div><span class="text-txt-3 text-[0.65rem] uppercase font-semibold">Constraints:</span> <span class="text-txt-2 text-xs">${esc(typeof d.context.constraints === 'string' ? d.context.constraints : JSON.stringify(d.context.constraints))}</span></div>`);
+                    if (d.context.resources) parts.push(`<div><span class="text-txt-3 text-[0.65rem] uppercase font-semibold">Resources:</span> <span class="text-txt-2 text-xs">${esc(typeof d.context.resources === 'string' ? d.context.resources : JSON.stringify(d.context.resources))}</span></div>`);
+                    if (parts.length > 0) contextHtml = `<div class="mt-2 space-y-1">${parts.join('')}</div>`;
+                }
+
+                return `
+                    <div class="directive-card ${riskClass}">
+                        <div class="flex items-start gap-2 cursor-pointer" onclick="toggleDirectiveDetail(${i})">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-1.5 flex-wrap mb-1">
+                                    ${riskBadge}
+                                    ${priorityBadge}
+                                    <span class="font-mono text-[0.6rem] text-txt-3">${esc(d.directive_id || '')}</span>
+                                </div>
+                                <div class="text-sm font-medium text-txt">${esc(d.title || 'Untitled')}</div>
+                                <div class="text-xs text-txt-2 mt-0.5 line-clamp-2">${esc(d.objective || '')}</div>
+                            </div>
+                            <span class="text-[0.6rem] text-txt-3 whitespace-nowrap flex-shrink-0 mt-1">${timeAgo(d.created_at)}</span>
+                        </div>
+                        <div class="directive-detail" id="dir-detail-${i}">
+                            ${criteriaHtml}
+                            ${domainsHtml}
+                            ${contextHtml}
+                            <div class="directive-actions">
+                                <textarea id="dir-notes-${i}" placeholder="Add notes for the system..." rows="2"></textarea>
+                                <div class="flex flex-col gap-1.5">
+                                    <button class="btn btn-approve text-xs py-1.5 px-3 whitespace-nowrap" onclick="approveDirective('${esc(d.directive_id)}', ${i})">Approve</button>
+                                    <button class="btn btn-deny text-xs py-1.5 px-3 whitespace-nowrap" onclick="rejectDirective('${esc(d.directive_id)}', ${i})">Reject</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Decision history
+        if (directiveHistory.length === 0) {
+            histPanel.innerHTML = '<div class="text-center py-3 text-txt-3 text-xs">No recent decisions</div>';
+        } else {
+            histPanel.innerHTML = `
+                <div class="text-[0.65rem] font-semibold text-txt-3 uppercase tracking-wider mb-2">Recent Decisions</div>
+                ${directiveHistory.map(h => {
+                    const statusBadge = h.status === 'active'
+                        ? '<span class="badge badge-ready" style="font-size:0.6rem;">approved</span>'
+                        : h.status === 'cancelled'
+                            ? '<span class="badge badge-failed" style="font-size:0.6rem;">rejected</span>'
+                            : `<span class="badge" style="font-size:0.6rem;">${esc(h.status)}</span>`;
+                    const riskDot = h.risk_level === 'high' ? '#FF6B6B' : h.risk_level === 'medium' ? '#FFD93D' : '#06D6A0';
+                    return `
+                        <div class="history-row">
+                            <div class="w-2 h-2 rounded-full flex-shrink-0" style="background:${riskDot}"></div>
+                            <span class="text-txt flex-1 truncate" title="${esc(h.title)}">${esc(h.title)}</span>
+                            ${statusBadge}
+                            ${h.approval_notes ? `<span class="text-txt-3 truncate max-w-[150px]" title="${esc(h.approval_notes)}">${esc(h.approval_notes)}</span>` : ''}
+                            <span class="text-txt-3 text-[0.6rem] whitespace-nowrap">${timeAgo(h.approved_at)}</span>
+                        </div>
+                    `;
+                }).join('')}
+            `;
+        }
+    }
+
+    async function approveDirective(directiveId, idx) {
+        const notes = document.getElementById(`dir-notes-${idx}`)?.value?.trim() || '';
+
+        const result = await fetchJSON(API.supabase, {
+            operation: 'update',
+            table: 'autonomous_directives',
+            filters: `directive_id=eq.${directiveId}`,
+            data: {
+                status: 'active',
+                approved_by: 'bradford',
+                approved_at: new Date().toISOString(),
+                approval_notes: notes || null,
+            },
+        });
+
+        if (result && (result.success || Array.isArray(result))) {
+            toast(`Approved: ${directiveData[idx]?.title || directiveId}`, 'success');
+            directiveData.splice(idx, 1);
+            renderDirectives();
+            updateStatusBar();
+        } else {
+            toast(`Failed to approve: ${result?.error || 'Unknown error'}`, 'error');
+        }
+    }
+
+    async function rejectDirective(directiveId, idx) {
+        const notes = document.getElementById(`dir-notes-${idx}`)?.value?.trim() || '';
+        if (!notes) {
+            toast('Please add a note explaining why you are rejecting this directive', 'error');
+            document.getElementById(`dir-notes-${idx}`)?.focus();
+            return;
+        }
+
+        const result = await fetchJSON(API.supabase, {
+            operation: 'update',
+            table: 'autonomous_directives',
+            filters: `directive_id=eq.${directiveId}`,
+            data: {
+                status: 'cancelled',
+                approved_by: 'bradford',
+                approved_at: new Date().toISOString(),
+                approval_notes: notes,
+            },
+        });
+
+        if (result && (result.success || Array.isArray(result))) {
+            toast(`Rejected: ${directiveData[idx]?.title || directiveId}`, 'success');
+            directiveData.splice(idx, 1);
+            renderDirectives();
+            updateStatusBar();
+        } else {
+            toast(`Failed to reject: ${result?.error || 'Unknown error'}`, 'error');
+        }
     }
 
     // ═══════════════════════════════════════
