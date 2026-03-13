@@ -3,6 +3,7 @@
 *.html
 !index.html
 !our-workflows.html
+!org-chart.html
 !brand_assets/**
 !rdgr/**
 
