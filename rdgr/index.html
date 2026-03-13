@@ -369,6 +369,26 @@
         }
         .wf-activate-btn-secondary:hover { background: rgba(138,149,169,0.12); border-color: rgba(138,149,169,0.4); }
 
+        /* ── Task type tabs ── */
+        .task-tab {
+            flex: 1;
+            padding: 0.4rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-align: center;
+            border-radius: 0.375rem;
+            border: none;
+            cursor: pointer;
+            color: #8A95A9;
+            background: transparent;
+            transition: background 0.2s, color 0.2s;
+        }
+        .task-tab:hover { color: #E8ECF1; }
+        .task-tab.active {
+            background: rgba(6,214,160,0.12);
+            color: #06D6A0;
+        }
+
         /* ── Directive cards ── */
         .directive-card {
             padding: 0.875rem 1rem;
@@ -556,12 +576,12 @@
                         <span class="badge" style="background: rgba(255,217,61,0.12); color: #FFD93D;" id="wfActiveCount">—</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button class="collapse-btn open" id="wfCollapseBtn" onclick="toggleWfPanel()">
+                        <button class="collapse-btn" id="wfCollapseBtn" onclick="toggleWfPanel()">
                             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
                         </button>
                     </div>
                 </div>
-                <div class="panel-body" id="wfPanel">
+                <div class="panel-body" id="wfPanel" style="display: none;">
                     <!-- Quick activate buttons -->
                     <div class="flex flex-wrap items-center gap-2 mb-3">
                         <button onclick="activateWorkflows('all')" id="wfBtnAll" class="wf-activate-btn">
@@ -753,49 +773,94 @@
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                 </button>
             </div>
-            <form onsubmit="return handleNewTask(event)" class="p-5 space-y-4">
-                <div>
-                    <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wider">Title <span class="text-alert">*</span></label>
-                    <input type="text" id="taskTitle" class="form-input" placeholder="What needs to be done?" required>
+            <div class="p-5">
+                <!-- Task type tabs -->
+                <div class="flex gap-1 mb-4 p-0.5 rounded-lg" style="background: rgba(255,255,255,0.04);">
+                    <button type="button" onclick="switchTaskType('task')" id="tabTask" class="task-tab active">General Task</button>
+                    <button type="button" onclick="switchTaskType('social')" id="tabSocial" class="task-tab">Social Post</button>
                 </div>
-                <div>
-                    <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wider">Description <span class="text-alert">*</span></label>
-                    <textarea id="taskDesc" class="form-input" placeholder="Describe the task in detail..." required></textarea>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
+
+                <!-- General Task Form -->
+                <form onsubmit="return handleNewTask(event)" id="taskForm" class="space-y-4">
                     <div>
-                        <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wider">Domain</label>
-                        <select id="taskDomain" class="form-input">
-                            <option value="research">Research</option>
-                            <option value="email">Email</option>
-                            <option value="writing">Writing</option>
-                            <option value="sales">Sales</option>
-                            <option value="calendar">Calendar</option>
-                            <option value="finance">Finance</option>
-                            <option value="thinking">Thinking</option>
-                            <option value="toolbuild">Toolbuild</option>
+                        <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wider">Title <span class="text-alert">*</span></label>
+                        <input type="text" id="taskTitle" class="form-input" placeholder="What needs to be done?" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wider">Description <span class="text-alert">*</span></label>
+                        <textarea id="taskDesc" class="form-input" placeholder="Describe the task in detail..." required></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wider">Domain</label>
+                            <select id="taskDomain" class="form-input">
+                                <option value="research">Research</option>
+                                <option value="email">Email</option>
+                                <option value="writing">Writing</option>
+                                <option value="sales">Sales</option>
+                                <option value="calendar">Calendar</option>
+                                <option value="finance">Finance</option>
+                                <option value="thinking">Thinking</option>
+                                <option value="toolbuild">Toolbuild</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wider">Priority</label>
+                            <select id="taskPriority" class="form-input">
+                                <option value="1">P1 — Critical</option>
+                                <option value="2">P2 — High</option>
+                                <option value="3" selected>P3 — Normal</option>
+                                <option value="4">P4 — Low</option>
+                                <option value="5">P5 — Background</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wider">Notes (optional)</label>
+                        <textarea id="taskNotes" class="form-input" rows="2" placeholder="Additional context..."></textarea>
+                    </div>
+                    <div class="flex gap-3 pt-2">
+                        <button type="submit" class="btn btn-primary flex-1 py-2.5" id="submitTaskBtn">Submit Task</button>
+                        <button type="button" onclick="closeModal('taskModal')" class="btn btn-ghost flex-1 py-2.5">Cancel</button>
+                    </div>
+                </form>
+
+                <!-- Social Post Form -->
+                <form onsubmit="return handleSocialPost(event)" id="socialForm" class="space-y-4" style="display: none;">
+                    <div>
+                        <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wider">Topic / Idea <span class="text-alert">*</span></label>
+                        <input type="text" id="socialTopic" class="form-input" placeholder="What should the post be about?" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wider">Platform</label>
+                        <select id="socialPlatform" class="form-input">
+                            <option value="linkedin">LinkedIn</option>
+                            <option value="twitter">Twitter / X</option>
+                            <option value="instagram">Instagram</option>
+                            <option value="facebook">Facebook</option>
+                            <option value="all">All Platforms</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wider">Priority</label>
-                        <select id="taskPriority" class="form-input">
-                            <option value="1">P1 — Critical</option>
-                            <option value="2">P2 — High</option>
-                            <option value="3" selected>P3 — Normal</option>
-                            <option value="4">P4 — Low</option>
-                            <option value="5">P5 — Background</option>
+                        <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wider">Tone / Style</label>
+                        <select id="socialTone" class="form-input">
+                            <option value="professional">Professional</option>
+                            <option value="casual">Casual / Conversational</option>
+                            <option value="thought_leadership">Thought Leadership</option>
+                            <option value="promotional">Promotional</option>
+                            <option value="educational">Educational</option>
                         </select>
                     </div>
-                </div>
-                <div>
-                    <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wider">Notes (optional)</label>
-                    <textarea id="taskNotes" class="form-input" rows="2" placeholder="Additional context..."></textarea>
-                </div>
-                <div class="flex gap-3 pt-2">
-                    <button type="submit" class="btn btn-primary flex-1 py-2.5" id="submitTaskBtn">Submit Task</button>
-                    <button type="button" onclick="closeModal('taskModal')" class="btn btn-ghost flex-1 py-2.5">Cancel</button>
-                </div>
-            </form>
+                    <div>
+                        <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wider">Additional Instructions (optional)</label>
+                        <textarea id="socialNotes" class="form-input" rows="2" placeholder="Key points, hashtags, CTA, links to include..."></textarea>
+                    </div>
+                    <div class="flex gap-3 pt-2">
+                        <button type="submit" class="btn btn-primary flex-1 py-2.5" id="submitSocialBtn" style="background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.35); color: #A855F7;">Submit Social Post</button>
+                        <button type="button" onclick="closeModal('taskModal')" class="btn btn-ghost flex-1 py-2.5">Cancel</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -863,7 +928,7 @@
 
     // Workflow control state
     let workflowRegistry = [];
-    let wfPanelOpen = true;
+    let wfPanelOpen = false;
 
     // ═══════════════════════════════════════
     // AUTH GATE
@@ -1657,10 +1722,17 @@ ${esc(content)}
     }
 
     // ═══════════════════════════════════════
-    // ACTIONS: NEW TASK
+    // ACTIONS: NEW TASK / SOCIAL POST
     // ═══════════════════════════════════════
     function submitNewTask() {
         openModal('taskModal');
+    }
+
+    function switchTaskType(type) {
+        document.getElementById('taskForm').style.display = type === 'task' ? '' : 'none';
+        document.getElementById('socialForm').style.display = type === 'social' ? '' : 'none';
+        document.getElementById('tabTask').classList.toggle('active', type === 'task');
+        document.getElementById('tabSocial').classList.toggle('active', type === 'social');
     }
 
     async function handleNewTask(e) {
@@ -1692,14 +1764,53 @@ ${esc(content)}
             document.getElementById('taskPriority').value = '3';
 
             closeModal('taskModal');
-
-            // Refresh task queue
             setTimeout(fetchTaskQueue, 2000);
         } catch (err) {
             toast(`Failed to submit task: ${err.message}`, 'error');
         } finally {
             btn.disabled = false;
             btn.textContent = 'Submit Task';
+        }
+        return false;
+    }
+
+    async function handleSocialPost(e) {
+        e.preventDefault();
+        const btn = document.getElementById('submitSocialBtn');
+        btn.disabled = true;
+        btn.textContent = 'Submitting...';
+
+        const payload = {
+            type: 'social_post',
+            title: `Social post: ${document.getElementById('socialTopic').value.trim()}`,
+            description: document.getElementById('socialTopic').value.trim(),
+            domain: 'social_media',
+            priority: 3,
+            context: {
+                platform: document.getElementById('socialPlatform').value,
+                tone: document.getElementById('socialTone').value,
+                notes: document.getElementById('socialNotes').value.trim() || undefined,
+            },
+        };
+
+        try {
+            const result = await fetchJSON(API.intake, payload);
+            const taskId = result?.task_id || result?.data?.task_id || 'submitted';
+            toast(`Social post queued: ${taskId}`, 'success');
+
+            // Reset form
+            document.getElementById('socialTopic').value = '';
+            document.getElementById('socialNotes').value = '';
+            document.getElementById('socialPlatform').value = 'linkedin';
+            document.getElementById('socialTone').value = 'professional';
+
+            closeModal('taskModal');
+            setTimeout(fetchTaskQueue, 2000);
+        } catch (err) {
+            toast(`Failed to submit social post: ${err.message}`, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Submit Social Post';
         }
         return false;
     }
@@ -1876,9 +1987,22 @@ ${esc(content)}
         const activatedNames = lastActivateResult?.activated ? new Set(lastActivateResult.activated) : null;
         const failedNames = lastActivateResult?.failed ? new Map(lastActivateResult.failed.map(f => [f.name, f.error])) : null;
 
-        countEl.textContent = activatedNames
-            ? `${lastActivateResult.activated_count}/${lastActivateResult.total} active`
-            : `${workflows.length} registered`;
+        // Count by registry status
+        const statusCounts = { active: 0, inactive: 0, broken: 0 };
+        workflows.forEach(wf => {
+            if (wf.status === 'active') statusCounts.active++;
+            else if (wf.status === 'broken') statusCounts.broken++;
+            else if (wf.status === 'inactive' || wf.status === 'inactive_pending_credentials') statusCounts.inactive++;
+        });
+
+        if (activatedNames) {
+            countEl.textContent = `${lastActivateResult.activated_count}/${lastActivateResult.total} active`;
+        } else {
+            const parts = [`${statusCounts.active} active`];
+            if (statusCounts.inactive > 0) parts.push(`${statusCounts.inactive} inactive`);
+            if (statusCounts.broken > 0) parts.push(`${statusCounts.broken} broken`);
+            countEl.textContent = `${workflows.length} total · ${parts.join(' · ')}`;
+        }
 
         if (workflows.length === 0) {
             grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;">No workflows found in registry</div>';
