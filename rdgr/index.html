@@ -938,7 +938,6 @@
     // CONFIG
     // ═══════════════════════════════════════
     const API = {
-        supabase: 'https://n8n.carltonaiservices.com/webhook/supabase-query',
         sheets: 'https://n8n.carltonaiservices.com/webhook/update-google-sheet',
         approve: 'https://n8n.carltonaiservices.com/webhook/rdgr-approve',
         intake: 'https://n8n.carltonaiservices.com/webhook/rdgr-intake',
@@ -947,11 +946,30 @@
     };
     const DASHBOARD_SHEET = '1fVGTkjk7Zt1vYgaUh5Daw9QiZZAKMIYNF0ssDM9XSGM';
 
+    // Direct Supabase PostgREST (read-only)
+    const SUPABASE_URL = 'https://yrwrswyjawmgtxrgbnim.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlyd3Jzd3lqYXdtZ3R4cmdibmltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzYzODY2MzMsImV4cCI6MjA1MTk2MjYzM30.CjKVHdkFnxFDyZSN4_5nTeX6K7SEu-DjvBH2lzfVrX8';
+
+    async function supabaseSelect(table, query = '') {
+        const url = `${SUPABASE_URL}/rest/v1/${table}?${query}`;
+        try {
+            const res = await fetch(url, {
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                }
+            });
+            if (!res.ok) { console.error('Supabase error:', res.status, await res.text()); return null; }
+            return await res.json();
+        } catch (err) { console.error('Supabase fetch error:', table, err); return null; }
+    }
+
     const DOMAIN_ICONS = {
         email: '✉', calendar: '📅', research: '🔍', writing: '✏️',
         sales: '🤝', finance: '📊', thinking: '🧠', toolbuild: '🔧',
         hub: '🔗', meetings: '👥', bookkeeper: '📒', social_media: '📱',
         meta: '⚙️', report: '📋', partnership: '🤝',
+        prospecting: '🎯', content: '📝', outbound: '📤',
     };
 
     let taskData = [];
@@ -1004,7 +1022,7 @@
 
     function startAutoRefresh() {
         if (autoRefreshInterval) clearInterval(autoRefreshInterval);
-        autoRefreshInterval = setInterval(refreshAll, 60000);
+        autoRefreshInterval = setInterval(refreshAll, 300000);
     }
 
     function toggleAutoRefresh() {
@@ -1052,20 +1070,8 @@
     }
 
     async function fetchTaskQueue() {
-        const result = await fetchJSON(API.supabase, {
-            operation: 'select',
-            table: 'autonomous_task_queue',
-            filters: 'order=priority.asc,created_at.desc&limit=100',
-        });
-
-        if (result && result.success && result.data) {
-            taskData = result.data;
-        } else if (Array.isArray(result)) {
-            taskData = result;
-        } else {
-            taskData = [];
-        }
-
+        const result = await supabaseSelect('autonomous_task_queue', 'order=priority.asc,created_at.desc&limit=100');
+        taskData = Array.isArray(result) ? result : [];
         updateStatusBar();
         renderTasks();
     }
@@ -1099,82 +1105,31 @@
 
     async function fetchDirectives() {
         const [pendingResult, historyResult] = await Promise.all([
-            fetchJSON(API.supabase, {
-                operation: 'select',
-                table: 'autonomous_directives',
-                filters: 'status=eq.pending_approval&order=created_at.desc&select=id,directive_id,project_id,title,objective,acceptance_criteria,domain,target_domains,priority,risk_level,context,created_at',
-            }),
-            fetchJSON(API.supabase, {
-                operation: 'select',
-                table: 'autonomous_directives',
-                filters: 'approved_at=not.is.null&order=approved_at.desc&limit=10&select=directive_id,title,status,risk_level,approved_by,approved_at,approval_notes',
-            }),
+            supabaseSelect('autonomous_directives', 'status=eq.pending_approval&order=created_at.desc&select=id,directive_id,project_id,title,objective,acceptance_criteria,domain,target_domains,priority,risk_level,context,created_at'),
+            supabaseSelect('autonomous_directives', 'approved_at=not.is.null&order=approved_at.desc&limit=10&select=directive_id,title,status,risk_level,approved_by,approved_at,approval_notes'),
         ]);
 
-        if (pendingResult && pendingResult.success && pendingResult.data) {
-            directiveData = pendingResult.data;
-        } else if (Array.isArray(pendingResult)) {
-            directiveData = pendingResult;
-        } else {
-            directiveData = [];
-        }
-
-        if (historyResult && historyResult.success && historyResult.data) {
-            directiveHistory = historyResult.data;
-        } else if (Array.isArray(historyResult)) {
-            directiveHistory = historyResult;
-        } else {
-            directiveHistory = [];
-        }
+        directiveData = Array.isArray(pendingResult) ? pendingResult : [];
+        directiveHistory = Array.isArray(historyResult) ? historyResult : [];
 
         renderDirectives();
         updateStatusBar();
     }
 
     async function fetchActivity() {
-        const result = await fetchJSON(API.supabase, {
-            operation: 'select',
-            table: 'autonomous_task_queue',
-            filters: 'status=in.(completed,failed)&order=created_at.desc&limit=20',
-        });
-
-        if (result && result.success && result.data) {
-            activityData = result.data;
-        } else if (Array.isArray(result)) {
-            activityData = result;
-        } else {
-            activityData = [];
-        }
-
+        const result = await supabaseSelect('autonomous_task_queue', 'status=in.(completed,failed)&order=created_at.desc&limit=20');
+        activityData = Array.isArray(result) ? result : [];
         renderActivity();
     }
 
     async function fetchHealth() {
-        const result = await fetchJSON(API.supabase, {
-            operation: 'select',
-            table: 'autonomous_execution_log',
-            filters: 'order=timestamp.desc&limit=50',
-        });
-
-        let logs = [];
-        if (result && result.success && result.data) logs = result.data;
-        else if (Array.isArray(result)) logs = result;
-
-        renderHealth(logs);
+        const result = await supabaseSelect('autonomous_execution_log', 'order=timestamp.desc&limit=50');
+        renderHealth(Array.isArray(result) ? result : []);
     }
 
     async function fetchRevenue() {
-        const result = await fetchJSON(API.supabase, {
-            operation: 'select',
-            table: 'autonomous_financial_snapshots',
-            filters: 'order=snapshot_date.desc&limit=1',
-        });
-
-        let snapshot = null;
-        if (result && result.success && result.data && result.data[0]) snapshot = result.data[0];
-        else if (Array.isArray(result) && result[0]) snapshot = result[0];
-
-        renderRevenue(snapshot);
+        const result = await supabaseSelect('autonomous_financial_snapshots', 'order=snapshot_date.desc&limit=1');
+        renderRevenue((Array.isArray(result) && result[0]) ? result[0] : null);
     }
 
     // ═══════════════════════════════════════
@@ -1311,7 +1266,11 @@
                 <div class="text-[0.65rem] font-semibold text-txt-3 uppercase tracking-wider mb-2">Recent Decisions</div>
                 ${directiveHistory.map(h => {
                     const statusBadge = h.status === 'active'
-                        ? '<span class="badge badge-ready" style="font-size:0.6rem;">approved</span>'
+                        ? '<span class="badge badge-blocked" style="font-size:0.6rem;animation:pulse 2s infinite;">Decomposing\u2026</span>'
+                        : h.status === 'in_progress'
+                            ? '<span class="badge badge-ready" style="font-size:0.6rem;">In Progress</span>'
+                        : h.status === 'completed'
+                            ? '<span class="badge badge-ready" style="font-size:0.6rem;">completed</span>'
                         : h.status === 'cancelled'
                             ? '<span class="badge badge-failed" style="font-size:0.6rem;">rejected</span>'
                             : `<span class="badge" style="font-size:0.6rem;">${esc(h.status)}</span>`;
@@ -1354,17 +1313,12 @@
 
     async function rejectDirective(directiveId, idx) {
         const notes = document.getElementById(`dir-notes-${idx}`)?.value?.trim() || '';
-        if (!notes) {
-            toast('Please add a note explaining why you are rejecting this directive', 'error');
-            document.getElementById(`dir-notes-${idx}`)?.focus();
-            return;
-        }
         const btn = event?.target; if (btn) btn.disabled = true;
 
         const result = await fetchJSON(API.directiveAction, {
             action: 'deny',
             directive_id: directiveId,
-            feedback: notes,
+            feedback: notes || undefined,
             reviewer_name: 'Bradford',
         });
 
@@ -1479,16 +1433,19 @@ ${esc(content)}
         }
 
         panel.innerHTML = filtered.map(t => {
-            const icon = DOMAIN_ICONS[t.domain] || '⚙️';
+            const displayDomain = t.payload?.original_domain || t.domain || '—';
+            const icon = DOMAIN_ICONS[t.domain] || DOMAIN_ICONS[t.payload?.original_domain] || '⚙️';
             const age = timeAgo(t.created_at);
             const p = Math.max(1, Math.min(5, t.priority || 3));
+            const directiveLabel = t.payload?.directive_id ? `<div class="text-[0.6rem] text-txt-3 opacity-70">From: ${esc(t.payload.directive_id)}</div>` : '';
             return `
                 <div class="task-row">
                     <span class="badge badge-${t.status}">${t.status.replace('_', ' ')}</span>
                     <span class="badge badge-p${p}">P${p}</span>
                     <div class="min-w-0">
                         <div class="text-txt truncate" title="${esc(t.title || '')}">${esc(t.title || 'Untitled')}</div>
-                        <div class="text-xs text-txt-3 mt-0.5">${icon} ${t.domain || '—'}</div>
+                        <div class="text-xs text-txt-3 mt-0.5">${icon} ${displayDomain}</div>
+                        ${directiveLabel}
                     </div>
                     <span class="text-xs text-txt-3 font-mono whitespace-nowrap">${age}</span>
                     ${t.revenue_impact ? `<span class="text-xs text-accent font-mono">$${t.revenue_impact}</span>` : '<span></span>'}
@@ -1980,20 +1937,8 @@ ${esc(content)}
 
     // Fetch workflow list from system_registry
     async function fetchWorkflows() {
-        const result = await fetchJSON(API.supabase, {
-            operation: 'select',
-            table: 'system_registry',
-            filters: 'category=eq.workflow&select=name,metadata&order=name.asc',
-        });
-
-        if (result && result.success && result.data) {
-            workflowRegistry = result.data;
-        } else if (Array.isArray(result)) {
-            workflowRegistry = result;
-        } else {
-            workflowRegistry = [];
-        }
-
+        const result = await supabaseSelect('system_registry', 'category=eq.workflow&select=name,metadata&order=name.asc');
+        workflowRegistry = Array.isArray(result) ? result : [];
         renderWorkflows();
     }
 
