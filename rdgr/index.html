@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>RDGR Command Center | Carlton AI</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -938,15 +941,12 @@
     // CONFIG
     // ═══════════════════════════════════════
     const API = {
-        sheets: 'https://n8n.carltonaiservices.com/webhook/update-google-sheet',
         approve: 'https://n8n.carltonaiservices.com/webhook/rdgr-approve',
         intake: 'https://n8n.carltonaiservices.com/webhook/rdgr-intake',
         activate: 'https://n8n.carltonaiservices.com/webhook/rdgr-activate',
         directiveAction: 'https://n8n.carltonaiservices.com/webhook/rdgr-directive-action',
     };
-    const DASHBOARD_SHEET = '1fVGTkjk7Zt1vYgaUh5Daw9QiZZAKMIYNF0ssDM9XSGM';
-
-    // Direct Supabase PostgREST (read-only)
+    // Direct Supabase PostgREST
     const SUPABASE_URL = 'https://yrwrswyjawmgtxrgbnim.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlyd3Jzd3lqYXdtZ3R4cmdibmltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzYzODY2MzMsImV4cCI6MjA1MTk2MjYzM30.CjKVHdkFnxFDyZSN4_5nTeX6K7SEu-DjvBH2lzfVrX8';
 
@@ -1077,29 +1077,11 @@
     }
 
     async function fetchHumanReview() {
-        const result = await fetchJSON(API.sheets, {
-            operation: 'get_structure',
-            spreadsheetId: DASHBOARD_SHEET,
-            sheetName: 'Human Review',
-            sampleRows: 100,
-        });
-
-        if (result && result.success && result.sampleRows) {
-            reviewData = result.sampleRows.filter(row => {
-                const decision = (row.decision || '').trim();
-                const decidedAt = (row.decided_at || '').trim();
-                return !decision || (decision && !decidedAt);
-            });
-        } else if (result && result.data && result.data.sampleRows) {
-            reviewData = result.data.sampleRows.filter(row => {
-                const decision = (row.decision || '').trim();
-                const decidedAt = (row.decided_at || '').trim();
-                return !decision || (decision && !decidedAt);
-            });
-        } else {
-            reviewData = [];
-        }
-
+        const result = await supabaseSelect(
+            'human_review_queue',
+            'decision=is.null&order=submitted_at.desc&limit=100'
+        );
+        reviewData = Array.isArray(result) ? result : [];
         renderReviews();
     }
 
@@ -1352,7 +1334,7 @@
             const content = item.content || '';
             const aiDecision = item.ai_decision || '';
             const reason = item.escalation_reason || '';
-            const issues = item.issues || '';
+            const issues = Array.isArray(item.issues) ? item.issues.join(', ') : (item.issues || '');
             const confidence = item.confidence || '';
             const summary = item.summary || '';
             const preview = content.length > 200 ? content.substring(0, 200) + '...' : content;
@@ -1625,20 +1607,23 @@ ${esc(content)}
         const updates = {
             decision: decision,
             decided_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
         };
-        if (notes && decision !== 'modified') {
-            updates.modified_content = `[NOTES] ${notes}`;
+        if (notes) {
+            updates.reviewer_notes = notes;
         }
 
         try {
-            // Step 1: Update Google Sheets
-            await fetchJSON(API.sheets, {
-                operation: 'find_and_update',
-                spreadsheetId: DASHBOARD_SHEET,
-                sheetName: 'Human Review',
-                keyColumn: 'task_id',
-                keyValue: taskId,
-                updates: updates,
+            // Step 1: Update Supabase directly
+            await fetch(`${SUPABASE_URL}/rest/v1/human_review_queue?task_id=eq.${taskId}`, {
+                method: 'PATCH',
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal',
+                },
+                body: JSON.stringify(updates),
             });
 
             // Step 2: Trigger immediate processing
@@ -1681,16 +1666,22 @@ ${esc(content)}
             const updates = {
                 decision: 'modified',
                 decided_at: new Date().toISOString(),
-                modified_content: content + (notes ? `\n\n[NOTES] ${notes}` : ''),
+                updated_at: new Date().toISOString(),
+                modified_content: content,
             };
+            if (notes) {
+                updates.reviewer_notes = notes;
+            }
 
-            await fetchJSON(API.sheets, {
-                operation: 'find_and_update',
-                spreadsheetId: DASHBOARD_SHEET,
-                sheetName: 'Human Review',
-                keyColumn: 'task_id',
-                keyValue: currentModifyTaskId,
-                updates: updates,
+            await fetch(`${SUPABASE_URL}/rest/v1/human_review_queue?task_id=eq.${currentModifyTaskId}`, {
+                method: 'PATCH',
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal',
+                },
+                body: JSON.stringify(updates),
             });
 
             await fetchJSON(API.approve, { trigger: 'dashboard', task_id: currentModifyTaskId });
