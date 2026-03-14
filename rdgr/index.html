@@ -943,6 +943,7 @@
         approve: 'https://n8n.carltonaiservices.com/webhook/rdgr-approve',
         intake: 'https://n8n.carltonaiservices.com/webhook/rdgr-intake',
         activate: 'https://n8n.carltonaiservices.com/webhook/rdgr-activate',
+        directiveAction: 'https://n8n.carltonaiservices.com/webhook/rdgr-directive-action',
     };
     const DASHBOARD_SHEET = '1fVGTkjk7Zt1vYgaUh5Daw9QiZZAKMIYNF0ssDM9XSGM';
 
@@ -1332,19 +1333,14 @@
     async function approveDirective(directiveId, idx) {
         const notes = document.getElementById(`dir-notes-${idx}`)?.value?.trim() || '';
 
-        const result = await fetchJSON(API.supabase, {
-            operation: 'update',
-            table: 'autonomous_directives',
-            filters: `directive_id=eq.${directiveId}`,
-            data: {
-                status: 'active',
-                approved_by: 'bradford',
-                approved_at: new Date().toISOString(),
-                approval_notes: notes || null,
-            },
+        const result = await fetchJSON(API.directiveAction, {
+            action: 'approve',
+            directive_id: directiveId,
+            feedback: notes || '',
+            reviewer_name: 'Bradford',
         });
 
-        if (result && (result.success || Array.isArray(result))) {
+        if (result?.success) {
             toast(`Approved: ${directiveData[idx]?.title || directiveId}`, 'success');
             directiveData.splice(idx, 1);
             renderDirectives();
@@ -1362,19 +1358,14 @@
             return;
         }
 
-        const result = await fetchJSON(API.supabase, {
-            operation: 'update',
-            table: 'autonomous_directives',
-            filters: `directive_id=eq.${directiveId}`,
-            data: {
-                status: 'cancelled',
-                approved_by: 'bradford',
-                approved_at: new Date().toISOString(),
-                approval_notes: notes,
-            },
+        const result = await fetchJSON(API.directiveAction, {
+            action: 'deny',
+            directive_id: directiveId,
+            feedback: notes,
+            reviewer_name: 'Bradford',
         });
 
-        if (result && (result.success || Array.isArray(result))) {
+        if (result?.success) {
             toast(`Rejected: ${directiveData[idx]?.title || directiveId}`, 'success');
             directiveData.splice(idx, 1);
             renderDirectives();
