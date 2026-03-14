@@ -1332,6 +1332,7 @@
 
     async function approveDirective(directiveId, idx) {
         const notes = document.getElementById(`dir-notes-${idx}`)?.value?.trim() || '';
+        const btn = event?.target; if (btn) btn.disabled = true;
 
         const result = await fetchJSON(API.directiveAction, {
             action: 'approve',
@@ -1347,6 +1348,7 @@
             updateStatusBar();
         } else {
             toast(`Failed to approve: ${result?.error || 'Unknown error'}`, 'error');
+            if (btn) btn.disabled = false;
         }
     }
 
@@ -1357,6 +1359,7 @@
             document.getElementById(`dir-notes-${idx}`)?.focus();
             return;
         }
+        const btn = event?.target; if (btn) btn.disabled = true;
 
         const result = await fetchJSON(API.directiveAction, {
             action: 'deny',
@@ -1372,6 +1375,7 @@
             updateStatusBar();
         } else {
             toast(`Failed to reject: ${result?.error || 'Unknown error'}`, 'error');
+            if (btn) btn.disabled = false;
         }
     }
 
