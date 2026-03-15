@@ -650,20 +650,38 @@
                         <span class="badge" style="background: rgba(255,217,61,0.12); color: #FFD93D;" id="directiveCount">0</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button class="text-xs text-txt-3 hover:text-txt transition-colors" onclick="toggleDirHistory()" id="dirHistoryToggle">History</button>
                         <button class="collapse-btn open" id="dirCollapseBtn" onclick="toggleDirPanel()">
                             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
                         </button>
                     </div>
                 </div>
-                <div class="panel-body" id="directivePanel">
-                    <div class="empty-state">
-                        <div class="skeleton h-16 w-full mb-2"></div>
-                        <div class="skeleton h-16 w-full mb-2"></div>
+                <div id="dirPanelBody">
+                    <div class="panel-body" id="directivePanel">
+                        <div class="empty-state">
+                            <div class="skeleton h-16 w-full mb-2"></div>
+                            <div class="skeleton h-16 w-full mb-2"></div>
+                        </div>
+                    </div>
+                    <div class="panel-body border-t border-border" id="activeDirectivesPanel"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Decision History ── -->
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 pb-3">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="flex items-center gap-2">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2a6 6 0 100 12A6 6 0 008 2z" stroke="#4CC9F0" stroke-width="1.2"/><path d="M8 5v3.5l2.5 1.5" stroke="#4CC9F0" stroke-width="1.2" stroke-linecap="round"/></svg>
+                        <h2 class="font-heading font-semibold text-sm tracking-wide uppercase">Decision History</h2>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button class="collapse-btn open" id="dirHistoryCollapseBtn" onclick="toggleDirHistory()">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                        </button>
                     </div>
                 </div>
-                <div class="panel-body border-t border-border" id="activeDirectivesPanel"></div>
-                <div class="panel-body border-t border-border" id="directiveHistoryPanel" style="display: none;"></div>
+                <div class="panel-body" id="directiveHistoryPanel"></div>
             </div>
         </div>
 
@@ -1180,15 +1198,15 @@
     // ═══════════════════════════════════════
     function toggleDirPanel() {
         dirPanelOpen = !dirPanelOpen;
-        document.getElementById('directivePanel').style.display = dirPanelOpen ? '' : 'none';
+        document.getElementById('dirPanelBody').style.display = dirPanelOpen ? '' : 'none';
         document.getElementById('dirCollapseBtn').classList.toggle('open', dirPanelOpen);
     }
 
+    let dirHistoryOpen = true;
     function toggleDirHistory() {
-        const panel = document.getElementById('directiveHistoryPanel');
-        const isHidden = panel.style.display === 'none';
-        panel.style.display = isHidden ? '' : 'none';
-        document.getElementById('dirHistoryToggle').textContent = isHidden ? 'Hide History' : 'History';
+        dirHistoryOpen = !dirHistoryOpen;
+        document.getElementById('directiveHistoryPanel').style.display = dirHistoryOpen ? '' : 'none';
+        document.getElementById('dirHistoryCollapseBtn').classList.toggle('open', dirHistoryOpen);
     }
 
     function toggleDirectiveDetail(idx) {
