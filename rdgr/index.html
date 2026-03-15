@@ -662,6 +662,7 @@
                         <div class="skeleton h-16 w-full mb-2"></div>
                     </div>
                 </div>
+                <div class="panel-body border-t border-border" id="activeDirectivesPanel"></div>
                 <div class="panel-body border-t border-border" id="directiveHistoryPanel" style="display: none;"></div>
             </div>
         </div>
@@ -981,6 +982,7 @@
     let activityData = [];
     let directiveData = [];
     let directiveHistory = [];
+    let activeDirectives = [];
     let autoRefreshInterval = null;
     let currentModifyTaskId = null;
     let dirPanelOpen = true;
@@ -1109,13 +1111,15 @@
     }
 
     async function fetchDirectives() {
-        const [pendingResult, historyResult] = await Promise.all([
+        const [pendingResult, historyResult, activeResult] = await Promise.all([
             supabaseSelect('autonomous_directives', 'status=eq.pending_approval&order=created_at.desc&select=id,directive_id,project_id,title,objective,acceptance_criteria,domain,target_domains,priority,risk_level,context,created_at'),
             supabaseSelect('autonomous_directives', 'approved_at=not.is.null&order=approved_at.desc&limit=10&select=directive_id,title,status,risk_level,approved_by,approved_at,approval_notes'),
+            supabaseSelect('autonomous_directives', 'status=in.(active,in_progress)&order=created_at.desc&select=directive_id,title,status,domain,target_domains,risk_level,priority,created_at'),
         ]);
 
         directiveData = Array.isArray(pendingResult) ? pendingResult : [];
         directiveHistory = Array.isArray(historyResult) ? historyResult : [];
+        activeDirectives = Array.isArray(activeResult) ? activeResult : [];
 
         renderDirectives();
         updateStatusBar();
@@ -1272,6 +1276,33 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        // Active directives
+        const activePanel = document.getElementById('activeDirectivesPanel');
+        if (activeDirectives.length === 0) {
+            activePanel.innerHTML = '';
+        } else {
+            activePanel.innerHTML = `
+                <div class="text-[0.65rem] font-semibold text-txt-3 uppercase tracking-wider mb-2">Active Directives (${activeDirectives.length})</div>
+                ${activeDirectives.map(d => {
+                    const statusBadge = d.status === 'active'
+                        ? '<span class="badge badge-in_progress" style="font-size:0.6rem;">Active</span>'
+                        : '<span class="badge badge-ready" style="font-size:0.6rem;">In Progress</span>';
+                    const riskDot = d.risk_level === 'high' ? '#FF6B6B' : d.risk_level === 'medium' ? '#FFD93D' : '#06D6A0';
+                    const domains = d.target_domains || (d.domain ? [d.domain] : []);
+                    const domainChips = domains.length > 0 ? domains.map(dm => `<span class="domain-chip" style="font-size:0.55rem;">${esc(dm)}</span>`).join('') : '';
+                    return `
+                        <div class="history-row">
+                            <div class="w-2 h-2 rounded-full flex-shrink-0" style="background:${riskDot}"></div>
+                            <span class="text-txt flex-1 truncate" title="${esc(d.title)}">${esc(d.title)}</span>
+                            ${statusBadge}
+                            ${domainChips}
+                            <span class="text-txt-3 text-[0.6rem] whitespace-nowrap">${timeAgo(d.created_at)}</span>
+                        </div>
+                    `;
+                }).join('')}
+            `;
         }
 
         // Decision history
@@ -1489,17 +1520,13 @@ ${esc(content)}
             const displayDomain = t.payload?.original_domain || t.domain || '—';
             const icon = DOMAIN_ICONS[t.domain] || DOMAIN_ICONS[t.payload?.original_domain] || '⚙️';
             const age = timeAgo(t.created_at);
-            const isDirective = t.source === 'directive';
-            const p = isDirective ? null : Math.max(1, Math.min(5, t.priority || 3));
+            const p = Math.max(1, Math.min(5, t.priority || 3));
             const dirId = t.directive_id || t.payload?.directive_id;
-            const directiveLabel = dirId ? `<div class="text-[0.6rem] text-txt-3 opacity-70">From: ${esc(dirId)}</div>` : '';
-            const priorityBadge = isDirective
-                ? `<span class="badge badge-op">${esc(t.operation || 'directive')}</span>`
-                : `<span class="badge badge-p${p}">P${p}</span>`;
+            const directiveLabel = dirId ? `<div class="text-[0.6rem] text-txt-3 opacity-70">DIR: ${esc(dirId)}</div>` : '';
             return `
                 <div class="task-row">
                     <span class="badge badge-${t.status}">${t.status.replace('_', ' ')}</span>
-                    ${priorityBadge}
+                    <span class="badge badge-p${p}">P${p}</span>
                     <div class="min-w-0">
                         <div class="text-txt truncate" title="${esc(t.title || '')}">${esc(t.title || 'Untitled')}</div>
                         <div class="text-xs text-txt-3 mt-0.5">${icon} ${displayDomain}</div>
