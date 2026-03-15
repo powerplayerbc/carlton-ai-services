@@ -166,6 +166,10 @@
         .badge-p4 { background: rgba(59,130,246,0.15); color: #3B82F6; }
         .badge-p5 { background: rgba(107,114,128,0.15); color: #6B7280; }
 
+        .badge-op { background: rgba(99,102,241,0.15); color: #818CF8; }
+        .badge-infra { background: rgba(255,217,61,0.12); color: #FFD93D; }
+        .badge-risk-high { background: rgba(239,68,68,0.15); color: #EF4444; }
+
         .badge-domain {
             background: rgba(76,201,240,0.1);
             color: #4CC9F0;
@@ -1070,8 +1074,27 @@
     }
 
     async function fetchTaskQueue() {
-        const result = await supabaseSelect('autonomous_task_queue', 'order=priority.asc,created_at.desc&limit=100');
-        taskData = Array.isArray(result) ? result : [];
+        const [directiveTasks, legacyTasks] = await Promise.all([
+            supabaseSelect('directive_tasks',
+                'select=task_id,directive_id,title,domain,status,operation,description,sequence,created_at&order=created_at.desc&limit=100'),
+            supabaseSelect('autonomous_task_queue',
+                'order=priority.asc,created_at.desc&limit=100')
+        ]);
+
+        const normalizedDirective = (Array.isArray(directiveTasks) ? directiveTasks : []).map(t => ({
+            ...t,
+            priority: t.sequence || 0,
+            source: 'directive',
+        }));
+        const normalizedLegacy = (Array.isArray(legacyTasks) ? legacyTasks : []).map(t => ({
+            ...t,
+            source: 'legacy',
+        }));
+
+        taskData = [...normalizedDirective, ...normalizedLegacy]
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .slice(0, 100);
+
         updateStatusBar();
         renderTasks();
     }
@@ -1099,8 +1122,19 @@
     }
 
     async function fetchActivity() {
-        const result = await supabaseSelect('autonomous_task_queue', 'status=in.(completed,failed)&order=created_at.desc&limit=20');
-        activityData = Array.isArray(result) ? result : [];
+        const [dt, atq] = await Promise.all([
+            supabaseSelect('directive_tasks',
+                'status=in.(completed,failed)&order=created_at.desc&limit=20&select=task_id,directive_id,title,domain,status,operation,created_at'),
+            supabaseSelect('autonomous_task_queue',
+                'status=in.(completed,failed)&order=created_at.desc&limit=20')
+        ]);
+
+        activityData = [
+            ...(Array.isArray(dt) ? dt : []).map(t => ({ ...t, source: 'directive' })),
+            ...(Array.isArray(atq) ? atq : []).map(t => ({ ...t, source: 'legacy' })),
+        ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+         .slice(0, 20);
+
         renderActivity();
     }
 
@@ -1334,10 +1368,53 @@
             const content = item.content || '';
             const aiDecision = item.ai_decision || '';
             const reason = item.escalation_reason || '';
-            const issues = Array.isArray(item.issues) ? item.issues.join(', ') : (item.issues || '');
-            const confidence = item.confidence || '';
+            const confidence = item.confidence;
             const summary = item.summary || '';
-            const preview = content.length > 200 ? content.substring(0, 200) + '...' : content;
+            const isInfra = contentType === 'infrastructure/install_request';
+
+            // Parse issues: infrastructure items have object {type, risk_level, integrations}, content items have array of strings
+            let issuesDisplay = '';
+            let infraIntegrations = [];
+            let infraRiskLevel = '';
+            if (isInfra && item.issues && typeof item.issues === 'object' && !Array.isArray(item.issues)) {
+                infraRiskLevel = item.issues.risk_level || 'high';
+                infraIntegrations = Array.isArray(item.issues.integrations) ? item.issues.integrations : [];
+            } else {
+                issuesDisplay = Array.isArray(item.issues) ? item.issues.join(', ') : (item.issues || '');
+            }
+
+            // Header badges
+            const typeBadge = isInfra
+                ? `<span class="badge badge-infra">INFRASTRUCTURE</span><span class="badge badge-risk-high">${esc(infraRiskLevel.toUpperCase())} RISK</span>`
+                : (contentType ? `<span class="badge badge-domain">${esc(contentType)}</span>` : '');
+            const confidenceLabel = isInfra
+                ? '<span class="text-xs text-warn">Requires Manual Approval</span>'
+                : (confidence ? `<span class="text-xs text-txt-3">Confidence: ${esc(String(confidence))}</span>` : '');
+
+            // Detail section
+            let detailContent = '';
+            if (isInfra) {
+                const integrationsList = infraIntegrations.length
+                    ? `<div class="mb-3"><span class="text-xs text-txt-3 uppercase tracking-wider font-medium">Integrations to Install</span><ul class="mt-1 text-xs text-txt-2 list-disc list-inside">${infraIntegrations.map(pkg => `<li class="py-0.5">${esc(String(pkg))}</li>`).join('')}</ul></div>`
+                    : '';
+                detailContent = `
+                    ${integrationsList}
+                    <div class="mb-3">
+                        <span class="text-xs text-txt-3 uppercase tracking-wider font-medium">Justification</span>
+                        <div class="mt-1 p-3 rounded text-xs text-txt-2 font-mono whitespace-pre-wrap max-h-48 overflow-y-auto" style="background: rgba(0,0,0,0.3); border: 1px solid #1E2130;">
+${esc(content)}
+                        </div>
+                    </div>`;
+            } else {
+                detailContent = `
+                    ${issuesDisplay ? `<div class="mb-3"><span class="text-xs text-txt-3 uppercase tracking-wider font-medium">Issues</span><p class="text-xs text-warn mt-1">${esc(issuesDisplay)}</p></div>` : ''}
+                    <div class="mb-3">
+                        <span class="text-xs text-txt-3 uppercase tracking-wider font-medium">Content</span>
+                        <div class="mt-1 p-3 rounded text-xs text-txt-2 font-mono whitespace-pre-wrap max-h-48 overflow-y-auto" style="background: rgba(0,0,0,0.3); border: 1px solid #1E2130;">
+${esc(content)}
+                        </div>
+                    </div>`;
+            }
 
             return `
                 <div class="review-card mb-3 p-4" id="review-${i}">
@@ -1345,8 +1422,8 @@
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2 mb-1.5 flex-wrap">
                                 <span class="font-mono text-xs text-info">${esc(taskId)}</span>
-                                ${contentType ? `<span class="badge badge-domain">${esc(contentType)}</span>` : ''}
-                                ${confidence ? `<span class="text-xs text-txt-3">Confidence: ${esc(confidence)}</span>` : ''}
+                                ${typeBadge}
+                                ${confidenceLabel}
                             </div>
                             ${summary ? `<p class="text-sm text-txt mb-1">${esc(summary)}</p>` : ''}
                             ${reason ? `<p class="text-xs text-alert"><span class="text-txt-3">Escalation:</span> ${esc(reason)}</p>` : ''}
@@ -1357,13 +1434,7 @@
                     </div>
 
                     <div class="hidden mt-4" id="review-detail-${i}">
-                        ${issues ? `<div class="mb-3"><span class="text-xs text-txt-3 uppercase tracking-wider font-medium">Issues</span><p class="text-xs text-warn mt-1">${esc(issues)}</p></div>` : ''}
-                        <div class="mb-3">
-                            <span class="text-xs text-txt-3 uppercase tracking-wider font-medium">Content</span>
-                            <div class="mt-1 p-3 rounded text-xs text-txt-2 font-mono whitespace-pre-wrap max-h-48 overflow-y-auto" style="background: rgba(0,0,0,0.3); border: 1px solid #1E2130;">
-${esc(content)}
-                            </div>
-                        </div>
+                        ${detailContent}
 
                         <div class="mb-3">
                             <label class="text-xs text-txt-3 uppercase tracking-wider font-medium block mb-1">Notes / Feedback</label>
@@ -1374,9 +1445,9 @@ ${esc(content)}
                             <button class="btn btn-approve text-xs" onclick="submitDecision('${esc(taskId)}', 'approved', ${i})">
                                 ✓ Approve
                             </button>
-                            <button class="btn btn-modify text-xs" onclick="openModify('${esc(taskId)}', ${i})">
+                            ${isInfra ? '' : `<button class="btn btn-modify text-xs" onclick="openModify('${esc(taskId)}', ${i})">
                                 ✎ Modify
-                            </button>
+                            </button>`}
                             <button class="btn btn-deny text-xs" onclick="submitDecision('${esc(taskId)}', 'denied', ${i})">
                                 ✕ Deny
                             </button>
@@ -1418,12 +1489,17 @@ ${esc(content)}
             const displayDomain = t.payload?.original_domain || t.domain || '—';
             const icon = DOMAIN_ICONS[t.domain] || DOMAIN_ICONS[t.payload?.original_domain] || '⚙️';
             const age = timeAgo(t.created_at);
-            const p = Math.max(1, Math.min(5, t.priority || 3));
-            const directiveLabel = t.payload?.directive_id ? `<div class="text-[0.6rem] text-txt-3 opacity-70">From: ${esc(t.payload.directive_id)}</div>` : '';
+            const isDirective = t.source === 'directive';
+            const p = isDirective ? null : Math.max(1, Math.min(5, t.priority || 3));
+            const dirId = t.directive_id || t.payload?.directive_id;
+            const directiveLabel = dirId ? `<div class="text-[0.6rem] text-txt-3 opacity-70">From: ${esc(dirId)}</div>` : '';
+            const priorityBadge = isDirective
+                ? `<span class="badge badge-op">${esc(t.operation || 'directive')}</span>`
+                : `<span class="badge badge-p${p}">P${p}</span>`;
             return `
                 <div class="task-row">
                     <span class="badge badge-${t.status}">${t.status.replace('_', ' ')}</span>
-                    <span class="badge badge-p${p}">P${p}</span>
+                    ${priorityBadge}
                     <div class="min-w-0">
                         <div class="text-txt truncate" title="${esc(t.title || '')}">${esc(t.title || 'Untitled')}</div>
                         <div class="text-xs text-txt-3 mt-0.5">${icon} ${displayDomain}</div>
@@ -1463,6 +1539,7 @@ ${esc(content)}
                         </div>
                         ${t.result_summary ? `<p class="text-xs text-txt-3 truncate">${esc(t.result_summary)}</p>` : ''}
                         ${!isCompleted && t.error_message ? `<p class="text-xs text-alert truncate">${esc(t.error_message)}</p>` : ''}
+                        ${t.source === 'directive' && t.operation && !t.result_summary ? `<p class="text-xs text-txt-3 truncate">${esc(t.operation)}</p>` : ''}
                         <span class="text-[0.65rem] text-txt-3 font-mono">${age}${t.retry_count ? ` · retry ${t.retry_count}` : ''}</span>
                     </div>
                 </div>
