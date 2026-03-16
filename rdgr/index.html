@@ -1221,7 +1221,7 @@
     async function fetchTaskQueue() {
         const [directiveTasks, legacyTasks] = await Promise.all([
             supabaseSelect('directive_tasks',
-                'select=task_id,directive_id,title,domain,status,operation,description,sequence,created_at&order=created_at.desc&limit=100'),
+                'select=task_id,directive_id,title,domain,status,human_action_type,description,sequence,created_at&brand_id=eq.carlton&order=created_at.desc&limit=100'),
             supabaseSelect('autonomous_task_queue',
                 'order=priority.asc,created_at.desc&limit=100')
         ]);
@@ -1271,7 +1271,7 @@
     async function fetchActivity() {
         const [dt, atq, execLog] = await Promise.all([
             supabaseSelect('directive_tasks',
-                'status=in.(completed,failed)&order=created_at.desc&limit=20&select=task_id,directive_id,title,domain,status,operation,created_at'),
+                'brand_id=eq.carlton&status=in.(completed,failed)&order=created_at.desc&limit=20&select=task_id,directive_id,title,domain,status,human_action_type,result_summary,created_at'),
             supabaseSelect('autonomous_task_queue',
                 'status=in.(completed,failed)&order=created_at.desc&limit=20'),
             supabaseSelect('autonomous_execution_log',
@@ -1318,18 +1318,10 @@
     // HUMAN TASKS
     // ═══════════════════════════════════════
     async function fetchHumanTasks() {
-        // Primary: requires_human flag
         let result = await supabaseSelect(
             'directive_tasks',
-            'select=task_id,directive_id,title,description,operation,parameters,status,created_at&requires_human=eq.true&status=in.(ready,awaiting_human,in_progress)&order=created_at.desc'
+            'select=task_id,directive_id,title,domain,status,human_action_type,description,parameters,expected_output,created_at&requires_human=eq.true&status=in.(ready,in_progress)&brand_id=eq.carlton&order=created_at.desc'
         );
-        // Fallback: if column doesn't exist yet, use operation filter
-        if (!Array.isArray(result)) {
-            result = await supabaseSelect(
-                'directive_tasks',
-                'select=task_id,directive_id,title,description,operation,parameters,status,created_at&operation=in.(review,approve)&status=in.(ready,awaiting_human,in_progress)&order=created_at.desc'
-            );
-        }
         humanTasksData = Array.isArray(result) ? result : [];
         renderHumanTasks();
     }
@@ -1345,7 +1337,7 @@
         }
 
         panel.innerHTML = humanTasksData.map((task, i) => {
-            const actionType = task.human_action_type || task.operation || 'review';
+            const actionType = task.human_action_type || 'review';
             const actionBadgeClass = actionType === 'approve' ? 'badge-approve-type'
                 : actionType === 'execute' ? 'badge-execute'
                 : actionType === 'decide' ? 'badge-decide'
@@ -1355,6 +1347,12 @@
             const contactInfo = params.contact_id
                 ? `<span class="text-[0.6rem] text-info">Contact: ${esc(params.contact_name || params.contact_id)}</span>`
                 : '';
+            const domainBadge = task.domain
+                ? `<span class="badge" style="background:rgba(96,165,250,0.12);color:#60A5FA;font-size:0.6rem">${esc(task.domain)}</span>`
+                : '';
+            const expectedOutput = task.expected_output
+                ? `<div class="text-[0.6rem] text-txt-3 mt-1 italic">Expected: ${esc(task.expected_output)}</div>`
+                : '';
 
             return `
                 <div class="human-task-card">
@@ -1363,10 +1361,12 @@
                             <div class="flex items-center gap-1.5 flex-wrap mb-1">
                                 <span class="badge ${actionBadgeClass}">${esc(actionType)}</span>
                                 <span class="badge badge-${task.status}">${esc((task.status || '').replace('_', ' '))}</span>
+                                ${domainBadge}
                                 <span class="font-mono text-[0.6rem] text-txt-3">DIR: ${esc(task.directive_id || '—')}</span>
                             </div>
                             <div class="text-sm font-medium text-txt">${esc(task.title || 'Untitled')}</div>
                             ${task.description ? `<div class="text-xs text-txt-2 mt-0.5 line-clamp-2">${esc(task.description)}</div>` : ''}
+                            ${expectedOutput}
                             <div class="flex items-center gap-3 mt-1.5">
                                 ${contactInfo}
                                 <span class="text-[0.6rem] text-txt-3 font-mono">${timeAgo(task.created_at)}</span>
@@ -1938,7 +1938,7 @@ ${esc(content)}
                         </div>
                         ${t.result_summary ? `<p class="text-xs text-txt-3 truncate">${esc(t.result_summary)}</p>` : ''}
                         ${!isCompleted && t.error_message ? `<p class="text-xs text-alert truncate">${esc(t.error_message)}</p>` : ''}
-                        ${t.source === 'directive' && t.operation && !t.result_summary ? `<p class="text-xs text-txt-3 truncate">${esc(t.operation)}</p>` : ''}
+                        ${t.source === 'directive' && (t.human_action_type || t.operation) && !t.result_summary ? `<p class="text-xs text-txt-3 truncate">${esc(t.human_action_type || t.operation)}</p>` : ''}
                         <span class="text-[0.65rem] text-txt-3 font-mono">${age}${t.retry_count ? ` · retry ${t.retry_count}` : ''}</span>
                     </div>
                 </div>
