@@ -1269,18 +1269,37 @@
     }
 
     async function fetchActivity() {
-        const [dt, atq] = await Promise.all([
+        const [dt, atq, execLog] = await Promise.all([
             supabaseSelect('directive_tasks',
                 'status=in.(completed,failed)&order=created_at.desc&limit=20&select=task_id,directive_id,title,domain,status,operation,created_at'),
             supabaseSelect('autonomous_task_queue',
-                'status=in.(completed,failed)&order=created_at.desc&limit=20')
+                'status=in.(completed,failed)&order=created_at.desc&limit=20'),
+            supabaseSelect('autonomous_execution_log',
+                'order=timestamp.desc&limit=30&select=workflow,result,action,timestamp,task_id,error_message,details')
         ]);
+
+        // Normalize execution log entries to match activity format
+        const normalizedExecLog = (Array.isArray(execLog) ? execLog : []).map(e => {
+            const details = e.details && typeof e.details === 'object' ? e.details : {};
+            return {
+                task_id: e.task_id || '',
+                title: `${e.workflow || 'Unknown'}: ${(e.action || '').replace(/_/g, ' ')}`,
+                domain: details.domain || e.workflow?.replace('RDGR-', '').toLowerCase() || '',
+                status: e.result === 'success' ? 'completed' : 'failed',
+                operation: e.action || '',
+                error_message: e.error_message || details.error_message || null,
+                created_at: e.timestamp,
+                source: 'execution_log',
+                retry_count: details.retry_count || null,
+            };
+        });
 
         activityData = [
             ...(Array.isArray(dt) ? dt : []).map(t => ({ ...t, source: 'directive' })),
             ...(Array.isArray(atq) ? atq : []).map(t => ({ ...t, source: 'legacy' })),
+            ...normalizedExecLog,
         ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-         .slice(0, 20);
+         .slice(0, 30);
 
         renderActivity();
     }
