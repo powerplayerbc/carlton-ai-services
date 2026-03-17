@@ -693,11 +693,15 @@
                         <button onclick="switchView('chat')" id="viewTabChat" class="task-tab" style="flex: none; padding: 0.3rem 0.75rem;">Command Chat</button>
                     </div>
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 sm:gap-3">
                     <span class="text-xs text-txt-3 font-mono hidden sm:block" id="lastRefresh">—</span>
                     <a href="/org-chart?auth=rdgr" class="btn btn-ghost text-xs py-2 px-3 hidden sm:flex items-center gap-1.5">
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v3M6 8v3M1 6h3M8 6h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
                         Org Map
+                    </a>
+                    <a href="/our-workflows" class="btn btn-ghost text-xs py-2 px-3 hidden sm:flex items-center gap-1.5">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 3h9M1.5 6h9M1.5 9h6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                        Workflows
                     </a>
                     <a href="/social-dashboard?auth=rdgr" class="btn btn-ghost text-xs py-2 px-3 hidden sm:flex items-center gap-1.5">
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M6 4v4M4 6h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
@@ -1409,6 +1413,12 @@
         document.getElementById('gate').classList.add('hidden');
         document.getElementById('mainContent').style.opacity = '1';
         initDashboard();
+        // Check for ?view=chat URL param (linked from other pages)
+        const viewParam = new URLSearchParams(window.location.search).get('view');
+        if (viewParam === 'chat') {
+            switchView('chat');
+            window.history.replaceState({}, '', window.location.pathname);
+        }
     }
 
     // ═══════════════════════════════════════
