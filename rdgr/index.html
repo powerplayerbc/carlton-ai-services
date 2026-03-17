@@ -1083,9 +1083,7 @@
                             </button>
                         </div>
 
-                        <!-- Session info -->
-                        <div class="flex items-center justify-between mt-1.5">
-                            <span id="chatSessionTimer" class="text-[0.6rem] text-txt-3 font-mono">Session: 0:00</span>
+                        <div class="flex items-center justify-end mt-1.5">
                             <span id="chatCharCount" class="text-[0.6rem] text-txt-3 font-mono">0 chars</span>
                         </div>
                     </div>
@@ -1383,7 +1381,6 @@
     let chatMessages = [];
     let chatAttachments = [];
     let chatSessionStart = null;
-    let chatSessionTimerRef = null;
     let chatThreadMemory = null;
     let chatTypingTimer = null;
     const CHAT_USER_COLORS = { bradford: '#06D6A0', dianna: '#A855F7', brianna: '#4CC9F0', ai: '#FFD93D', system: '#525E73' };
@@ -2855,19 +2852,10 @@ ${esc(content)}
         // Set user dropdown to stored value
         const sel = document.getElementById('chatUserSelect');
         if (sel) sel.value = chatCurrentUser;
-        chatSessionStart = Date.now();
-        chatSessionTimerRef = setInterval(updateChatSessionTimer, 1000);
         fetchThreads();
     }
 
-    function updateChatSessionTimer() {
-        if (!chatSessionStart) return;
-        const elapsed = Math.floor((Date.now() - chatSessionStart) / 1000);
-        const m = Math.floor(elapsed / 60);
-        const s = elapsed % 60;
-        const el = document.getElementById('chatSessionTimer');
-        if (el) el.textContent = `Session: ${m}:${String(s).padStart(2, '0')}`;
-    }
+
 
     function generateChatId(prefix) {
         const now = new Date();
