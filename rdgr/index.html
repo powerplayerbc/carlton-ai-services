@@ -1322,6 +1322,7 @@
         complete: 'https://n8n.carltonaiservices.com/webhook/rdgr-complete',
         crm: 'https://n8n.carltonaiservices.com/webhook/rdgr-crm',
         chat: 'https://n8n.carltonaiservices.com/webhook/rdgr-chat',
+        social: 'https://n8n.carltonaiservices.com/webhook/rdgr-tool-social',
     };
     // Direct Supabase PostgREST
     const SUPABASE_URL = 'https://yrwrswyjawmgtxrgbnim.supabase.co';
@@ -1375,6 +1376,7 @@
     let chatSessionStart = null;
     let chatThreadMemory = null;
     let chatTypingTimer = null;
+    let chatPendingThreads = new Set();
     const CHAT_USER_COLORS = { bradford: '#06D6A0', dianna: '#A855F7', brianna: '#4CC9F0', ai: '#FFD93D', system: '#525E73' };
 
     // ═══════════════════════════════════════
@@ -2447,18 +2449,20 @@ ${esc(content)}
         btn.textContent = 'Submitting...';
 
         const payload = {
+            task_type: document.getElementById('taskDomain').value,
             title: document.getElementById('taskTitle').value.trim(),
             description: document.getElementById('taskDesc').value.trim(),
-            domain: document.getElementById('taskDomain').value,
             priority: parseInt(document.getElementById('taskPriority').value),
+            dependencies: [],
+            metadata: {},
         };
 
         const notes = document.getElementById('taskNotes').value.trim();
-        if (notes) payload.context = { notes };
+        if (notes) payload.metadata = { notes };
 
         try {
             const result = await fetchJSON(API.intake, payload);
-            const taskId = result?.task_id || result?.data?.task_id || 'submitted';
+            const taskId = result?.task_id || 'submitted';
             toast(`Task created: ${taskId}`, 'success');
 
             // Reset form
@@ -2536,21 +2540,19 @@ ${esc(content)}
         btn.disabled = true;
         btn.textContent = 'Submitting...';
 
+        const platform = document.getElementById('socialPlatform').value;
+        const socialNotes = document.getElementById('socialNotes').value.trim();
         const payload = {
-            type: 'social_post',
-            title: `Social post: ${document.getElementById('socialTopic').value.trim()}`,
-            description: document.getElementById('socialTopic').value.trim(),
-            domain: 'social_media',
-            priority: 3,
-            context: {
-                platform: document.getElementById('socialPlatform').value,
+            platform: platform,
+            content: document.getElementById('socialTopic').value.trim(),
+            parameters: {
                 tone: document.getElementById('socialTone').value,
-                notes: document.getElementById('socialNotes').value.trim() || undefined,
+                hashtags: [],
             },
         };
-
+        if (socialNotes) payload.parameters.notes = socialNotes;
         if (socialImageData) {
-            payload.image = {
+            payload.parameters.image = {
                 base64: socialImageData.base64,
                 filename: socialImageData.filename,
                 mimeType: socialImageData.mimeType,
@@ -2559,9 +2561,16 @@ ${esc(content)}
         }
 
         try {
-            const result = await fetchJSON(API.intake, payload);
-            const taskId = result?.task_id || result?.data?.task_id || 'submitted';
-            toast(`Social post queued: ${taskId}`, 'success');
+            if (platform === 'all') {
+                const platforms = ['linkedin', 'twitter', 'instagram', 'facebook'];
+                for (const p of platforms) {
+                    await fetchJSON(API.social, { ...payload, platform: p });
+                }
+                toast(`Social post sent to all platforms`, 'success');
+            } else {
+                await fetchJSON(API.social, payload);
+                toast(`Social post sent to ${platform}`, 'success');
+            }
 
             // Reset form
             document.getElementById('socialTopic').value = '';
@@ -2895,7 +2904,7 @@ ${esc(content)}
             return `
                 <div class="thread-item ${isActive ? 'active' : ''}" onclick="selectThread('${esc(t.thread_id)}')">
                     <div class="flex items-center justify-between">
-                        <div class="thread-title">${esc(t.title)}</div>
+                        <div class="thread-title flex items-center gap-1.5">${chatPendingThreads.has(t.thread_id) ? '<span style="width:6px;height:6px;border-radius:50%;background:#FFD93D;animation:pulse-live 2s ease-in-out infinite;flex-shrink:0;" title="Processing..."></span>' : ''}${t.has_new_message ? '<span style="width:8px;height:8px;border-radius:50%;background:#06D6A0;flex-shrink:0;" title="New response"></span>' : ''}${esc(t.title)}</div>
                         <div class="thread-time">${time}</div>
                     </div>
                     <div class="thread-preview">${t.preview_text ? esc(t.preview_text) : 'No messages yet'}</div>
@@ -2906,9 +2915,14 @@ ${esc(content)}
 
     async function selectThread(threadId) {
         chatActiveThreadId = threadId;
+
+        // Clear "new message" flag since user is now viewing this thread
+        const thread = chatThreads.find(t => t.thread_id === threadId);
+        if (thread && thread.has_new_message) {
+            thread.has_new_message = false;
+        }
         renderThreadList(); // highlight active
 
-        const thread = chatThreads.find(t => t.thread_id === threadId);
         document.getElementById('chatThreadTitle').textContent = thread ? thread.title : 'Thread';
         document.getElementById('chatThreadTitle').style.color = '#E8ECF1';
         document.getElementById('chatThreadMeta').textContent = threadId;
@@ -2916,6 +2930,15 @@ ${esc(content)}
 
         // Fetch messages
         await fetchMessages(threadId);
+
+        // Show/hide typing indicator based on whether this thread has a pending request
+        if (chatPendingThreads.has(threadId)) {
+            document.getElementById('typingIndicator').style.display = 'block';
+            document.getElementById('chatSendBtn').disabled = true;
+        } else {
+            document.getElementById('typingIndicator').style.display = 'none';
+            document.getElementById('chatSendBtn').disabled = false;
+        }
 
         // Fetch thread memory
         const memData = await supabaseSelect('command_thread_memory', `thread_id=eq.${threadId}`);
@@ -3127,6 +3150,9 @@ ${esc(content)}
             return;
         }
 
+        // Capture thread ID at send time — response will use this, not whatever is active later
+        const requestThreadId = chatActiveThreadId;
+        const requestUser = chatCurrentUser;
         const msgId = generateChatId('CM') + '_' + String(Date.now()).slice(-3);
         const now = new Date().toISOString();
 
@@ -3141,8 +3167,8 @@ ${esc(content)}
         // Optimistic: render user message immediately
         const optimisticMsg = {
             message_id: msgId,
-            thread_id: chatActiveThreadId,
-            sender: chatCurrentUser,
+            thread_id: requestThreadId,
+            sender: requestUser,
             sender_type: 'human',
             content: content || '(attachment)',
             content_type: 'text',
@@ -3160,16 +3186,22 @@ ${esc(content)}
         document.getElementById('chatAttachmentPreview').innerHTML = '';
         document.getElementById('chatCharCount').textContent = '0 chars';
 
-        // Show typing indicator
+        // Show typing indicator (only if still on this thread)
         document.getElementById('typingIndicator').style.display = 'block';
         document.getElementById('messageList').scrollTop = document.getElementById('messageList').scrollHeight;
         document.getElementById('chatSendBtn').disabled = true;
+
+        // Track this thread as pending
+        chatPendingThreads.add(requestThreadId);
+        renderThreadList();
 
         // Start typing timer with progressive messages
         const typingStartTime = Date.now();
         const typingTextEl = document.getElementById('typingText');
         typingTextEl.textContent = 'RDGR is thinking...';
-        chatTypingTimer = setInterval(() => {
+        const localTimer = setInterval(() => {
+            // Only update typing text if user is still viewing this thread
+            if (chatActiveThreadId !== requestThreadId) return;
             const elapsed = Math.floor((Date.now() - typingStartTime) / 1000);
             if (elapsed < 10) {
                 typingTextEl.textContent = 'RDGR is thinking...';
@@ -3192,14 +3224,14 @@ ${esc(content)}
 
         try {
             const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 180000);
+            const timeout = setTimeout(() => controller.abort(), 300000);
 
             const result = await fetchJSON(API.chat, {
-                thread_id: chatActiveThreadId,
+                thread_id: requestThreadId,
                 brand_id: 'carlton',
                 domain: 'chat',
                 operation: 'send_message',
-                sender: chatCurrentUser,
+                sender: requestUser,
                 parameters: {
                     content: content,
                     content_type: 'text',
@@ -3215,16 +3247,20 @@ ${esc(content)}
                 },
             });
             clearTimeout(timeout);
+            clearInterval(localTimer);
+            chatPendingThreads.delete(requestThreadId);
 
-            // Hide typing indicator and clear timer
-            if (chatTypingTimer) { clearInterval(chatTypingTimer); chatTypingTimer = null; }
-            document.getElementById('typingIndicator').style.display = 'none';
+            const stillViewing = chatActiveThreadId === requestThreadId;
+
+            if (stillViewing) {
+                if (chatTypingTimer) { clearInterval(chatTypingTimer); chatTypingTimer = null; }
+                document.getElementById('typingIndicator').style.display = 'none';
+            }
 
             if (result && result.success && result.reply) {
-                // Render AI reply
                 const aiMsg = {
                     message_id: result.message_id || generateChatId('CM') + '_ai',
-                    thread_id: chatActiveThreadId,
+                    thread_id: requestThreadId,
                     sender: 'ai',
                     sender_type: 'ai',
                     content: result.reply.content || result.reply,
@@ -3233,64 +3269,65 @@ ${esc(content)}
                     metadata: result.reply.metadata || null,
                     created_at: result.timestamp || new Date().toISOString(),
                 };
-                chatMessages.push(aiMsg);
-                renderMessages();
 
-                // Update thread in sidebar
-                const thread = chatThreads.find(t => t.thread_id === chatActiveThreadId);
+                // Update thread sidebar metadata
+                const thread = chatThreads.find(t => t.thread_id === requestThreadId);
                 if (thread) {
                     thread.last_message_at = aiMsg.created_at;
                     thread.message_count = (thread.message_count || 0) + 2;
                     thread.preview_text = (aiMsg.content || '').slice(0, 100);
-                    renderThreadList();
                 }
 
-                // Auto-title: if thread is still "New Chat" and this is the first exchange, use first message as title
-                if (thread && thread.title === 'New Chat' && chatMessages.length <= 3) {
-                    const autoTitle = content.slice(0, 50) + (content.length > 50 ? '...' : '');
-                    thread.title = autoTitle;
-                    document.getElementById('chatThreadTitle').textContent = autoTitle;
-                    renderThreadList();
-                    // Update in Supabase
-                    fetch(`${SUPABASE_URL}/rest/v1/command_threads?thread_id=eq.${chatActiveThreadId}`, {
-                        method: 'PATCH',
-                        headers: {
-                            'apikey': SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ title: autoTitle }),
-                    }).catch(() => {});
+                if (stillViewing) {
+                    // User is still on this thread — render the reply
+                    chatMessages.push(aiMsg);
+                    renderMessages();
+                    if (thread) renderThreadList();
+
+                    // Auto-title
+                    if (thread && thread.title === 'New Chat' && chatMessages.length <= 3) {
+                        const autoTitle = content.slice(0, 50) + (content.length > 50 ? '...' : '');
+                        thread.title = autoTitle;
+                        document.getElementById('chatThreadTitle').textContent = autoTitle;
+                        renderThreadList();
+                        fetch(`${SUPABASE_URL}/rest/v1/command_threads?thread_id=eq.${requestThreadId}`, {
+                            method: 'PATCH',
+                            headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ title: autoTitle }),
+                        }).catch(() => {});
+                    }
+                } else {
+                    // User switched to a different thread — flag for "new message" dot
+                    if (thread) {
+                        thread.has_new_message = true;
+                        renderThreadList();
+                    }
                 }
             } else {
-                // Show error as system message
                 const errContent = (result && result.error) ? result.error : 'Failed to get a response. The backend may not be configured yet.';
-                chatMessages.push({
-                    message_id: 'sys_' + Date.now(),
-                    thread_id: chatActiveThreadId,
-                    sender: 'system',
-                    sender_type: 'system',
-                    content: errContent,
-                    created_at: new Date().toISOString(),
-                });
-                renderMessages();
+                if (stillViewing) {
+                    chatMessages.push({ message_id: 'sys_' + Date.now(), thread_id: requestThreadId, sender: 'system', sender_type: 'system', content: errContent, created_at: new Date().toISOString() });
+                    renderMessages();
+                }
             }
         } catch (err) {
-            if (chatTypingTimer) { clearInterval(chatTypingTimer); chatTypingTimer = null; }
-            document.getElementById('typingIndicator').style.display = 'none';
-            const errMsg = err.name === 'AbortError' ? 'Request timed out (3m). Try again.' : 'Network error. Check your connection.';
-            chatMessages.push({
-                message_id: 'sys_' + Date.now(),
-                thread_id: chatActiveThreadId,
-                sender: 'system',
-                sender_type: 'system',
-                content: errMsg,
-                created_at: new Date().toISOString(),
-            });
-            renderMessages();
+            clearInterval(localTimer);
+            chatPendingThreads.delete(requestThreadId);
+            const stillViewing = chatActiveThreadId === requestThreadId;
+            if (stillViewing) {
+                if (chatTypingTimer) { clearInterval(chatTypingTimer); chatTypingTimer = null; }
+                document.getElementById('typingIndicator').style.display = 'none';
+                const errMsg = err.name === 'AbortError' ? 'Request timed out (5m). Try again.' : 'Network error. Check your connection.';
+                chatMessages.push({ message_id: 'sys_' + Date.now(), thread_id: requestThreadId, sender: 'system', sender_type: 'system', content: errMsg, created_at: new Date().toISOString() });
+                renderMessages();
+            }
+            renderThreadList();
         }
 
-        document.getElementById('chatSendBtn').disabled = false;
+        // Re-enable send if user is on the request thread or any non-pending thread
+        if (!chatPendingThreads.has(chatActiveThreadId)) {
+            document.getElementById('chatSendBtn').disabled = false;
+        }
         document.getElementById('chatInput').focus();
     }
 
