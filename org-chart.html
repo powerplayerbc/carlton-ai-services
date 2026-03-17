@@ -110,6 +110,16 @@
             animation: pulse-live 2s ease-in-out infinite;
         }
 
+        /* ── Nav Tabs ── */
+        .task-tab {
+            flex: 1; padding: 0.4rem 0.75rem; font-size: 0.75rem; font-weight: 500;
+            text-align: center; border-radius: 0.375rem; cursor: pointer;
+            color: rgba(255,255,255,0.45); background: transparent; border: none;
+            transition: color 0.2s ease, background 0.2s ease;
+        }
+        .task-tab:hover { color: #E8ECF1; }
+        .task-tab.active { background: rgba(6,214,160,0.12); color: #06D6A0; }
+
         /* ── Stat chip ── */
         .stat-chip {
             background: #11131A;
@@ -477,29 +487,17 @@
             <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div class="pulse-dot"></div>
-                    <h1 class="font-heading font-bold text-base sm:text-lg tracking-wide">ORG <span class="text-txt-3 font-normal">Map</span></h1>
+                    <h1 class="font-heading font-bold text-base sm:text-lg tracking-wide">RDGR <span class="text-txt-3 font-normal">Command Center</span></h1>
+                    <div class="flex gap-1 p-0.5 rounded-lg ml-2 hidden sm:flex" style="background: rgba(255,255,255,0.04);">
+                        <a href="/rdgr" class="task-tab" style="flex: none; padding: 0.3rem 0.75rem; text-decoration: none;">Dashboard</a>
+                        <a href="/rdgr?view=chat" class="task-tab" style="flex: none; padding: 0.3rem 0.75rem; text-decoration: none;">Chat</a>
+                        <span class="task-tab active" style="flex: none; padding: 0.3rem 0.75rem;">Org Map</span>
+                        <a href="/our-workflows" class="task-tab" style="flex: none; padding: 0.3rem 0.75rem; text-decoration: none;">Workflows</a>
+                        <a href="/social-dashboard?auth=rdgr" class="task-tab" style="flex: none; padding: 0.3rem 0.75rem; text-decoration: none;">Social</a>
+                        <a href="/crm" class="task-tab" style="flex: none; padding: 0.3rem 0.75rem; text-decoration: none;">CRM</a>
+                    </div>
                 </div>
                 <div class="flex items-center gap-2 sm:gap-3">
-                    <a href="/rdgr" class="btn btn-ghost text-xs py-2 px-3 hidden sm:flex items-center gap-1.5">
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        RDGR
-                    </a>
-                    <a href="/rdgr?view=chat" class="btn btn-ghost text-xs py-2 px-3 hidden sm:flex items-center gap-1.5">
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2h8a1 1 0 011 1v5a1 1 0 01-1 1H5l-2 2V9H2a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        Chat
-                    </a>
-                    <a href="/our-workflows" class="btn btn-ghost text-xs py-2 px-3 hidden sm:flex items-center gap-1.5">
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 3h9M1.5 6h9M1.5 9h6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-                        Workflows
-                    </a>
-                    <a href="/social-dashboard?auth=rdgr" class="btn btn-ghost text-xs py-2 px-3 hidden sm:flex items-center gap-1.5">
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M6 4v4M4 6h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-                        Social
-                    </a>
-                    <a href="/crm" class="btn btn-ghost text-xs py-2 px-3 hidden sm:flex items-center gap-1.5">
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5zM2 10.5c0-2.2 1.8-4 4-4s4 1.8 4 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-                        CRM
-                    </a>
                     <button onclick="refreshData()" class="btn btn-ghost text-xs py-2 px-3 flex items-center gap-1.5" id="refreshBtn">
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 6a4.5 4.5 0 018.18-2.6M10.5 6a4.5 4.5 0 01-8.18 2.6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M9.5 1v2.5H7M2.5 11V8.5H5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         Refresh
