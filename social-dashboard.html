@@ -1743,7 +1743,7 @@ function renderMonthView() {
 // DETAIL SLIDE-OUT PANEL
 // ═══════════════════════════════════════
 function openDetail(id) {
-    const post = allPosts.find(p => p.id === id);
+    const post = allPosts.find(p => String(p.id) === String(id));
     if (!post) return;
 
     const panel = document.getElementById('detailPanel');
