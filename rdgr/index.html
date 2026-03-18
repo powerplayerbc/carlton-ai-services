@@ -630,14 +630,60 @@
 
         /* ── Chat themed overrides ── */
         #chatView .btn-primary {
-            background: var(--accent-15, rgba(6,214,160,0.15));
+            background: var(--accent-30, rgba(6,214,160,0.3));
             color: var(--accent, #06D6A0);
-            border-color: var(--accent-30, rgba(6,214,160,0.3));
+            border: 1px solid var(--accent-40, rgba(6,214,160,0.4));
+            font-weight: 600;
         }
-        #chatView .btn-primary:hover { background: var(--accent-30, rgba(6,214,160,0.25)); }
+        #chatView .btn-primary:hover {
+            background: var(--accent-40, rgba(6,214,160,0.4));
+            box-shadow: 0 0 12px var(--accent-15, rgba(6,214,160,0.15));
+        }
         #chatView .form-input:focus {
             border-color: var(--accent-40, rgba(6,214,160,0.4));
             box-shadow: 0 0 0 2px var(--accent-08, rgba(6,214,160,0.08));
+        }
+
+        /* ── Chat light mode ── */
+        #chatView.chat-light #messageList {
+            background: #F5F6F8;
+        }
+        #chatView.chat-light .chat-msg.human .chat-msg-bubble {
+            background: var(--accent-15, rgba(6,214,160,0.15));
+            border-color: var(--accent-30, rgba(6,214,160,0.3));
+            color: #1A1D28;
+        }
+        #chatView.chat-light .chat-msg.ai .chat-msg-bubble {
+            background: #FFFFFF;
+            border: 1px solid #D8DBE3;
+            color: #1A1D28;
+        }
+        #chatView.chat-light .chat-msg.system .chat-msg-bubble {
+            background: #E8ECF1;
+            border-color: #D8DBE3;
+            color: #525E73;
+        }
+        #chatView.chat-light .chat-msg-meta { color: #6B7280; }
+        #chatView.chat-light .chat-msg-bubble code {
+            background: rgba(0,0,0,0.06) !important;
+            color: #1A1D28 !important;
+        }
+        #chatView.chat-light .chat-msg-bubble a { color: #2563EB !important; }
+        #chatView.chat-light .empty-state { color: #6B7280; }
+        #chatView.chat-light .empty-state .text-txt-3 { color: #6B7280 !important; }
+        #chatView.chat-light #chatHeader {
+            background: #F5F6F8;
+            border-bottom-color: #D8DBE3;
+        }
+        #chatView.chat-light #chatHeader h3 { color: #1A1D28 !important; }
+        #chatView.chat-light #chatHeader span { color: #6B7280 !important; }
+        #chatView.chat-light #chatHeader .btn-ghost {
+            color: #6B7280;
+            border-color: #D8DBE3;
+        }
+        #chatView.chat-light #chatHeader .btn-ghost:hover {
+            background: rgba(0,0,0,0.04);
+            color: #1A1D28;
         }
 
         /* ── Chat input auto-resize ── */
@@ -1022,7 +1068,13 @@
 
                     <!-- Theme Picker -->
                     <div style="padding: 0.5rem 1rem 0.75rem; border-bottom: 1px solid #1E2130;">
-                        <div style="font-size:0.6rem;color:#525E73;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.375rem;font-weight:500;">Theme</div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.375rem;">
+                            <div style="font-size:0.6rem;color:#525E73;text-transform:uppercase;letter-spacing:0.08em;font-weight:500;">Theme</div>
+                            <button id="chatModeToggle" onclick="toggleChatMode()" style="display:inline-flex;align-items:center;gap:0.25rem;background:rgba(255,255,255,0.04);border:1px solid #2A2E3D;border-radius:0.25rem;padding:0.15rem 0.4rem;cursor:pointer;font-size:0.55rem;color:#8A95A9;text-transform:uppercase;letter-spacing:0.06em;transition:background 0.15s;" title="Toggle light/dark mode">
+                                <span id="chatModeIcon">&#9789;</span>
+                                <span id="chatModeLabel">Dark</span>
+                            </button>
+                        </div>
                         <div style="display:flex;gap:0.375rem;flex-wrap:wrap;" id="themePicker"></div>
                     </div>
 
@@ -2894,6 +2946,32 @@ ${esc(content)}
             s.style.outline = s.dataset.theme === themeName ? '2px solid #fff' : 'none';
             s.style.outlineOffset = s.dataset.theme === themeName ? '1px' : '0';
         });
+
+        // Tint sidebar and input area with accent color
+        const sidebar = document.getElementById('chatSidebar');
+        const inputArea = document.getElementById('chatInputArea');
+        if (sidebar) sidebar.style.background = `linear-gradient(135deg, ${hex}0D 0%, #0B0D14 100%)`;
+        if (inputArea) inputArea.style.background = `linear-gradient(0deg, ${hex}0D 0%, #0B0D14 100%)`;
+    }
+
+    function applyChatMode(mode) {
+        const cv = document.getElementById('chatView');
+        if (!cv) return;
+        if (mode === 'light') {
+            cv.classList.add('chat-light');
+        } else {
+            cv.classList.remove('chat-light');
+        }
+        localStorage.setItem('rdgr-chat-mode-' + chatCurrentUser, mode);
+        const icon = document.getElementById('chatModeIcon');
+        const label = document.getElementById('chatModeLabel');
+        if (icon) icon.innerHTML = mode === 'light' ? '&#9788;' : '&#9789;';
+        if (label) label.textContent = mode === 'light' ? 'Light' : 'Dark';
+    }
+
+    function toggleChatMode() {
+        const current = localStorage.getItem('rdgr-chat-mode-' + chatCurrentUser) || 'dark';
+        applyChatMode(current === 'dark' ? 'light' : 'dark');
     }
 
     function renderThemePicker() {
@@ -2919,10 +2997,12 @@ ${esc(content)}
         // Set user dropdown to stored value
         const sel = document.getElementById('chatUserSelect');
         if (sel) sel.value = chatCurrentUser;
-        // Load saved theme for this user
+        // Load saved theme and mode for this user
         renderThemePicker();
         const savedTheme = localStorage.getItem('rdgr-chat-theme-' + chatCurrentUser) || 'teal';
         applyChatTheme(savedTheme);
+        const savedMode = localStorage.getItem('rdgr-chat-mode-' + chatCurrentUser) || 'dark';
+        applyChatMode(savedMode);
         fetchThreads();
     }
 
@@ -3111,10 +3191,12 @@ ${esc(content)}
         document.getElementById('chatThreadTitle').style.color = '#8A95A9';
         document.getElementById('chatThreadMeta').textContent = '';
         document.getElementById('chatHeaderActions').style.display = 'none';
-        // Load this user's saved theme
+        // Load this user's saved theme and mode
         renderThemePicker();
         const savedTheme = localStorage.getItem('rdgr-chat-theme-' + chatCurrentUser) || 'teal';
         applyChatTheme(savedTheme);
+        const savedMode = localStorage.getItem('rdgr-chat-mode-' + chatCurrentUser) || 'dark';
+        applyChatMode(savedMode);
         renderMessages();
         fetchThreads();
     }
