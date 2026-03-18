@@ -1237,27 +1237,32 @@ async function loadBase64Image(sessionId, el) {
 // POST ACTIONS
 // ═══════════════════════════════════════
 async function approvePost(id) {
+    // Immediately hide the card
+    const card = document.getElementById(`card-${id}`);
+    if (card) { card.style.opacity = '0.4'; card.style.pointerEvents = 'none'; }
     try {
         await writeApi('approve', { id });
-        const post = allPosts.find(p => p.id === id);
-        if (post) { post.status = 'approved'; post.approved_at = new Date().toISOString(); }
+        allPosts = allPosts.filter(p => p.id !== id);
         updateStats();
         renderCurrentView();
         showToast('Post approved', 'success');
     } catch (err) {
+        if (card) { card.style.opacity = '1'; card.style.pointerEvents = ''; }
         showToast('Failed to approve: ' + err.message, 'error');
     }
 }
 
 async function denyPost(id) {
+    const card = document.getElementById(`card-${id}`);
+    if (card) { card.style.opacity = '0.4'; card.style.pointerEvents = 'none'; }
     try {
         await writeApi('deny', { id });
-        const post = allPosts.find(p => p.id === id);
-        if (post) { post.status = 'failed'; post.error_message = 'Denied by reviewer'; }
+        allPosts = allPosts.filter(p => p.id !== id);
         updateStats();
         renderCurrentView();
         showToast('Post denied', 'success');
     } catch (err) {
+        if (card) { card.style.opacity = '1'; card.style.pointerEvents = ''; }
         showToast('Failed to deny: ' + err.message, 'error');
     }
 }
@@ -1296,22 +1301,32 @@ function startEdit(id) {
     const post = allPosts.find(p => p.id === id);
     if (!post) return;
     editingPostId = id;
-    const card = document.getElementById(`card-${id}`);
-    if (!card) return;
 
-    const display = document.getElementById(`content-display-${id}`);
-    if (!display) return;
+    // Close detail panel if open, then re-render to show edit state
+    closeDetail();
 
-    const hashtags = Array.isArray(post.hashtags) ? post.hashtags.join(', ') : '';
+    // Wait a tick for re-render, then inject edit UI
+    setTimeout(() => {
+        const display = document.getElementById(`content-display-${id}`);
+        if (!display) return;
 
-    display.innerHTML = `
-        <textarea class="form-input mb-2" id="edit-content-${id}" rows="4">${escapeHtml(post.content_text || '')}</textarea>
-        <input type="text" class="form-input mb-2" id="edit-hashtags-${id}" value="${escapeHtml(hashtags)}" placeholder="Hashtags (comma-separated)">
-        <div class="flex gap-2">
-            <button onclick="saveEdit('${id}')" class="btn btn-approve text-xs py-1.5 px-2.5">Save</button>
-            <button onclick="cancelEdit('${id}')" class="btn btn-ghost text-xs py-1.5 px-2.5">Cancel</button>
-        </div>
-    `;
+        const hashtags = Array.isArray(post.hashtags) ? post.hashtags.join(', ') : '';
+
+        display.innerHTML = `
+            <textarea class="form-input mb-2" id="edit-content-${id}" rows="4" onclick="event.stopPropagation()">${escapeHtml(post.content_text || '')}</textarea>
+            <input type="text" class="form-input mb-2" id="edit-hashtags-${id}" value="${escapeHtml(hashtags)}" placeholder="Hashtags (comma-separated)" onclick="event.stopPropagation()">
+            <div class="flex gap-2" onclick="event.stopPropagation()">
+                <button onclick="saveEdit('${id}')" class="btn btn-approve text-xs py-1.5 px-2.5">Save</button>
+                <button onclick="cancelEdit('${id}')" class="btn btn-ghost text-xs py-1.5 px-2.5">Cancel</button>
+            </div>
+        `;
+
+        // Scroll the card into view and focus the textarea
+        const card = document.getElementById(`card-${id}`);
+        if (card) card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        const textarea = document.getElementById(`edit-content-${id}`);
+        if (textarea) textarea.focus();
+    }, 50);
 }
 
 async function saveEdit(id) {
@@ -1369,8 +1384,7 @@ async function confirmSchedule() {
     const scheduled_at = new Date(dt).toISOString();
     try {
         await writeApi('schedule', { id: scheduleTargetId, scheduled_at });
-        const post = allPosts.find(p => p.id === scheduleTargetId);
-        if (post) { post.status = 'scheduled'; post.scheduled_at = scheduled_at; post.approved_at = new Date().toISOString(); }
+        allPosts = allPosts.filter(p => p.id !== scheduleTargetId);
         closeScheduleModal();
         updateStats();
         renderCurrentView();
@@ -1810,7 +1824,7 @@ function openDetail(id) {
             ${post.status === 'pending_approval' || post.status === 'draft' ? `
                 <button onclick="approvePost('${post.id}');closeDetail();" class="btn btn-approve text-xs py-1.5 px-3">Approve</button>
                 <button onclick="openScheduleModal('${post.id}')" class="btn btn-schedule text-xs py-1.5 px-3">Schedule</button>
-                <button onclick="startEdit('${post.id}');closeDetail();" class="btn btn-ghost text-xs py-1.5 px-3">Edit</button>
+                <button onclick="startEdit('${post.id}')" class="btn btn-ghost text-xs py-1.5 px-3">Edit</button>
                 <button onclick="denyPost('${post.id}');closeDetail();" class="btn btn-deny text-xs py-1.5 px-3">Deny</button>
             ` : post.status === 'scheduled' || post.status === 'approved' ? `
                 <button onclick="openScheduleModal('${post.id}')" class="btn btn-schedule text-xs py-1.5 px-3">Reschedule</button>
