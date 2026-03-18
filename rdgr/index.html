@@ -1701,24 +1701,12 @@
             } else {
                 buttonsHtml = actionOptions.map(action => {
                     const cfg = ACTION_BUTTON_CONFIG[action] || { label: action.replace(/_/g, ' '), cls: 'btn-ghost', icon: '⚡' };
-                    return `<button class="btn ${cfg.cls} text-xs py-1.5 px-3 whitespace-nowrap" onclick="event.stopPropagation();selectInlineAction(${i}, '${action}')">${cfg.icon} ${cfg.label}</button>`;
+                    return `<button class="btn ${cfg.cls} text-xs py-1.5 px-3 whitespace-nowrap" onclick="event.stopPropagation();fireAction(${i}, '${action}')" id="ht-actionbtn-${i}-${action}">${cfg.icon} ${cfg.label}</button>`;
                 }).join('');
             }
 
-            // Inline edit area (shown when 'edit' action is selected)
-            const editAreaHtml = `<div id="ht-edit-${i}" style="display:none;" class="mt-2">
-                <label class="block text-[0.65rem] font-semibold text-txt-3 uppercase tracking-wider mb-1">Edit Content</label>
-                <textarea id="ht-editcontent-${i}" class="form-input font-mono text-xs" rows="6" placeholder="Edit the content..."></textarea>
-            </div>`;
-
-            // Inline feedback area
-            const feedbackHtml = `<div id="ht-feedback-area-${i}" style="display:none;" class="mt-2">
-                <label class="block text-[0.65rem] font-semibold text-txt-3 uppercase tracking-wider mb-1" id="ht-feedback-label-${i}">Notes</label>
-                <textarea id="ht-feedback-${i}" class="form-input text-xs" rows="2" placeholder="Add notes..."></textarea>
-            </div>`;
-
-            // CRM interaction logging
-            const crmHtml = `<div id="ht-crm-${i}" style="display:none;" class="mt-2">
+            // CRM interaction logging (always visible in expanded card)
+            const crmHtml = `<div class="mt-3">
                 <label class="flex items-center gap-2 cursor-pointer text-xs text-txt-2">
                     <input type="checkbox" id="ht-logcrm-${i}" onchange="toggleInlineCrm(${i})" class="accent-accent">
                     <span>Log as CRM interaction</span>
@@ -1739,12 +1727,6 @@
                         <option value="twitter">Twitter / X</option>
                     </select>
                 </div>
-            </div>`;
-
-            // Inline submit button (shown after selecting an action)
-            const submitHtml = `<div id="ht-submit-${i}" style="display:none;" class="mt-2 flex gap-2">
-                <button id="ht-submit-btn-${i}" class="btn btn-approve text-xs py-1.5 px-4" onclick="submitInlineAction(${i})">Submit</button>
-                <button class="btn btn-ghost text-xs py-1.5 px-3" onclick="cancelInlineAction(${i})">Cancel</button>
             </div>`;
 
             return `
@@ -1768,88 +1750,17 @@
                         ${expectedHtml}
                         ${contactHtml}
                         ${paramsHtml}
-                        <div class="directive-actions">
-                            <div class="flex flex-wrap gap-1.5" id="ht-buttons-${i}">
-                                ${buttonsHtml}
-                            </div>
+                        <div class="mt-3">
+                            <textarea id="ht-feedback-${i}" class="form-input text-xs" rows="2" placeholder="Notes (optional)" onclick="event.stopPropagation()"></textarea>
                         </div>
-                        ${editAreaHtml}
-                        ${feedbackHtml}
                         ${crmHtml}
-                        ${submitHtml}
+                        <div class="flex flex-wrap gap-1.5 mt-3" id="ht-buttons-${i}">
+                            ${buttonsHtml}
+                        </div>
                     </div>
                 </div>
             `;
         }).join('');
-    }
-
-    let currentHumanAction = null;
-
-    function selectInlineAction(idx, action) {
-        currentHumanTaskIdx = idx;
-        currentHumanAction = action;
-        const task = humanTasksData[idx];
-        const cfg = ACTION_BUTTON_CONFIG[action] || { label: action, cls: 'btn-ghost' };
-
-        // Show feedback area
-        const feedbackArea = document.getElementById(`ht-feedback-area-${idx}`);
-        feedbackArea.style.display = '';
-        const feedbackRequired = ['reject', 'request_changes'].includes(action);
-        document.getElementById(`ht-feedback-label-${idx}`).innerHTML = feedbackRequired
-            ? 'Feedback <span class="text-alert">*</span>'
-            : 'Notes (optional)';
-        const feedbackInput = document.getElementById(`ht-feedback-${idx}`);
-        feedbackInput.placeholder = action === 'reject'
-            ? 'Why are you rejecting this?'
-            : action === 'request_changes'
-                ? 'What changes are needed?'
-                : 'Add notes...';
-        feedbackInput.value = '';
-
-        // Edit area
-        const editArea = document.getElementById(`ht-edit-${idx}`);
-        if (action === 'edit') {
-            editArea.style.display = '';
-            const params = task?.parameters || {};
-            const rc = params.review_content;
-            let editData = '';
-            if (rc) {
-                if (rc.type === 'comparison') editData = rc.data?.polished || rc.data?.original || '';
-                else if (typeof rc.data === 'string') editData = rc.data;
-                else editData = JSON.stringify(rc.data, null, 2);
-            }
-            document.getElementById(`ht-editcontent-${idx}`).value = editData;
-        } else {
-            editArea.style.display = 'none';
-        }
-
-        // CRM section — show only for approve/mark_complete
-        const crmSection = document.getElementById(`ht-crm-${idx}`);
-        if (['approve', 'mark_complete'].includes(action)) {
-            crmSection.style.display = '';
-        } else {
-            crmSection.style.display = 'none';
-        }
-
-        // Submit button
-        const submitArea = document.getElementById(`ht-submit-${idx}`);
-        submitArea.style.display = '';
-        const submitBtn = document.getElementById(`ht-submit-btn-${idx}`);
-        submitBtn.className = `btn ${cfg.cls} text-xs py-1.5 px-4`;
-        submitBtn.textContent = cfg.label;
-
-        // Highlight selected action button
-        document.querySelectorAll(`#ht-buttons-${idx} .btn`).forEach(b => b.style.opacity = '0.4');
-        event.target.style.opacity = '1';
-    }
-
-    function cancelInlineAction(idx) {
-        document.getElementById(`ht-feedback-area-${idx}`).style.display = 'none';
-        document.getElementById(`ht-edit-${idx}`).style.display = 'none';
-        document.getElementById(`ht-crm-${idx}`).style.display = 'none';
-        document.getElementById(`ht-submit-${idx}`).style.display = 'none';
-        document.querySelectorAll(`#ht-buttons-${idx} .btn`).forEach(b => b.style.opacity = '1');
-        currentHumanAction = null;
     }
 
     function toggleInlineCrm(idx) {
@@ -1862,34 +1773,28 @@
         document.getElementById(`ht-platform-${idx}`).style.display = channel === 'social' ? '' : 'none';
     }
 
-    async function submitInlineAction(idx) {
+    async function fireAction(idx, action) {
         const task = humanTasksData[idx];
         if (!task) return;
-        const action = currentHumanAction;
 
-        const feedback = document.getElementById(`ht-feedback-${idx}`).value.trim();
-        const editedContent = action === 'edit' ? document.getElementById(`ht-editcontent-${idx}`).value.trim() : null;
+        const feedback = document.getElementById(`ht-feedback-${idx}`)?.value?.trim() || '';
 
-        // Validate required fields
+        // Validate feedback required for reject/request_changes
         if (['reject', 'request_changes'].includes(action) && !feedback) {
-            toast('Please provide feedback.', 'error');
+            toast('Please provide feedback for this action.', 'error');
             document.getElementById(`ht-feedback-${idx}`).focus();
             return;
         }
-        if (action === 'edit' && !editedContent) {
-            toast('Edited content cannot be empty.', 'error');
-            document.getElementById(`ht-editcontent-${idx}`).focus();
-            return;
-        }
 
-        const btn = document.getElementById(`ht-submit-btn-${idx}`);
-        btn.disabled = true;
-        btn.textContent = 'Submitting...';
+        // Disable all action buttons in this card
+        document.querySelectorAll(`#ht-buttons-${idx} .btn`).forEach(b => { b.disabled = true; b.style.opacity = '0.4'; });
+        const clickedBtn = document.getElementById(`ht-actionbtn-${idx}-${action}`);
+        if (clickedBtn) { clickedBtn.style.opacity = '1'; clickedBtn.textContent = 'Sending...'; }
 
         try {
-            // Log CRM interaction if requested (approve/mark_complete only)
+            // Log CRM interaction if checked
             const logCrm = document.getElementById(`ht-logcrm-${idx}`)?.checked;
-            if (logCrm && ['approve', 'mark_complete'].includes(action)) {
+            if (logCrm) {
                 const params = task.parameters && typeof task.parameters === 'object' ? task.parameters : {};
                 const channel = document.getElementById(`ht-channel-${idx}`).value;
                 const platform = channel === 'social' ? document.getElementById(`ht-platform-${idx}`).value : null;
@@ -1916,7 +1821,6 @@
                 task_id: task.task_id,
                 action: action,
                 feedback: feedback || undefined,
-                edited_content: editedContent || undefined,
                 acted_by: 'bradford'
             });
 
@@ -1928,13 +1832,13 @@
                 toast(`${formatActionLabel(action)}: ${task.title || task.task_id}${cbMsg}`, 'success');
             } else {
                 toast(`Failed: ${result?.message || result?.error || 'Unknown error'}`, 'error');
-                btn.disabled = false;
-                btn.textContent = formatActionLabel(action);
+                document.querySelectorAll(`#ht-buttons-${idx} .btn`).forEach(b => { b.disabled = false; b.style.opacity = '1'; });
+                if (clickedBtn) clickedBtn.textContent = ACTION_BUTTON_CONFIG[action]?.icon + ' ' + formatActionLabel(action);
             }
         } catch (err) {
             toast(`Failed: ${err.message}`, 'error');
-            btn.disabled = false;
-            btn.textContent = formatActionLabel(action);
+            document.querySelectorAll(`#ht-buttons-${idx} .btn`).forEach(b => { b.disabled = false; b.style.opacity = '1'; });
+            if (clickedBtn) clickedBtn.textContent = ACTION_BUTTON_CONFIG[action]?.icon + ' ' + formatActionLabel(action);
         }
     }
 
