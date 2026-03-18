@@ -1171,6 +1171,7 @@ function renderPostCard(post) {
                         <button onclick="openScheduleModal('${post.id}')" class="btn btn-schedule text-xs py-1.5 px-2.5">Schedule</button>
                         <button onclick="startEdit('${post.id}')" class="btn btn-ghost text-xs py-1.5 px-2.5">Edit</button>
                         <button onclick="denyPost('${post.id}')" class="btn btn-deny text-xs py-1.5 px-2.5">Deny</button>
+                        <button onclick="deletePost('${post.id}')" class="btn btn-deny text-xs py-1.5 px-2.5" style="opacity:0.6;">Delete</button>
                     ` : post.status === 'failed' ? `
                         <button onclick="retryPost('${post.id}')" class="btn btn-approve text-xs py-1.5 px-2.5">Retry</button>
                         <button onclick="deletePost('${post.id}')" class="btn btn-deny text-xs py-1.5 px-2.5">Delete</button>
@@ -1809,6 +1810,7 @@ function openDetail(id) {
             ${post.status === 'pending_approval' || post.status === 'draft' ? `
                 <button onclick="approvePost('${post.id}');closeDetail();" class="btn btn-approve text-xs py-1.5 px-3">Approve</button>
                 <button onclick="openScheduleModal('${post.id}')" class="btn btn-schedule text-xs py-1.5 px-3">Schedule</button>
+                <button onclick="startEdit('${post.id}');closeDetail();" class="btn btn-ghost text-xs py-1.5 px-3">Edit</button>
                 <button onclick="denyPost('${post.id}');closeDetail();" class="btn btn-deny text-xs py-1.5 px-3">Deny</button>
             ` : post.status === 'scheduled' || post.status === 'approved' ? `
                 <button onclick="openScheduleModal('${post.id}')" class="btn btn-schedule text-xs py-1.5 px-3">Reschedule</button>

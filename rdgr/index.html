@@ -1314,66 +1314,7 @@
         </div>
     </div>
 
-    <!-- ═══ UNIFIED HUMAN ACTION MODAL ═══ -->
-    <div class="modal-backdrop" id="humanActionModal">
-        <div class="modal-content">
-            <div class="panel-header">
-                <h3 class="font-heading font-semibold text-sm tracking-wide uppercase" id="haModalTitle">Task Action</h3>
-                <button onclick="closeModal('humanActionModal')" class="text-txt-3 hover:text-txt transition-colors">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                </button>
-            </div>
-            <div class="p-5 space-y-4">
-                <div>
-                    <label class="block text-xs text-txt-2 mb-1 font-medium uppercase tracking-wider">Task</label>
-                    <p class="text-sm text-txt" id="haTaskTitle">—</p>
-                </div>
-                <!-- Edit content area (shown only for 'edit' action) -->
-                <div id="haEditArea" style="display:none;">
-                    <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wider">Edit Content</label>
-                    <textarea id="haEditContent" class="form-input font-mono text-xs" rows="8" placeholder="Edit the content..."></textarea>
-                </div>
-                <!-- Feedback textarea -->
-                <div>
-                    <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wider" id="haFeedbackLabel">Notes</label>
-                    <textarea id="haFeedback" class="form-input" rows="4" placeholder="Add notes..."></textarea>
-                </div>
-                <!-- CRM interaction logging (index.html only) -->
-                <div id="haCrmSection">
-                    <label class="flex items-center gap-2 cursor-pointer text-sm text-txt-2">
-                        <input type="checkbox" id="htLogInteraction" onchange="toggleHtInteractionFields()" class="accent-accent">
-                        <span>Log as CRM interaction</span>
-                    </label>
-                </div>
-                <div id="htInteractionFields" style="display:none;" class="space-y-3 pl-4 border-l-2 border-border">
-                    <div>
-                        <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wider">Channel</label>
-                        <select id="htChannel" class="form-input" onchange="toggleHtPlatformField()">
-                            <option value="phone_outbound">Phone (Outbound)</option>
-                            <option value="phone_inbound">Phone (Inbound)</option>
-                            <option value="email_outbound">Email (Outbound)</option>
-                            <option value="in_person">In Person</option>
-                            <option value="social">Social Media</option>
-                            <option value="manual">Manual / Other</option>
-                        </select>
-                    </div>
-                    <div id="htPlatformField" style="display:none;">
-                        <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wider">Platform</label>
-                        <select id="htPlatform" class="form-input">
-                            <option value="instagram">Instagram</option>
-                            <option value="linkedin">LinkedIn</option>
-                            <option value="facebook">Facebook</option>
-                            <option value="twitter">Twitter / X</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="flex gap-3 pt-2">
-                    <button onclick="submitHumanAction()" class="btn flex-1 py-2.5" id="haSubmitBtn">Submit</button>
-                    <button onclick="closeModal('humanActionModal')" class="btn btn-ghost flex-1 py-2.5">Cancel</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Human task actions are now inline within each card -->
 
     <!-- ═══ TOAST CONTAINER ═══ -->
     <div class="toast-container" id="toasts"></div>
@@ -1760,9 +1701,51 @@
             } else {
                 buttonsHtml = actionOptions.map(action => {
                     const cfg = ACTION_BUTTON_CONFIG[action] || { label: action.replace(/_/g, ' '), cls: 'btn-ghost', icon: '⚡' };
-                    return `<button class="btn ${cfg.cls} text-xs py-1.5 px-3 whitespace-nowrap" onclick="openActionModal(${i}, '${action}')">${cfg.icon} ${cfg.label}</button>`;
+                    return `<button class="btn ${cfg.cls} text-xs py-1.5 px-3 whitespace-nowrap" onclick="event.stopPropagation();selectInlineAction(${i}, '${action}')">${cfg.icon} ${cfg.label}</button>`;
                 }).join('');
             }
+
+            // Inline edit area (shown when 'edit' action is selected)
+            const editAreaHtml = `<div id="ht-edit-${i}" style="display:none;" class="mt-2">
+                <label class="block text-[0.65rem] font-semibold text-txt-3 uppercase tracking-wider mb-1">Edit Content</label>
+                <textarea id="ht-editcontent-${i}" class="form-input font-mono text-xs" rows="6" placeholder="Edit the content..."></textarea>
+            </div>`;
+
+            // Inline feedback area
+            const feedbackHtml = `<div id="ht-feedback-area-${i}" style="display:none;" class="mt-2">
+                <label class="block text-[0.65rem] font-semibold text-txt-3 uppercase tracking-wider mb-1" id="ht-feedback-label-${i}">Notes</label>
+                <textarea id="ht-feedback-${i}" class="form-input text-xs" rows="2" placeholder="Add notes..."></textarea>
+            </div>`;
+
+            // CRM interaction logging
+            const crmHtml = `<div id="ht-crm-${i}" style="display:none;" class="mt-2">
+                <label class="flex items-center gap-2 cursor-pointer text-xs text-txt-2">
+                    <input type="checkbox" id="ht-logcrm-${i}" onchange="toggleInlineCrm(${i})" class="accent-accent">
+                    <span>Log as CRM interaction</span>
+                </label>
+                <div id="ht-crm-fields-${i}" style="display:none;" class="mt-2 space-y-2 pl-4 border-l-2 border-border">
+                    <select id="ht-channel-${i}" class="form-input text-xs" onchange="toggleInlinePlatform(${i})">
+                        <option value="phone_outbound">Phone (Outbound)</option>
+                        <option value="phone_inbound">Phone (Inbound)</option>
+                        <option value="email_outbound">Email (Outbound)</option>
+                        <option value="in_person">In Person</option>
+                        <option value="social">Social Media</option>
+                        <option value="manual">Manual / Other</option>
+                    </select>
+                    <select id="ht-platform-${i}" class="form-input text-xs" style="display:none;">
+                        <option value="instagram">Instagram</option>
+                        <option value="linkedin">LinkedIn</option>
+                        <option value="facebook">Facebook</option>
+                        <option value="twitter">Twitter / X</option>
+                    </select>
+                </div>
+            </div>`;
+
+            // Inline submit button (shown after selecting an action)
+            const submitHtml = `<div id="ht-submit-${i}" style="display:none;" class="mt-2 flex gap-2">
+                <button id="ht-submit-btn-${i}" class="btn btn-approve text-xs py-1.5 px-4" onclick="submitInlineAction(${i})">Submit</button>
+                <button class="btn btn-ghost text-xs py-1.5 px-3" onclick="cancelInlineAction(${i})">Cancel</button>
+            </div>`;
 
             return `
                 <div class="human-task-card${isProcessing ? ' processing' : ''}">
@@ -1786,10 +1769,14 @@
                         ${contactHtml}
                         ${paramsHtml}
                         <div class="directive-actions">
-                            <div class="flex flex-wrap gap-1.5">
+                            <div class="flex flex-wrap gap-1.5" id="ht-buttons-${i}">
                                 ${buttonsHtml}
                             </div>
                         </div>
+                        ${editAreaHtml}
+                        ${feedbackHtml}
+                        ${crmHtml}
+                        ${submitHtml}
                     </div>
                 </div>
             `;
@@ -1798,31 +1785,29 @@
 
     let currentHumanAction = null;
 
-    function openActionModal(idx, action) {
+    function selectInlineAction(idx, action) {
         currentHumanTaskIdx = idx;
         currentHumanAction = action;
         const task = humanTasksData[idx];
         const cfg = ACTION_BUTTON_CONFIG[action] || { label: action, cls: 'btn-ghost' };
 
-        document.getElementById('haModalTitle').textContent = cfg.label + ' Task';
-        document.getElementById('haTaskTitle').textContent = task?.title || 'Untitled';
-
-        // Reset fields
-        document.getElementById('haFeedback').value = '';
-
-        // Configure feedback label and required state
+        // Show feedback area
+        const feedbackArea = document.getElementById(`ht-feedback-area-${idx}`);
+        feedbackArea.style.display = '';
         const feedbackRequired = ['reject', 'request_changes'].includes(action);
-        document.getElementById('haFeedbackLabel').innerHTML = feedbackRequired
+        document.getElementById(`ht-feedback-label-${idx}`).innerHTML = feedbackRequired
             ? 'Feedback <span class="text-alert">*</span>'
             : 'Notes (optional)';
-        document.getElementById('haFeedback').placeholder = action === 'reject'
+        const feedbackInput = document.getElementById(`ht-feedback-${idx}`);
+        feedbackInput.placeholder = action === 'reject'
             ? 'Why are you rejecting this?'
             : action === 'request_changes'
                 ? 'What changes are needed?'
                 : 'Add notes...';
+        feedbackInput.value = '';
 
         // Edit area
-        const editArea = document.getElementById('haEditArea');
+        const editArea = document.getElementById(`ht-edit-${idx}`);
         if (action === 'edit') {
             editArea.style.display = '';
             const params = task?.parameters || {};
@@ -1833,72 +1818,81 @@
                 else if (typeof rc.data === 'string') editData = rc.data;
                 else editData = JSON.stringify(rc.data, null, 2);
             }
-            document.getElementById('haEditContent').value = editData;
+            document.getElementById(`ht-editcontent-${idx}`).value = editData;
         } else {
             editArea.style.display = 'none';
         }
 
         // CRM section — show only for approve/mark_complete
-        const crmSection = document.getElementById('haCrmSection');
-        const interactionFields = document.getElementById('htInteractionFields');
+        const crmSection = document.getElementById(`ht-crm-${idx}`);
         if (['approve', 'mark_complete'].includes(action)) {
             crmSection.style.display = '';
-            document.getElementById('htLogInteraction').checked = false;
-            interactionFields.style.display = 'none';
         } else {
             crmSection.style.display = 'none';
-            interactionFields.style.display = 'none';
         }
 
-        // Submit button styling
-        const submitBtn = document.getElementById('haSubmitBtn');
-        submitBtn.className = `btn ${cfg.cls} flex-1 py-2.5`;
+        // Submit button
+        const submitArea = document.getElementById(`ht-submit-${idx}`);
+        submitArea.style.display = '';
+        const submitBtn = document.getElementById(`ht-submit-btn-${idx}`);
+        submitBtn.className = `btn ${cfg.cls} text-xs py-1.5 px-4`;
         submitBtn.textContent = cfg.label;
 
-        openModal('humanActionModal');
+        // Highlight selected action button
+        document.querySelectorAll(`#ht-buttons-${idx} .btn`).forEach(b => b.style.opacity = '0.4');
+        event.target.style.opacity = '1';
     }
 
-    function toggleHtInteractionFields() {
-        const checked = document.getElementById('htLogInteraction').checked;
-        document.getElementById('htInteractionFields').style.display = checked ? '' : 'none';
+    function cancelInlineAction(idx) {
+        document.getElementById(`ht-feedback-area-${idx}`).style.display = 'none';
+        document.getElementById(`ht-edit-${idx}`).style.display = 'none';
+        document.getElementById(`ht-crm-${idx}`).style.display = 'none';
+        document.getElementById(`ht-submit-${idx}`).style.display = 'none';
+        document.querySelectorAll(`#ht-buttons-${idx} .btn`).forEach(b => b.style.opacity = '1');
+        currentHumanAction = null;
     }
 
-    function toggleHtPlatformField() {
-        const channel = document.getElementById('htChannel').value;
-        document.getElementById('htPlatformField').style.display = channel === 'social' ? '' : 'none';
+    function toggleInlineCrm(idx) {
+        const checked = document.getElementById(`ht-logcrm-${idx}`).checked;
+        document.getElementById(`ht-crm-fields-${idx}`).style.display = checked ? '' : 'none';
     }
 
-    async function submitHumanAction() {
-        const task = humanTasksData[currentHumanTaskIdx];
+    function toggleInlinePlatform(idx) {
+        const channel = document.getElementById(`ht-channel-${idx}`).value;
+        document.getElementById(`ht-platform-${idx}`).style.display = channel === 'social' ? '' : 'none';
+    }
+
+    async function submitInlineAction(idx) {
+        const task = humanTasksData[idx];
         if (!task) return;
         const action = currentHumanAction;
 
-        const feedback = document.getElementById('haFeedback').value.trim();
-        const editedContent = action === 'edit' ? document.getElementById('haEditContent').value.trim() : null;
+        const feedback = document.getElementById(`ht-feedback-${idx}`).value.trim();
+        const editedContent = action === 'edit' ? document.getElementById(`ht-editcontent-${idx}`).value.trim() : null;
 
         // Validate required fields
         if (['reject', 'request_changes'].includes(action) && !feedback) {
             toast('Please provide feedback.', 'error');
-            document.getElementById('haFeedback').focus();
+            document.getElementById(`ht-feedback-${idx}`).focus();
             return;
         }
         if (action === 'edit' && !editedContent) {
             toast('Edited content cannot be empty.', 'error');
-            document.getElementById('haEditContent').focus();
+            document.getElementById(`ht-editcontent-${idx}`).focus();
             return;
         }
 
-        const btn = document.getElementById('haSubmitBtn');
+        const btn = document.getElementById(`ht-submit-btn-${idx}`);
         btn.disabled = true;
         btn.textContent = 'Submitting...';
 
         try {
             // Log CRM interaction if requested (approve/mark_complete only)
-            const logInteraction = document.getElementById('htLogInteraction')?.checked;
-            if (logInteraction && ['approve', 'mark_complete'].includes(action)) {
+            const logCrm = document.getElementById(`ht-logcrm-${idx}`)?.checked;
+            if (logCrm && ['approve', 'mark_complete'].includes(action)) {
                 const params = task.parameters && typeof task.parameters === 'object' ? task.parameters : {};
-                const channel = document.getElementById('htChannel').value;
-                const platform = channel === 'social' ? document.getElementById('htPlatform').value : null;
+                const channel = document.getElementById(`ht-channel-${idx}`).value;
+                const platform = channel === 'social' ? document.getElementById(`ht-platform-${idx}`).value : null;
                 if (params.contact_id) {
                     await fetchJSON(API.crm, {
                         task_id: `human-${Date.now()}`,
@@ -1927,20 +1921,20 @@
             });
 
             if (result?.success) {
-                closeModal('humanActionModal');
-                humanTasksData.splice(currentHumanTaskIdx, 1);
+                humanTasksData.splice(idx, 1);
                 renderHumanTasks();
                 updateStatusBar();
                 const cbMsg = result.callback_fired ? ' — workflow continuing' : '';
                 toast(`${formatActionLabel(action)}: ${task.title || task.task_id}${cbMsg}`, 'success');
             } else {
                 toast(`Failed: ${result?.message || result?.error || 'Unknown error'}`, 'error');
+                btn.disabled = false;
+                btn.textContent = formatActionLabel(action);
             }
         } catch (err) {
             toast(`Failed: ${err.message}`, 'error');
-        } finally {
             btn.disabled = false;
-            btn.textContent = formatActionLabel(currentHumanAction);
+            btn.textContent = formatActionLabel(action);
         }
     }
 
