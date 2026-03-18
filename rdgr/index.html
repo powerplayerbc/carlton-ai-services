@@ -1649,7 +1649,7 @@
     async function fetchHumanTasks() {
         let result = await supabaseSelect(
             'directive_tasks',
-            'select=task_id,directive_id,title,domain,status,human_action_type,description,parameters,expected_output,created_at&requires_human=eq.true&status=in.(ready,in_progress)&brand_id=eq.carlton&order=created_at.desc'
+            'select=task_id,directive_id,title,domain,status,human_action_type,description,parameters,expected_output,created_at&requires_human=eq.true&status=eq.pending&order=created_at.desc'
         );
         humanTasksData = Array.isArray(result) ? result : [];
         renderHumanTasks();
