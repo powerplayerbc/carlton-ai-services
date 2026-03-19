@@ -434,6 +434,80 @@
         .comparison-view { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.5rem; }
         .comparison-col { padding: 0.75rem; border-radius: 0.375rem; background: rgba(0,0,0,0.3); border: 1px solid #1E2130; max-height: 200px; overflow-y: auto; }
 
+        /* ── Outreach cards ── */
+        .outreach-card {
+            padding: 1rem 1.25rem;
+            border-radius: 0.5rem;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid #1E2130;
+            border-left: 3px solid #525E73;
+            margin-bottom: 0.5rem;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .outreach-card:hover { background: #151824; }
+        .outreach-card.os-draft { border-left-color: #FFD93D; }
+        .outreach-card.os-approved { border-left-color: #06D6A0; }
+        .outreach-card.os-rejected { border-left-color: #FF6B6B; }
+        .outreach-card.os-sent { border-left-color: #4CC9F0; }
+        .outreach-card.os-revision { border-left-color: #A855F7; }
+        .email-preview-body {
+            font-family: 'IBM Plex Sans', system-ui;
+            font-size: 0.8rem;
+            line-height: 1.7;
+            color: #C8CDD5;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .email-subject-line {
+            font-family: 'Chakra Petch', system-ui;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #E8ECF1;
+            letter-spacing: -0.01em;
+        }
+        .email-meta-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.375rem 0;
+            font-size: 0.75rem;
+            border-bottom: 1px solid rgba(30,33,48,0.5);
+        }
+        .email-meta-label {
+            color: #525E73;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.6rem;
+            letter-spacing: 0.08em;
+            min-width: 48px;
+        }
+        .outreach-stat-row {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .outreach-stat-pill {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            border: 1px solid #1E2130;
+            background: rgba(255,255,255,0.02);
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .outreach-stat-pill:hover { background: rgba(255,255,255,0.04); }
+        .outreach-stat-pill.active-filter { border-color: rgba(6,214,160,0.4); background: rgba(6,214,160,0.06); }
+        .outreach-stat-pill .os-count {
+            font-family: 'Chakra Petch', system-ui;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
         /* ── Empty state ── */
         .empty-state {
             text-align: center; padding: 2rem 1rem; color: #525E73;
@@ -584,6 +658,12 @@
                         <div class="stat-label">Human Tasks</div>
                     </div>
                 </div>
+                <div class="stat-chip flex-1 min-w-[130px]">
+                    <div>
+                        <div class="stat-value text-warn" id="statOutreach">—</div>
+                        <div class="stat-label">Drafts Pending</div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -594,6 +674,7 @@
                 <button class="crm-tab" id="tab-pipeline" onclick="switchView('pipeline')">Pipeline</button>
                 <button class="crm-tab" id="tab-attribution" onclick="switchView('attribution')">Attribution</button>
                 <button class="crm-tab" id="tab-sequences" onclick="switchView('sequences')">Sequences</button>
+                <button class="crm-tab" id="tab-outreach" onclick="switchView('outreach')">Outreach</button>
                 <button class="crm-tab" id="tab-tasks" onclick="switchView('tasks')">Human Tasks</button>
             </div>
         </div>
@@ -689,6 +770,50 @@
                 </div>
                 <div class="panel-body" id="sequencesPanel">
                     <div class="empty-state"><div class="skeleton h-20 w-full mb-2"></div><div class="skeleton h-20 w-full"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ VIEW: OUTREACH ═══ -->
+        <div id="view-outreach" class="max-w-[1600px] mx-auto px-4 sm:px-6 pb-8" style="display: none;">
+            <!-- Outreach filter pills -->
+            <div class="outreach-stat-row" id="outreachFilterRow">
+                <div class="outreach-stat-pill active-filter" onclick="filterOutreach('all')">
+                    <span class="os-count" id="osAll">—</span>
+                    <span class="text-txt-2">All</span>
+                </div>
+                <div class="outreach-stat-pill" onclick="filterOutreach('draft')">
+                    <span class="os-count" style="color:#FFD93D;" id="osDraft">—</span>
+                    <span class="text-txt-2">Pending</span>
+                </div>
+                <div class="outreach-stat-pill" onclick="filterOutreach('approved')">
+                    <span class="os-count" style="color:#06D6A0;" id="osApproved">—</span>
+                    <span class="text-txt-2">Approved</span>
+                </div>
+                <div class="outreach-stat-pill" onclick="filterOutreach('rejected')">
+                    <span class="os-count" style="color:#FF6B6B;" id="osRejected">—</span>
+                    <span class="text-txt-2">Rejected</span>
+                </div>
+                <div class="outreach-stat-pill" onclick="filterOutreach('sent')">
+                    <span class="os-count" style="color:#4CC9F0;" id="osSent">—</span>
+                    <span class="text-txt-2">Sent</span>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="flex items-center gap-2">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4l6 4 6-4" stroke="#FFD93D" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><rect x="1.5" y="3" width="13" height="10" rx="1.5" stroke="#FFD93D" stroke-width="1.2"/></svg>
+                        <h2 class="font-heading font-semibold text-sm tracking-wide uppercase">Outreach Drafts</h2>
+                        <span class="badge badge-blocked" id="outreachPendingBadge">0</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="outreachSearch" class="form-input py-1.5 text-xs" style="max-width: 240px;" placeholder="Search drafts..." onkeydown="if(event.key==='Enter')filterOutreachSearch()">
+                        <button onclick="fetchOutreachDrafts()" class="btn btn-ghost text-xs py-1.5 px-3">Refresh</button>
+                    </div>
+                </div>
+                <div class="panel-body" id="outreachPanel" style="padding: 0.75rem 1.25rem;">
+                    <div class="empty-state"><div class="skeleton h-20 w-full mb-2"></div><div class="skeleton h-20 w-full mb-2"></div><div class="skeleton h-20 w-full"></div></div>
                 </div>
             </div>
         </div>
@@ -822,6 +947,54 @@
         </div>
     </div>
 
+    <!-- ═══ EMAIL PREVIEW MODAL ═══ -->
+    <div class="modal-backdrop" id="emailPreviewModal">
+        <div class="modal-content" style="max-width: 680px;">
+            <div class="panel-header">
+                <div class="flex items-center gap-2">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 4l6 4 6-4" stroke="#FFD93D" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><rect x="1.5" y="3" width="13" height="10" rx="1.5" stroke="#FFD93D" stroke-width="1.2"/></svg>
+                    <h3 class="font-heading font-semibold text-sm tracking-wide uppercase">Email Preview</h3>
+                    <span class="badge" id="epStatusBadge">draft</span>
+                </div>
+                <button onclick="closeModal('emailPreviewModal')" class="text-txt-3 hover:text-txt transition-colors">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+            <div class="p-5">
+                <!-- Email header -->
+                <div style="border-bottom: 1px solid #1E2130; padding-bottom: 0.75rem; margin-bottom: 1rem;">
+                    <div class="email-meta-row" style="border: none;">
+                        <span class="email-meta-label">To</span>
+                        <span class="text-txt" id="epTo">—</span>
+                    </div>
+                    <div class="email-meta-row" style="border: none;">
+                        <span class="email-meta-label">Subj</span>
+                        <span class="email-subject-line" id="epSubject">—</span>
+                    </div>
+                    <div class="email-meta-row" style="border: none;">
+                        <span class="email-meta-label">Score</span>
+                        <span id="epScore">—</span>
+                    </div>
+                </div>
+                <!-- Email body -->
+                <div class="email-preview-body" id="epBody" style="max-height: 360px; overflow-y: auto; padding: 1rem; border-radius: 0.375rem; background: rgba(0,0,0,0.25); border: 1px solid #1E2130;">
+                    —
+                </div>
+                <!-- Reviewer notes -->
+                <div class="mt-4">
+                    <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wider">Reviewer Notes</label>
+                    <textarea id="epNotes" class="form-input text-xs" rows="2" placeholder="Optional feedback..."></textarea>
+                </div>
+                <!-- Action buttons -->
+                <div class="flex gap-3 pt-4" id="epActions">
+                    <button onclick="approveOutreach()" class="btn btn-approve flex-1 py-2.5" id="epApproveBtn">Approve & Queue</button>
+                    <button onclick="rejectOutreach()" class="btn btn-deny flex-1 py-2.5" id="epRejectBtn">Reject</button>
+                    <button onclick="closeModal('emailPreviewModal')" class="btn btn-ghost py-2.5 px-4">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Human task actions are now inline within each card -->
 
     <!-- ═══ TOAST CONTAINER ═══ -->
@@ -837,6 +1010,7 @@
         complete: 'https://n8n.carltonaiservices.com/webhook/rdgr-complete',
         humanAction: 'https://n8n.carltonaiservices.com/webhook/human-action',
         sequences: 'https://n8n.carltonaiservices.com/webhook/crm-sequences',
+        outreachApproved: 'https://n8n.carltonaiservices.com/webhook/prosp-outreach-approved',
     };
 
     const SUPABASE_URL = 'https://yrwrswyjawmgtxrgbnim.supabase.co';
@@ -859,6 +1033,9 @@
     let currentHumanTaskIdx = null;
     let sequencesData = [];
     let attributionData = [];
+    let outreachDrafts = [];
+    let outreachFilter = 'all';
+    let currentPreviewDraft = null;
     let current360ContactId = null;
     let autoRefreshInterval = null;
 
@@ -1022,6 +1199,7 @@
             fetchContacts(),
             fetchStats(),
             fetchHumanTasks(),
+            fetchOutreachStats(),
         ]);
 
         document.getElementById('lastRefresh').textContent = new Date().toLocaleTimeString();
@@ -1033,7 +1211,7 @@
     // ═══════════════════════════════════════
     function switchView(view) {
         currentView = view;
-        const views = ['contacts', 'pipeline', 'attribution', 'sequences', 'tasks'];
+        const views = ['contacts', 'pipeline', 'attribution', 'sequences', 'outreach', 'tasks'];
         views.forEach(v => {
             document.getElementById(`view-${v}`).style.display = v === view ? '' : 'none';
             document.getElementById(`tab-${v}`).classList.toggle('active', v === view);
@@ -1043,6 +1221,7 @@
         if (view === 'pipeline') fetchPipelineData();
         if (view === 'attribution') fetchAttribution();
         if (view === 'sequences') fetchSequences();
+        if (view === 'outreach') fetchOutreachDrafts();
     }
 
     // ═══════════════════════════════════════
@@ -1502,6 +1681,248 @@
                 </div>
             `;
         }).join('');
+    }
+
+    // ═══════════════════════════════════════
+    // OUTREACH DRAFTS
+    // ═══════════════════════════════════════
+    async function fetchOutreachStats() {
+        const drafts = await supabaseSelect('copy_drafts',
+            'select=id,review_status&brand_id=eq.carlton&order=created_at.desc'
+        );
+        const all = Array.isArray(drafts) ? drafts : [];
+        const pending = all.filter(d => d.review_status === 'draft').length;
+        document.getElementById('statOutreach').textContent = pending;
+    }
+
+    async function fetchOutreachDrafts() {
+        const panel = document.getElementById('outreachPanel');
+        panel.innerHTML = '<div class="empty-state">Loading outreach drafts...</div>';
+
+        const result = await supabaseSelect('copy_drafts',
+            'select=id,brand_id,copy_type,title,content,context,review_status,review_feedback,revision_count,destination,requested_by,parent_draft_id,approved_at,approved_by,created_at,updated_at&brand_id=eq.carlton&order=created_at.desc&limit=200'
+        );
+        outreachDrafts = Array.isArray(result) ? result : [];
+
+        // Update filter counts
+        const counts = { all: outreachDrafts.length, draft: 0, approved: 0, rejected: 0, sent: 0 };
+        outreachDrafts.forEach(d => {
+            if (counts[d.review_status] !== undefined) counts[d.review_status]++;
+        });
+        document.getElementById('osAll').textContent = counts.all;
+        document.getElementById('osDraft').textContent = counts.draft;
+        document.getElementById('osApproved').textContent = counts.approved;
+        document.getElementById('osRejected').textContent = counts.rejected;
+        document.getElementById('osSent').textContent = counts.sent;
+        document.getElementById('outreachPendingBadge').textContent = counts.draft;
+
+        renderOutreachDrafts();
+    }
+
+    function filterOutreach(status) {
+        outreachFilter = status;
+        // Update active pill
+        document.querySelectorAll('#outreachFilterRow .outreach-stat-pill').forEach(p => p.classList.remove('active-filter'));
+        event.currentTarget.classList.add('active-filter');
+        renderOutreachDrafts();
+    }
+
+    function filterOutreachSearch() {
+        renderOutreachDrafts();
+    }
+
+    function getDraftRecipient(draft) {
+        const ctx = draft.context || {};
+        const content = draft.content || {};
+        const name = ctx.contact_name || ctx.name || content.recipient_name || '';
+        const company = ctx.company || content.company || '';
+        const email = ctx.email || content.recipient_email || '';
+        const contactId = ctx.contact_id || '';
+        return { name, company, email, contactId };
+    }
+
+    function getDraftSubject(draft) {
+        const content = draft.content || {};
+        return content.subject || draft.title || '(No subject)';
+    }
+
+    function getDraftBody(draft) {
+        const content = draft.content || {};
+        if (typeof content === 'string') return content;
+        return content.body || content.text || content.email_body || '';
+    }
+
+    function getDraftScore(draft) {
+        const ctx = draft.context || {};
+        return ctx.score || ctx.qualification_score || null;
+    }
+
+    function renderOutreachDrafts() {
+        const panel = document.getElementById('outreachPanel');
+        const searchQ = (document.getElementById('outreachSearch')?.value || '').toLowerCase().trim();
+
+        let filtered = outreachDrafts;
+        if (outreachFilter !== 'all') {
+            filtered = filtered.filter(d => d.review_status === outreachFilter);
+        }
+        if (searchQ) {
+            filtered = filtered.filter(d => {
+                const r = getDraftRecipient(d);
+                const subject = getDraftSubject(d);
+                const body = getDraftBody(d);
+                return (r.name + r.company + r.email + subject + body).toLowerCase().includes(searchQ);
+            });
+        }
+
+        if (filtered.length === 0) {
+            const filterLabel = outreachFilter === 'all' ? '' : ` with status "${outreachFilter}"`;
+            panel.innerHTML = `<div class="empty-state"><div class="mb-2 text-2xl opacity-40">📧</div>No outreach drafts${filterLabel}</div>`;
+            return;
+        }
+
+        panel.innerHTML = filtered.map((draft, i) => {
+            const r = getDraftRecipient(draft);
+            const subject = getDraftSubject(draft);
+            const body = getDraftBody(draft);
+            const score = getDraftScore(draft);
+            const statusClass = `os-${draft.review_status || 'draft'}`;
+            const statusColors = { draft: '#FFD93D', approved: '#06D6A0', rejected: '#FF6B6B', sent: '#4CC9F0' };
+            const statusColor = statusColors[draft.review_status] || '#525E73';
+
+            const bodyPreview = body.length > 180 ? body.substring(0, 180) + '...' : body;
+            const isPending = draft.review_status === 'draft';
+
+            return `
+                <div class="outreach-card ${statusClass}">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-1.5 flex-wrap mb-1.5">
+                                <span class="badge" style="background:rgba(${draft.review_status === 'draft' ? '255,217,61' : draft.review_status === 'approved' ? '6,214,160' : draft.review_status === 'rejected' ? '255,107,107' : draft.review_status === 'sent' ? '76,201,240' : '107,114,128'},0.15);color:${statusColor};">${esc(draft.review_status || 'draft')}</span>
+                                ${draft.copy_type ? `<span class="badge badge-domain">${esc(draft.copy_type)}</span>` : ''}
+                                ${score ? `<span class="badge eng-${score >= 75 ? 'hot' : score >= 50 ? 'active' : score >= 25 ? 'warm' : 'cold'}">${score}</span>` : ''}
+                                ${draft.revision_count > 0 ? `<span class="text-[0.6rem] text-txt-3">Rev ${draft.revision_count}</span>` : ''}
+                            </div>
+                            <div class="flex items-center gap-2 mb-1">
+                                ${r.name ? `<span class="text-sm font-medium text-txt">${esc(r.name)}</span>` : ''}
+                                ${r.company ? `<span class="text-xs text-txt-3">@ ${esc(r.company)}</span>` : ''}
+                                ${r.email ? `<span class="text-xs text-info">${esc(r.email)}</span>` : '<span class="text-xs text-alert">No email</span>'}
+                            </div>
+                            <div class="email-subject-line text-sm mb-1" style="font-size: 0.85rem;">${esc(subject)}</div>
+                            <div class="text-xs text-txt-3 leading-relaxed" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${esc(bodyPreview)}</div>
+                            <div class="flex items-center gap-3 mt-2">
+                                <span class="text-[0.6rem] text-txt-3 font-mono">${timeAgo(draft.created_at)}</span>
+                                ${draft.review_feedback ? `<span class="text-[0.6rem] text-warn">Has feedback</span>` : ''}
+                                ${draft.revision_count > 0 && draft.context?.revision_feedback ? `<span class="text-[0.6rem] text-info">Revised</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-1.5 flex-shrink-0">
+                            <button class="btn btn-ghost text-xs py-1.5 px-3" onclick="openEmailPreview('${esc(draft.id)}')">Preview</button>
+                            ${isPending ? `
+                                <button class="btn btn-approve text-xs py-1.5 px-3" onclick="quickApprove('${esc(draft.id)}')">Approve</button>
+                                <button class="btn btn-deny text-xs py-1.5 px-3" onclick="quickReject('${esc(draft.id)}')">Reject</button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function openEmailPreview(draftId) {
+        const draft = outreachDrafts.find(d => d.id === draftId);
+        if (!draft) return;
+        currentPreviewDraft = draft;
+
+        const r = getDraftRecipient(draft);
+        const subject = getDraftSubject(draft);
+        const body = getDraftBody(draft);
+        const score = getDraftScore(draft);
+        const isPending = draft.review_status === 'draft';
+
+        const statusColors = { draft: '#FFD93D', approved: '#06D6A0', rejected: '#FF6B6B', sent: '#4CC9F0' };
+        const statusColor = statusColors[draft.review_status] || '#525E73';
+
+        document.getElementById('epStatusBadge').textContent = draft.review_status || 'draft';
+        document.getElementById('epStatusBadge').style.cssText = `background:rgba(${draft.review_status === 'approved' ? '6,214,160' : draft.review_status === 'rejected' ? '255,107,107' : draft.review_status === 'sent' ? '76,201,240' : '255,217,61'},0.15);color:${statusColor};`;
+
+        const toLine = [r.name, r.company ? `@ ${r.company}` : '', r.email ? `<${r.email}>` : ''].filter(Boolean).join(' ');
+        document.getElementById('epTo').innerHTML = esc(toLine) || '(Unknown recipient)';
+        document.getElementById('epSubject').textContent = subject;
+        document.getElementById('epScore').innerHTML = score
+            ? `<span class="badge eng-${score >= 75 ? 'hot' : score >= 50 ? 'active' : 'warm'}">${score}</span>`
+            : '<span class="text-txt-3 text-xs">—</span>';
+        document.getElementById('epBody').textContent = body || '(Empty body)';
+        document.getElementById('epNotes').value = draft.review_feedback || '';
+
+        // Show/hide action buttons based on status
+        document.getElementById('epApproveBtn').style.display = isPending ? '' : 'none';
+        document.getElementById('epRejectBtn').style.display = isPending ? '' : 'none';
+
+        openModal('emailPreviewModal');
+    }
+
+    async function approveOutreach() {
+        if (!currentPreviewDraft) return;
+        const notes = document.getElementById('epNotes').value.trim();
+        await updateDraftStatus(currentPreviewDraft, 'approved', notes);
+    }
+
+    async function rejectOutreach() {
+        if (!currentPreviewDraft) return;
+        const notes = document.getElementById('epNotes').value.trim();
+        if (!notes) { toast('Please provide feedback when rejecting.', 'error'); document.getElementById('epNotes').focus(); return; }
+        await updateDraftStatus(currentPreviewDraft, 'rejected', notes);
+    }
+
+    async function quickApprove(draftId) {
+        const draft = outreachDrafts.find(d => d.id === draftId);
+        if (!draft) return;
+        await updateDraftStatus(draft, 'approved', '');
+    }
+
+    async function quickReject(draftId) {
+        const draft = outreachDrafts.find(d => d.id === draftId);
+        if (!draft) return;
+        currentPreviewDraft = draft;
+        openEmailPreview(draftId);
+        toast('Please review and add feedback before rejecting.', 'error');
+    }
+
+    async function updateDraftStatus(draft, newStatus, notes) {
+        const btn = newStatus === 'approved' ? document.getElementById('epApproveBtn') : document.getElementById('epRejectBtn');
+        if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
+
+        try {
+            const ctx = draft.context || {};
+            const contactId = ctx.contact_id || '';
+
+            // Call the outreach-approved webhook directly
+            const result = await fetchJSON(API.outreachApproved, {
+                draft_id: draft.id,
+                contact_id: contactId,
+                action: newStatus === 'approved' ? 'approve' : 'reject',
+                reviewer_notes: notes || '',
+                acted_by: 'bradford'
+            });
+
+            if (result?.success !== false && !result?.error) {
+                toast(`Draft ${newStatus}: ${getDraftSubject(draft)}`, 'success');
+            } else {
+                // Fallback: try updating lifecycle via CRM-BRIDGE if webhook returned error
+                throw new Error(result?.message || result?.error || 'Action failed');
+            }
+
+            closeModal('emailPreviewModal');
+            currentPreviewDraft = null;
+            // Refresh data
+            await fetchOutreachDrafts();
+            fetchOutreachStats();
+            fetchHumanTasks();
+        } catch (err) {
+            toast(`Failed: ${err.message}`, 'error');
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = newStatus === 'approved' ? 'Approve & Queue' : 'Reject'; }
+        }
     }
 
     // ═══════════════════════════════════════
