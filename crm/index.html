@@ -1679,19 +1679,17 @@
         );
         outreachDrafts = Array.isArray(result) ? result : [];
 
-        // Update filter counts
-        const superseded = getSupersededIds(outreachDrafts);
-        const counts = { all: 0, draft: 0, approved: 0, rejected: 0, sent: 0 };
+        // Update filter counts — "All" is the sum of all statuses
+        const counts = { draft: 0, approved: 0, rejected: 0, sent: 0 };
         outreachDrafts.forEach(d => {
             if (counts[d.review_status] !== undefined) counts[d.review_status]++;
-            if (!superseded.has(d.id)) counts.all++;
         });
-        document.getElementById('osAll').textContent = counts.all;
+        const totalAll = counts.draft + counts.approved + counts.rejected + counts.sent;
+        document.getElementById('osAll').textContent = totalAll;
         document.getElementById('osDraft').textContent = counts.draft;
         document.getElementById('osApproved').textContent = counts.approved;
         document.getElementById('osRejected').textContent = counts.rejected;
         document.getElementById('osSent').textContent = counts.sent;
-        document.getElementById('outreachPendingBadge').textContent = counts.draft;
 
         renderOutreachDrafts();
     }
@@ -1776,6 +1774,9 @@
                 return (r.name + r.company + r.email + subject + body).toLowerCase().includes(searchQ);
             });
         }
+
+        // Update the panel header badge to reflect current filter count
+        document.getElementById('outreachPendingBadge').textContent = filtered.length;
 
         if (filtered.length === 0) {
             const filterLabel = outreachFilter === 'all' ? '' : ` with status "${outreachFilter}"`;
