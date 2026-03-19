@@ -1680,9 +1680,11 @@
         outreachDrafts = Array.isArray(result) ? result : [];
 
         // Update filter counts
-        const counts = { all: outreachDrafts.length, draft: 0, approved: 0, rejected: 0, sent: 0 };
+        const superseded = getSupersededIds(outreachDrafts);
+        const counts = { all: 0, draft: 0, approved: 0, rejected: 0, sent: 0 };
         outreachDrafts.forEach(d => {
             if (counts[d.review_status] !== undefined) counts[d.review_status]++;
+            if (!superseded.has(d.id)) counts.all++;
         });
         document.getElementById('osAll').textContent = counts.all;
         document.getElementById('osDraft').textContent = counts.draft;
@@ -1732,12 +1734,38 @@
         return ctx.score || ctx.qualification_score || null;
     }
 
+    // Build set of superseded draft IDs — for each contact, all but the latest draft
+    function getSupersededIds(drafts) {
+        const byContact = {};
+        drafts.forEach(d => {
+            const cid = (d.context || {}).contact_id;
+            if (!cid) return;
+            if (!byContact[cid]) byContact[cid] = [];
+            byContact[cid].push(d);
+        });
+        const superseded = new Set();
+        Object.values(byContact).forEach(group => {
+            if (group.length <= 1) return;
+            // Sort by revision_count desc, then created_at desc — first one is latest
+            group.sort((a, b) => (b.revision_count || 0) - (a.revision_count || 0) || new Date(b.created_at) - new Date(a.created_at));
+            // All except the first are superseded
+            for (let i = 1; i < group.length; i++) {
+                superseded.add(group[i].id);
+            }
+        });
+        return superseded;
+    }
+
     function renderOutreachDrafts() {
         const panel = document.getElementById('outreachPanel');
         const searchQ = (document.getElementById('outreachSearch')?.value || '').toLowerCase().trim();
 
         let filtered = outreachDrafts;
-        if (outreachFilter !== 'all') {
+        if (outreachFilter === 'all') {
+            // In "All" view, hide superseded drafts (older revisions for same contact)
+            const superseded = getSupersededIds(outreachDrafts);
+            filtered = filtered.filter(d => !superseded.has(d.id));
+        } else {
             filtered = filtered.filter(d => d.review_status === outreachFilter);
         }
         if (searchQ) {
