@@ -771,11 +771,7 @@
         <div id="view-outreach" class="max-w-[1600px] mx-auto px-4 sm:px-6 pb-8" style="display: none;">
             <!-- Outreach filter pills -->
             <div class="outreach-stat-row" id="outreachFilterRow">
-                <div class="outreach-stat-pill active-filter" onclick="filterOutreach('all')">
-                    <span class="os-count" id="osAll">—</span>
-                    <span class="text-txt-2">All</span>
-                </div>
-                <div class="outreach-stat-pill" onclick="filterOutreach('draft')">
+                <div class="outreach-stat-pill active-filter" onclick="filterOutreach('draft')">
                     <span class="os-count" style="color:#FFD93D;" id="osDraft">—</span>
                     <span class="text-txt-2">Pending</span>
                 </div>
@@ -790,6 +786,10 @@
                 <div class="outreach-stat-pill" onclick="filterOutreach('sent')">
                     <span class="os-count" style="color:#4CC9F0;" id="osSent">—</span>
                     <span class="text-txt-2">Sent</span>
+                </div>
+                <div class="outreach-stat-pill" onclick="filterOutreach('all')">
+                    <span class="os-count" id="osAll">—</span>
+                    <span class="text-txt-2">All</span>
                 </div>
             </div>
 
@@ -1010,7 +1010,7 @@
     let sequencesData = [];
     let attributionData = [];
     let outreachDrafts = [];
-    let outreachFilter = 'all';
+    let outreachFilter = 'draft';
     let currentPreviewDraft = null;
     let current360ContactId = null;
     let autoRefreshInterval = null;
