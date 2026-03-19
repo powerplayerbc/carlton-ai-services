@@ -654,12 +654,6 @@
                 </div>
                 <div class="stat-chip flex-1 min-w-[130px]">
                     <div>
-                        <div class="stat-value" style="color: #A855F7;" id="statHumanTasks">—</div>
-                        <div class="stat-label">Human Tasks</div>
-                    </div>
-                </div>
-                <div class="stat-chip flex-1 min-w-[130px]">
-                    <div>
                         <div class="stat-value text-warn" id="statOutreach">—</div>
                         <div class="stat-label">Drafts Pending</div>
                     </div>
@@ -675,7 +669,6 @@
                 <button class="crm-tab" id="tab-attribution" onclick="switchView('attribution')">Attribution</button>
                 <button class="crm-tab" id="tab-sequences" onclick="switchView('sequences')">Sequences</button>
                 <button class="crm-tab" id="tab-outreach" onclick="switchView('outreach')">Outreach</button>
-                <button class="crm-tab" id="tab-tasks" onclick="switchView('tasks')">Human Tasks</button>
             </div>
         </div>
 
@@ -814,23 +807,6 @@
                 </div>
                 <div class="panel-body" id="outreachPanel" style="padding: 0.75rem 1.25rem;">
                     <div class="empty-state"><div class="skeleton h-20 w-full mb-2"></div><div class="skeleton h-20 w-full mb-2"></div><div class="skeleton h-20 w-full"></div></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ═══ VIEW: HUMAN TASKS ═══ -->
-        <div id="view-tasks" class="max-w-[1600px] mx-auto px-4 sm:px-6 pb-8" style="display: none;">
-            <div class="panel">
-                <div class="panel-header">
-                    <div class="flex items-center gap-2">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z" stroke="#A855F7" stroke-width="1.2"/><path d="M3 13.5c0-2.8 2.2-5 5-5s5 2.2 5 5" stroke="#A855F7" stroke-width="1.2" stroke-linecap="round"/></svg>
-                        <h2 class="font-heading font-semibold text-sm tracking-wide uppercase">Human Tasks</h2>
-                        <span class="badge badge-human" id="htCount">0</span>
-                    </div>
-                    <span class="text-xs text-txt-3 font-mono">Requires your action</span>
-                </div>
-                <div class="panel-body" id="humanTasksPanel">
-                    <div class="empty-state">No tasks requiring human action</div>
                 </div>
             </div>
         </div>
@@ -1198,7 +1174,6 @@
         await Promise.all([
             fetchContacts(),
             fetchStats(),
-            fetchHumanTasks(),
             fetchOutreachStats(),
         ]);
 
@@ -1211,7 +1186,7 @@
     // ═══════════════════════════════════════
     function switchView(view) {
         currentView = view;
-        const views = ['contacts', 'pipeline', 'attribution', 'sequences', 'outreach', 'tasks'];
+        const views = ['contacts', 'pipeline', 'attribution', 'sequences', 'outreach'];
         views.forEach(v => {
             document.getElementById(`view-${v}`).style.display = v === view ? '' : 'none';
             document.getElementById(`tab-${v}`).classList.toggle('active', v === view);
@@ -1793,7 +1768,7 @@
             const isPending = draft.review_status === 'draft';
 
             return `
-                <div class="outreach-card ${statusClass}">
+                <div class="outreach-card ${statusClass}" onclick="openEmailPreview('${esc(draft.id)}')" style="cursor:pointer;">
                     <div class="flex items-start justify-between gap-3">
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-1.5 flex-wrap mb-1.5">
@@ -1816,10 +1791,9 @@
                             </div>
                         </div>
                         <div class="flex flex-col gap-1.5 flex-shrink-0">
-                            <button class="btn btn-ghost text-xs py-1.5 px-3" onclick="openEmailPreview('${esc(draft.id)}')">Preview</button>
                             ${isPending ? `
-                                <button class="btn btn-approve text-xs py-1.5 px-3" onclick="quickApprove('${esc(draft.id)}')">Approve</button>
-                                <button class="btn btn-deny text-xs py-1.5 px-3" onclick="quickReject('${esc(draft.id)}')">Reject</button>
+                                <button class="btn btn-approve text-xs py-1.5 px-3" onclick="event.stopPropagation();quickApprove('${esc(draft.id)}')">Approve</button>
+                                <button class="btn btn-deny text-xs py-1.5 px-3" onclick="event.stopPropagation();quickReject('${esc(draft.id)}')">Reject</button>
                             ` : ''}
                         </div>
                     </div>
