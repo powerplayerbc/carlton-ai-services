@@ -1301,17 +1301,13 @@
 
     function renderProofBank() {
         const list = document.getElementById('proofList');
-        const empty = document.getElementById('proofEmpty');
         document.getElementById('proofCount').textContent = proofBank.length;
 
         if (!proofBank.length) {
-            list.innerHTML = '';
-            empty.style.display = '';
-            list.appendChild(empty);
+            list.innerHTML = '<div class="text-center text-txt-3 text-sm py-6">No proof entries yet</div>';
             return;
         }
 
-        empty.style.display = 'none';
         list.innerHTML = proofBank.map((p, i) => `
             <div class="proof-card" data-id="${p.id}">
                 <div class="flex items-start justify-between gap-3">
