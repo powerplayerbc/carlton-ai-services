@@ -449,6 +449,7 @@
         .outreach-card.os-approved { border-left-color: #06D6A0; }
         .outreach-card.os-rejected { border-left-color: #FF6B6B; }
         .outreach-card.os-sent { border-left-color: #4CC9F0; }
+        .outreach-card.os-skipped { border-left-color: #6B7280; }
         .outreach-card.os-revision { border-left-color: #A855F7; }
         .email-preview-body {
             font-family: 'IBM Plex Sans', system-ui;
@@ -783,6 +784,10 @@
                     <span class="os-count" style="color:#FF6B6B;" id="osRejected">—</span>
                     <span class="text-txt-2">Rejected</span>
                 </div>
+                <div class="outreach-stat-pill" onclick="filterOutreach('skipped')">
+                    <span class="os-count" style="color:#6B7280;" id="osSkipped">—</span>
+                    <span class="text-txt-2">Skipped</span>
+                </div>
                 <div class="outreach-stat-pill" onclick="filterOutreach('sent')">
                     <span class="os-count" style="color:#4CC9F0;" id="osSent">—</span>
                     <span class="text-txt-2">Sent</span>
@@ -969,6 +974,7 @@
                 <div class="flex gap-3 pt-4" id="epActions">
                     <button onclick="approveOutreach()" class="btn btn-approve flex-1 py-2.5" id="epApproveBtn">Approve & Queue</button>
                     <button onclick="rejectOutreach()" class="btn btn-deny flex-1 py-2.5" id="epRejectBtn">Reject</button>
+                    <button onclick="skipOutreach()" class="btn btn-ghost flex-1 py-2.5" id="epSkipBtn">Skip</button>
                     <button onclick="closeModal('emailPreviewModal')" class="btn btn-ghost py-2.5 px-4">Close</button>
                 </div>
             </div>
@@ -1684,15 +1690,16 @@
         outreachDrafts = Array.isArray(result) ? result : [];
 
         // Update filter counts — "All" is the sum of all statuses
-        const counts = { draft: 0, approved: 0, rejected: 0, sent: 0 };
+        const counts = { draft: 0, approved: 0, rejected: 0, skipped: 0, sent: 0 };
         outreachDrafts.forEach(d => {
             if (counts[d.review_status] !== undefined) counts[d.review_status]++;
         });
-        const totalAll = counts.draft + counts.approved + counts.rejected + counts.sent;
+        const totalAll = counts.draft + counts.approved + counts.rejected + counts.skipped + counts.sent;
         document.getElementById('osAll').textContent = totalAll;
         document.getElementById('osDraft').textContent = counts.draft;
         document.getElementById('osApproved').textContent = counts.approved;
         document.getElementById('osRejected').textContent = counts.rejected;
+        document.getElementById('osSkipped').textContent = counts.skipped;
         document.getElementById('osSent').textContent = counts.sent;
 
         renderOutreachDrafts();
@@ -1794,7 +1801,7 @@
             const body = getDraftBody(draft);
             const score = getDraftScore(draft);
             const statusClass = `os-${draft.review_status || 'draft'}`;
-            const statusColors = { draft: '#FFD93D', approved: '#06D6A0', rejected: '#FF6B6B', sent: '#4CC9F0' };
+            const statusColors = { draft: '#FFD93D', approved: '#06D6A0', rejected: '#FF6B6B', skipped: '#6B7280', sent: '#4CC9F0' };
             const statusColor = statusColors[draft.review_status] || '#525E73';
 
             const bodyPreview = body.length > 180 ? body.substring(0, 180) + '...' : body;
@@ -1805,7 +1812,7 @@
                     <div class="flex items-start justify-between gap-3">
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-1.5 flex-wrap mb-1.5">
-                                <span class="badge" style="background:rgba(${draft.review_status === 'draft' ? '255,217,61' : draft.review_status === 'approved' ? '6,214,160' : draft.review_status === 'rejected' ? '255,107,107' : draft.review_status === 'sent' ? '76,201,240' : '107,114,128'},0.15);color:${statusColor};">${esc(draft.review_status || 'draft')}</span>
+                                <span class="badge" style="background:rgba(${draft.review_status === 'draft' ? '255,217,61' : draft.review_status === 'approved' ? '6,214,160' : draft.review_status === 'rejected' ? '255,107,107' : draft.review_status === 'skipped' ? '107,114,128' : draft.review_status === 'sent' ? '76,201,240' : '107,114,128'},0.15);color:${statusColor};">${esc(draft.review_status || 'draft')}</span>
                                 ${draft.copy_type ? `<span class="badge badge-domain">${esc(draft.copy_type)}</span>` : ''}
                                 ${score ? `<span class="badge eng-${score >= 75 ? 'hot' : score >= 50 ? 'active' : score >= 25 ? 'warm' : 'cold'}">${score}</span>` : ''}
                                 ${draft.revision_count > 0 ? `<span class="text-[0.6rem] text-txt-3">Rev ${draft.revision_count}</span>` : ''}
@@ -1827,6 +1834,7 @@
                             ${isPending ? `
                                 <button class="btn btn-approve text-xs py-1.5 px-3" onclick="event.stopPropagation();quickApprove('${esc(draft.id)}')">Approve</button>
                                 <button class="btn btn-deny text-xs py-1.5 px-3" onclick="event.stopPropagation();quickReject('${esc(draft.id)}')">Reject</button>
+                                <button class="btn btn-ghost text-xs py-1.5 px-3" onclick="event.stopPropagation();quickSkip('${esc(draft.id)}')">Skip</button>
                             ` : ''}
                         </div>
                     </div>
@@ -1846,11 +1854,11 @@
         const score = getDraftScore(draft);
         const isPending = draft.review_status === 'draft';
 
-        const statusColors = { draft: '#FFD93D', approved: '#06D6A0', rejected: '#FF6B6B', sent: '#4CC9F0' };
+        const statusColors = { draft: '#FFD93D', approved: '#06D6A0', rejected: '#FF6B6B', skipped: '#6B7280', sent: '#4CC9F0' };
         const statusColor = statusColors[draft.review_status] || '#525E73';
 
         document.getElementById('epStatusBadge').textContent = draft.review_status || 'draft';
-        document.getElementById('epStatusBadge').style.cssText = `background:rgba(${draft.review_status === 'approved' ? '6,214,160' : draft.review_status === 'rejected' ? '255,107,107' : draft.review_status === 'sent' ? '76,201,240' : '255,217,61'},0.15);color:${statusColor};`;
+        document.getElementById('epStatusBadge').style.cssText = `background:rgba(${draft.review_status === 'approved' ? '6,214,160' : draft.review_status === 'rejected' ? '255,107,107' : draft.review_status === 'skipped' ? '107,114,128' : draft.review_status === 'sent' ? '76,201,240' : '255,217,61'},0.15);color:${statusColor};`;
 
         const toLine = [r.name, r.company ? `@ ${r.company}` : '', r.email ? `<${r.email}>` : ''].filter(Boolean).join(' ');
         document.getElementById('epTo').innerHTML = esc(toLine) || '(Unknown recipient)';
@@ -1883,6 +1891,7 @@
         // Show/hide action buttons based on status
         document.getElementById('epApproveBtn').style.display = isPending ? '' : 'none';
         document.getElementById('epRejectBtn').style.display = isPending ? '' : 'none';
+        document.getElementById('epSkipBtn').style.display = isPending ? '' : 'none';
 
         openModal('emailPreviewModal');
     }
@@ -1914,8 +1923,22 @@
         toast('Please review and add feedback before rejecting.', 'error');
     }
 
+    async function skipOutreach() {
+        if (!currentPreviewDraft) return;
+        if (!confirm('Skip this contact? They won\'t receive an outreach email this round.')) return;
+        await updateDraftStatus(currentPreviewDraft, 'skip', '');
+    }
+
+    async function quickSkip(draftId) {
+        const draft = outreachDrafts.find(d => d.id === draftId);
+        if (!draft) return;
+        if (!confirm('Skip this contact? They won\'t receive an outreach email this round.')) return;
+        await updateDraftStatus(draft, 'skip', '');
+    }
+
     async function updateDraftStatus(draft, newStatus, notes) {
-        const btn = newStatus === 'approved' ? document.getElementById('epApproveBtn') : document.getElementById('epRejectBtn');
+        const btnMap = { approved: 'epApproveBtn', rejected: 'epRejectBtn', skip: 'epSkipBtn' };
+        const btn = document.getElementById(btnMap[newStatus]);
         if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
 
         try {
@@ -1943,11 +1966,11 @@
             // Refresh data
             await fetchOutreachDrafts();
             fetchOutreachStats();
-            fetchHumanTasks();
         } catch (err) {
             toast(`Failed: ${err.message}`, 'error');
         } finally {
-            if (btn) { btn.disabled = false; btn.textContent = newStatus === 'approved' ? 'Approve & Queue' : 'Reject'; }
+            const btnLabels = { approved: 'Approve & Queue', rejected: 'Reject', skip: 'Skip' };
+            if (btn) { btn.disabled = false; btn.textContent = btnLabels[newStatus] || newStatus; }
         }
     }
 
