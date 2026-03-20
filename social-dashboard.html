@@ -1229,6 +1229,12 @@ function initDashboard() {
             document.getElementById('outreachSearchInput').value = autoSearch;
             applyOutreachSearch();
         }, 800);
+    } else {
+        // Restore last active tab from session
+        const savedTab = sessionStorage.getItem('social-top-tab');
+        if (savedTab === 'outreach') {
+            switchTopTab('outreach');
+        }
     }
 }
 
@@ -1258,6 +1264,7 @@ async function checkPendingSnapshots() {
 // ═══════════════════════════════════════
 function switchTopTab(tab) {
     activeTopTab = tab;
+    sessionStorage.setItem('social-top-tab', tab);
     document.getElementById('topTabContent').classList.toggle('active', tab === 'content');
     document.getElementById('topTabOutreach').classList.toggle('active', tab === 'outreach');
     document.getElementById('contentSection').style.display = tab === 'content' ? '' : 'none';
