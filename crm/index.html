@@ -2549,43 +2549,51 @@
             groups[c.industry_group].push(c);
         });
 
-        let html = '';
+        // Single table with group header rows spanning all columns
+        let rows = '';
         Object.entries(groups).forEach(([group, items]) => {
             const activeCount = items.filter(i => i.is_active).length;
-            html += `
-                <div class="group-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? '' : 'none'">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs font-semibold text-txt uppercase tracking-wider">${esc(group.replace(/_/g, ' '))}</span>
-                        <span class="badge badge-domain" style="font-size:0.55rem;">${activeCount}/${items.length}</span>
-                    </div>
-                    <span class="text-txt-3 text-xs">▾</span>
-                </div>
-                <div>
-                    <table class="contact-table"><tbody>
-                    ${items.map(cat => {
-                        const dimStyle = cat.is_active ? '' : 'opacity:0.45;';
-                        const kws = Array.isArray(cat.keywords) ? cat.keywords : [];
-                        return `
-                            <tr style="${dimStyle}">
-                                <td class="text-txt text-sm">${esc(cat.search_term)}</td>
-                                <td class="text-txt-3 text-xs">${esc(cat.sub_category || '—')}</td>
-                                <td>${kws.map(k => `<span class="kw-chip">${esc(k)}</span>`).join(' ')}</td>
-                                <td class="font-mono text-xs text-txt-2">${cat.weight}</td>
-                                <td>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" ${cat.is_active ? 'checked' : ''} onchange="toggleCategoryActive(${cat.id}, this.checked)">
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                </td>
-                                <td><button class="btn btn-ghost text-[0.6rem] py-0.5 px-2" onclick="deleteCategory(${cat.id}, '${esc(cat.search_term)}')">Del</button></td>
-                            </tr>
-                        `;
-                    }).join('')}
-                    </tbody></table>
-                </div>
+            const groupId = 'catgrp-' + group.replace(/\W/g, '');
+            rows += `
+                <tr class="group-header" onclick="document.querySelectorAll('.${groupId}').forEach(r=>r.style.display=r.style.display==='none'?'':'none')" style="cursor:pointer;">
+                    <td colspan="6" style="padding:0.5rem 0.75rem;background:rgba(255,255,255,0.02);border-bottom:1px solid #1E2130;">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-semibold text-txt uppercase tracking-wider">${esc(group.replace(/_/g, ' '))}</span>
+                                <span class="badge badge-domain" style="font-size:0.55rem;">${activeCount}/${items.length}</span>
+                            </div>
+                            <span class="text-txt-3 text-xs">▾</span>
+                        </div>
+                    </td>
+                </tr>
             `;
+            items.forEach(cat => {
+                const dimStyle = cat.is_active ? '' : 'opacity:0.45;';
+                const kws = Array.isArray(cat.keywords) ? cat.keywords : [];
+                rows += `
+                    <tr class="${groupId}" style="${dimStyle}">
+                        <td class="text-txt text-sm">${esc(cat.search_term)}</td>
+                        <td class="text-txt-3 text-xs">${esc(cat.sub_category || '—')}</td>
+                        <td>${kws.map(k => `<span class="kw-chip">${esc(k)}</span>`).join(' ')}</td>
+                        <td class="font-mono text-xs text-txt-2">${cat.weight}</td>
+                        <td>
+                            <label class="toggle-switch">
+                                <input type="checkbox" ${cat.is_active ? 'checked' : ''} onchange="toggleCategoryActive(${cat.id}, this.checked)">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </td>
+                        <td><button class="btn btn-ghost text-[0.6rem] py-0.5 px-2" onclick="deleteCategory(${cat.id}, '${esc(cat.search_term)}')">Del</button></td>
+                    </tr>
+                `;
+            });
         });
-        panel.innerHTML = html;
+
+        panel.innerHTML = `<div style="overflow-x:auto;"><table class="contact-table">
+            <thead><tr>
+                <th>Search Term</th><th>Sub-Category</th><th>Keywords</th><th>Weight</th><th>Active</th><th style="width:60px;"></th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+        </table></div>`;
     }
 
     let addCatFormOpen = false;
