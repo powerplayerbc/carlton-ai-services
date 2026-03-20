@@ -795,16 +795,28 @@
                 </div>
             </div>
 
-            <!-- ══ Panel 8: AI Suggestions ══ -->
-            <div class="panel hidden" id="panel-suggestions">
+            <!-- ══ Panel 8: AI Suggested Settings (Snapshot) ══ -->
+            <div class="panel hidden" id="panel-snapshot">
                 <div class="panel-header">
                     <div class="flex items-center gap-2">
-                        <span class="font-heading font-semibold text-sm tracking-wide">AI Suggestions</span>
-                        <span class="badge badge-warn" id="suggestionsCount">0</span>
+                        <span class="font-heading font-semibold text-sm tracking-wide">AI Suggested Settings</span>
+                        <span class="badge badge-warn" id="snapshotBadge">NEW</span>
                     </div>
                 </div>
-                <div class="panel-body">
-                    <p class="text-xs text-txt-3 mb-3">Based on nightly analysis of approved and rejected drafts</p>
+                <div class="panel-body" id="snapshotBody"></div>
+            </div>
+
+            <!-- ══ Panel 8b: Individual AI Suggestions (legacy) ══ -->
+            <div class="panel hidden" id="panel-suggestions">
+                <div class="panel-header cursor-pointer" onclick="toggleIndividualSuggestions()">
+                    <div class="flex items-center gap-2">
+                        <span class="font-heading font-semibold text-sm tracking-wide">Individual Suggestions</span>
+                        <span class="badge badge-warn" id="suggestionsCount">0</span>
+                    </div>
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" id="suggestionsChevron" style="transition: transform 0.2s; transform: rotate(0deg);"><path d="M3 4.5l3 3 3-3" stroke="#8A95A9" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <div class="panel-body hidden" id="suggestionsBody">
+                    <p class="text-xs text-txt-3 mb-3">Accept or dismiss changes individually</p>
                     <div class="space-y-3" id="suggestionsList"></div>
                 </div>
             </div>
@@ -1031,10 +1043,11 @@
 
     async function initSettings() {
         try {
-            const [settingsArr, proofArr, suggestionsArr, draftsArr] = await Promise.all([
+            const [settingsArr, proofArr, suggestionsArr, snapshotsArr, draftsArr] = await Promise.all([
                 supabaseGet(`outreach_voice_settings?brand_id=eq.${BRAND_ID}&limit=1`),
                 supabaseGet(`outreach_proof_bank?brand_id=eq.${BRAND_ID}&is_active=eq.true&order=sort_order.asc`),
                 supabaseGet(`voice_learning_log?brand_id=eq.${BRAND_ID}&status=eq.pending&order=created_at.desc`),
+                supabaseGet(`voice_settings_snapshots?brand_id=eq.${BRAND_ID}&status=eq.pending&order=created_at.desc`),
                 supabaseGet(`copy_drafts?brand_id=eq.${BRAND_ID}&copy_type=eq.cold_outreach_email&review_status=in.(approved,rejected,skipped)&order=updated_at.desc&limit=50&select=id,review_status,human_feedback,updated_at`)
             ]);
 
@@ -1048,7 +1061,10 @@
             proofBank = proofArr || [];
             renderProofBank();
 
-            // AI Suggestions
+            // AI Snapshots (primary)
+            renderSnapshot(snapshotsArr || []);
+
+            // Individual AI Suggestions (secondary)
             renderSuggestions(suggestionsArr || []);
 
             // Recent patterns
@@ -1407,8 +1423,130 @@
     }
 
     // ═══════════════════════════════════════════════════
-    // AI SUGGESTIONS
+    // AI SNAPSHOT (apply-all-at-once)
     // ═══════════════════════════════════════════════════
+
+    let lastAppliedSnapshotId = null;
+
+    function renderSnapshot(snapshots) {
+        const panel = document.getElementById('panel-snapshot');
+        const body = document.getElementById('snapshotBody');
+
+        if (!snapshots.length) { panel.classList.add('hidden'); return; }
+
+        const snap = snapshots[0];
+        panel.classList.remove('hidden');
+
+        const changes = snap.individual_changes || [];
+        const changesHtml = changes.map(c => `
+            <div class="flex items-start gap-3 py-2 border-b border-border/50 last:border-0">
+                <span class="font-mono text-xs text-txt-3 w-40 shrink-0 pt-0.5">${esc(c.setting_field)}</span>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 text-sm">
+                        <span class="text-alert">${esc(String(c.current_value))}</span>
+                        <svg width="14" height="8" viewBox="0 0 14 8" fill="none"><path d="M1 4h12M9 1l4 3-4 3" stroke="#06D6A0" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span class="text-accent">${esc(String(c.suggested_value))}</span>
+                    </div>
+                    <p class="text-xs text-txt-3 mt-0.5">${esc(c.reasoning || '')}</p>
+                </div>
+            </div>
+        `).join('');
+
+        body.innerHTML = `
+            <div class="mb-3">
+                <div class="text-sm font-medium mb-1">${esc(snap.label || 'AI Suggested Settings')}</div>
+                <div class="text-xs text-txt-3">
+                    Based on ${snap.drafts_analyzed || 0} drafts
+                    (${snap.approval_rate || 0}% approval rate)
+                    ${snap.source_version ? ` · from v${snap.source_version}` : ''}
+                </div>
+            </div>
+            <div class="mb-4">${changesHtml || '<div class="text-xs text-txt-3">No individual changes listed</div>'}</div>
+            <div class="flex items-center gap-2" id="snapshotActions-${snap.id}">
+                <button class="btn btn-approve text-xs py-1.5 px-4" onclick="applySnapshot(${snap.id})">Apply Suggested Settings</button>
+                <button class="btn btn-ghost text-xs py-1.5 px-3" onclick="dismissSnapshot(${snap.id})">Dismiss</button>
+            </div>
+        `;
+    }
+
+    async function applySnapshot(id) {
+        try {
+            await supabaseRPC('apply_voice_snapshot', { p_snapshot_id: id, p_applied_by: 'bradford' });
+            lastAppliedSnapshotId = id;
+
+            // Reload settings
+            const settingsArr = await supabaseGet(`outreach_voice_settings?brand_id=eq.${BRAND_ID}&limit=1`);
+            const raw = settingsArr.length ? settingsArr[0] : { ...DEFAULTS };
+            currentSettings = { ...DEFAULTS, ...raw };
+            originalSettings = JSON.parse(JSON.stringify(currentSettings));
+            dirtyFields.clear();
+            document.getElementById('saveBar').classList.remove('has-changes');
+            populateForm();
+
+            // Replace the snapshot card content with success + undo
+            const panel = document.getElementById('panel-snapshot');
+            const body = document.getElementById('snapshotBody');
+            body.innerHTML = `
+                <div class="flex items-center gap-3 py-2">
+                    <span class="text-accent text-sm font-medium">Settings applied (v${currentSettings.version})</span>
+                    <button class="text-xs text-info hover:underline" onclick="undoSnapshot()">Undo</button>
+                </div>
+            `;
+            toast('AI suggested settings applied', 'success');
+        } catch (err) {
+            console.error('Apply snapshot failed:', err);
+            toast('Failed to apply snapshot', 'error');
+        }
+    }
+
+    async function undoSnapshot() {
+        try {
+            // Find the manual backup created by the apply
+            const backups = await supabaseGet(`voice_settings_snapshots?snapshot_type=eq.manual_backup&order=created_at.desc&limit=1`);
+            if (!backups.length) { toast('No backup found to undo', 'error'); return; }
+
+            await supabaseRPC('rollback_voice_snapshot', { p_snapshot_id: backups[0].id });
+
+            // Reload settings
+            const settingsArr = await supabaseGet(`outreach_voice_settings?brand_id=eq.${BRAND_ID}&limit=1`);
+            const raw = settingsArr.length ? settingsArr[0] : { ...DEFAULTS };
+            currentSettings = { ...DEFAULTS, ...raw };
+            originalSettings = JSON.parse(JSON.stringify(currentSettings));
+            dirtyFields.clear();
+            document.getElementById('saveBar').classList.remove('has-changes');
+            populateForm();
+
+            // Hide snapshot panel
+            document.getElementById('panel-snapshot').classList.add('hidden');
+            toast('Settings rolled back to previous version', 'success');
+        } catch (err) {
+            console.error('Rollback failed:', err);
+            toast('Failed to undo', 'error');
+        }
+    }
+
+    async function dismissSnapshot(id) {
+        try {
+            await supabasePatch('voice_settings_snapshots', `id=eq.${id}`, { status: 'dismissed' });
+            document.getElementById('panel-snapshot').classList.add('hidden');
+            toast('Snapshot dismissed', 'success');
+        } catch (err) {
+            console.error('Dismiss snapshot failed:', err);
+            toast('Failed to dismiss', 'error');
+        }
+    }
+
+    // ═══════════════════════════════════════════════════
+    // INDIVIDUAL AI SUGGESTIONS
+    // ═══════════════════════════════════════════════════
+
+    function toggleIndividualSuggestions() {
+        const body = document.getElementById('suggestionsBody');
+        const chevron = document.getElementById('suggestionsChevron');
+        const isHidden = body.classList.contains('hidden');
+        body.classList.toggle('hidden');
+        chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+    }
 
     function renderSuggestions(suggestions) {
         const panel = document.getElementById('panel-suggestions');
