@@ -435,6 +435,67 @@
         .comparison-view { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.5rem; }
         .comparison-col { padding: 0.75rem; border-radius: 0.375rem; background: rgba(0,0,0,0.3); border: 1px solid #1E2130; max-height: 200px; overflow-y: auto; }
 
+        /* ── Toggle switch ── */
+        .toggle-switch { position: relative; display: inline-block; width: 32px; height: 18px; flex-shrink: 0; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; inset: 0; background: #2A2E3D; border-radius: 9px; transition: background 0.2s; }
+        .toggle-slider:before { content: ''; position: absolute; width: 14px; height: 14px; left: 2px; bottom: 2px; background: #525E73; border-radius: 50%; transition: transform 0.2s, background 0.2s; }
+        .toggle-switch input:checked + .toggle-slider { background: rgba(6,214,160,0.25); }
+        .toggle-switch input:checked + .toggle-slider:before { transform: translateX(14px); background: #06D6A0; }
+
+        /* ── Keyword chips ── */
+        .kw-chip {
+            display: inline-flex; align-items: center; gap: 2px;
+            padding: 1px 6px; border-radius: 3px;
+            font-size: 0.6rem; font-family: 'JetBrains Mono', monospace;
+            background: rgba(76,201,240,0.1); color: #4CC9F0;
+            border: 1px solid rgba(76,201,240,0.15);
+            white-space: nowrap;
+        }
+
+        /* ── Inline add row ── */
+        .add-row-input {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid #1E2130;
+            border-radius: 0.25rem;
+            padding: 0.375rem 0.5rem;
+            color: #E8ECF1;
+            font-family: 'IBM Plex Sans', system-ui;
+            font-size: 0.75rem;
+            outline: none;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+        .add-row-input:focus { border-color: rgba(6,214,160,0.4); }
+        .add-row-input::placeholder { color: #525E73; }
+        select.add-row-input { cursor: pointer; }
+        select.add-row-input option { background: #1A1D28; color: #E8ECF1; }
+
+        /* ── Group header ── */
+        .group-header {
+            padding: 0.5rem 0.75rem;
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid #1E2130;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: space-between;
+            transition: background 0.15s;
+        }
+        .group-header:hover { background: rgba(255,255,255,0.04); }
+
+        /* ── Import mode tabs ── */
+        .import-tab {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            color: #8A95A9;
+            background: transparent;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+        .import-tab.active { background: rgba(6,214,160,0.1); color: #06D6A0; border-color: rgba(6,214,160,0.2); }
+
         /* ── Outreach cards ── */
         .outreach-card {
             padding: 1rem 1.25rem;
@@ -671,6 +732,7 @@
                 <button class="crm-tab" id="tab-attribution" onclick="switchView('attribution')">Attribution</button>
                 <button class="crm-tab" id="tab-sequences" onclick="switchView('sequences')">Sequences</button>
                 <button class="crm-tab" id="tab-outreach" onclick="switchView('outreach')">Outreach</button>
+                <button class="crm-tab" id="tab-prospecting" onclick="switchView('prospecting')">Prospecting</button>
             </div>
         </div>
 
@@ -814,6 +876,146 @@
                 </div>
                 <div class="panel-body" id="outreachPanel" style="padding: 0.75rem 1.25rem;">
                     <div class="empty-state"><div class="skeleton h-20 w-full mb-2"></div><div class="skeleton h-20 w-full mb-2"></div><div class="skeleton h-20 w-full"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ VIEW: PROSPECTING ═══ -->
+        <div id="view-prospecting" class="max-w-[1600px] mx-auto px-4 sm:px-6 pb-8 space-y-4" style="display: none;">
+
+            <!-- ── Target Locations ── -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="flex items-center gap-2">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1C5.2 1 3 3.2 3 6c0 3.5 5 9 5 9s5-5.5 5-9c0-2.8-2.2-5-5-5z" stroke="#06D6A0" stroke-width="1.2"/><circle cx="8" cy="6" r="1.5" stroke="#06D6A0" stroke-width="1.2"/></svg>
+                        <h2 class="font-heading font-semibold text-sm tracking-wide uppercase">Target Locations</h2>
+                        <span class="badge badge-in_progress" id="locCount">0</span>
+                    </div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="contact-table">
+                        <thead>
+                            <tr>
+                                <th>City</th>
+                                <th>State</th>
+                                <th>Zone</th>
+                                <th>Weight</th>
+                                <th>Active</th>
+                                <th style="width:60px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="locationsBody">
+                            <tr><td colspan="6" class="empty-state">Loading...</td></tr>
+                        </tbody>
+                        <tfoot>
+                            <tr style="background: rgba(6,214,160,0.03);">
+                                <td><input type="text" class="add-row-input" id="addLocCity" placeholder="City name"></td>
+                                <td><input type="text" class="add-row-input" id="addLocState" placeholder="ST" maxlength="2" style="width:50px;text-transform:uppercase;"></td>
+                                <td>
+                                    <select class="add-row-input" id="addLocZone">
+                                        <option value="primary">Primary</option>
+                                        <option value="expansion">Expansion</option>
+                                    </select>
+                                </td>
+                                <td><input type="number" class="add-row-input" id="addLocWeight" value="1.0" min="0.5" max="3" step="0.5" style="width:60px;"></td>
+                                <td></td>
+                                <td><button class="btn btn-primary text-xs py-1 px-2" onclick="addLocation()">Add</button></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ── Target Categories ── -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="flex items-center gap-2">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="2" width="5" height="5" rx="1" stroke="#4CC9F0" stroke-width="1.2"/><rect x="9.5" y="2" width="5" height="5" rx="1" stroke="#4CC9F0" stroke-width="1.2"/><rect x="1.5" y="9" width="5" height="5" rx="1" stroke="#4CC9F0" stroke-width="1.2"/><rect x="9.5" y="9" width="5" height="5" rx="1" stroke="#4CC9F0" stroke-width="1.2"/></svg>
+                        <h2 class="font-heading font-semibold text-sm tracking-wide uppercase">Target Categories</h2>
+                        <span class="badge badge-execute" id="catCount">0</span>
+                    </div>
+                    <button class="btn btn-primary text-xs py-1 px-3" onclick="openAddCategoryForm()">+ Add</button>
+                </div>
+                <div id="categoriesPanel">
+                    <div class="empty-state">Loading...</div>
+                </div>
+            </div>
+
+            <!-- ── Linked Sheets ── -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="flex items-center gap-2">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="1.5" stroke="#FFD93D" stroke-width="1.2"/><path d="M2 6h12M6 2v12" stroke="#FFD93D" stroke-width="1.2"/></svg>
+                        <h2 class="font-heading font-semibold text-sm tracking-wide uppercase">Linked Sheets</h2>
+                        <span class="badge badge-blocked" id="sheetCount">0</span>
+                    </div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="contact-table">
+                        <thead>
+                            <tr>
+                                <th>Label</th>
+                                <th>Sheet URL</th>
+                                <th>Tab</th>
+                                <th>Last Checked</th>
+                                <th>Rows</th>
+                                <th>Active</th>
+                                <th style="width:60px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="sheetsBody">
+                            <tr><td colspan="7" class="empty-state">Loading...</td></tr>
+                        </tbody>
+                        <tfoot>
+                            <tr style="background: rgba(255,217,61,0.03);">
+                                <td><input type="text" class="add-row-input" id="addSheetLabel" placeholder="Label"></td>
+                                <td><input type="text" class="add-row-input" id="addSheetUrl" placeholder="Google Sheets URL"></td>
+                                <td><input type="text" class="add-row-input" id="addSheetTab" placeholder="Sheet1" value="Sheet1" style="width:80px;"></td>
+                                <td colspan="3"></td>
+                                <td><button class="btn btn-primary text-xs py-1 px-2" onclick="addSheet()">Add</button></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ── Lead Import ── -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="flex items-center gap-2">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8M5 7l3 3 3-3" stroke="#A855F7" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12h10" stroke="#A855F7" stroke-width="1.2" stroke-linecap="round"/></svg>
+                        <h2 class="font-heading font-semibold text-sm tracking-wide uppercase">Lead Import</h2>
+                    </div>
+                    <div class="flex gap-1">
+                        <button class="import-tab active" id="importTabSheets" onclick="switchImportMode('sheets')">Google Sheets</button>
+                        <button class="import-tab" id="importTabJson" onclick="switchImportMode('json')">Manual JSON</button>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <!-- Sheets import -->
+                    <div id="importSheetsForm">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs text-txt-2 mb-1 font-medium uppercase tracking-wider">Google Sheets URL</label>
+                                <input type="text" class="form-input text-xs" id="importSheetsUrl" placeholder="https://docs.google.com/spreadsheets/d/...">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1 font-medium uppercase tracking-wider">Sheet Tab</label>
+                                <input type="text" class="form-input text-xs" id="importSheetsTab" value="Sheet1" placeholder="Sheet1">
+                            </div>
+                        </div>
+                        <button class="btn btn-primary py-2 px-4" id="importSheetsBtn" onclick="importFromSheets()">Import from Sheets</button>
+                        <p class="text-xs text-txt-3 mt-2">Leads will be scored by GPT and stored as prospects. High-scoring leads enter the enrichment + outreach pipeline automatically.</p>
+                    </div>
+                    <!-- JSON import -->
+                    <div id="importJsonForm" style="display:none;">
+                        <div class="mb-3">
+                            <label class="block text-xs text-txt-2 mb-1 font-medium uppercase tracking-wider">Leads JSON Array</label>
+                            <textarea class="form-input text-xs font-mono" id="importJsonData" rows="8" placeholder='[{"business_name":"Acme Plumbing","phone":"555-1234","website":"acmeplumbing.com","address":"123 Main St, Denver CO","category":"plumber"}]'></textarea>
+                        </div>
+                        <button class="btn btn-primary py-2 px-4" id="importJsonBtn" onclick="importFromJson()">Import Leads</button>
+                        <p class="text-xs text-txt-3 mt-2">Required: <span class="text-txt-2">business_name</span>. Optional: phone, website, address, category, sub_category, keywords, email.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1199,7 +1401,7 @@
     // ═══════════════════════════════════════
     function switchView(view) {
         currentView = view;
-        const views = ['contacts', 'pipeline', 'attribution', 'sequences', 'outreach'];
+        const views = ['contacts', 'pipeline', 'attribution', 'sequences', 'outreach', 'prospecting'];
         views.forEach(v => {
             document.getElementById(`view-${v}`).style.display = v === view ? '' : 'none';
             document.getElementById(`tab-${v}`).classList.toggle('active', v === view);
@@ -1210,6 +1412,7 @@
         if (view === 'attribution') fetchAttribution();
         if (view === 'sequences') fetchSequences();
         if (view === 'outreach') fetchOutreachDrafts();
+        if (view === 'prospecting') fetchProspectingData();
     }
 
     // ═══════════════════════════════════════
@@ -2217,6 +2420,375 @@
     }
 
     // ═══════════════════════════════════════
+    // ═══════════════════════════════════════
+    // SUPABASE WRITE HELPER
+    // ═══════════════════════════════════════
+    async function supabaseWrite(table, method, body, matchQuery = '') {
+        const url = `${SUPABASE_URL}/rest/v1/${table}?${matchQuery}`;
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=representation'
+                },
+                body: method === 'DELETE' ? undefined : JSON.stringify(body)
+            });
+            if (!res.ok) { const t = await res.text(); console.error('Supabase write error:', res.status, t); return null; }
+            const text = await res.text();
+            return text ? JSON.parse(text) : true;
+        } catch (err) { console.error('Supabase write error:', err); return null; }
+    }
+
+    // ═══════════════════════════════════════
+    // PROSPECTING DATA
+    // ═══════════════════════════════════════
+    let prospLocations = [];
+    let prospCategories = [];
+    let prospSheets = [];
+
+    async function fetchProspectingData() {
+        await Promise.all([fetchLocations(), fetchCategories(), fetchLinkedSheets()]);
+    }
+
+    // ── Locations ──
+    async function fetchLocations() {
+        const result = await supabaseSelect('prosp_target_locations',
+            'select=*&brand_id=eq.carlton&order=weight.desc,city.asc'
+        );
+        prospLocations = Array.isArray(result) ? result : [];
+        document.getElementById('locCount').textContent = prospLocations.filter(l => l.is_active).length;
+        renderLocations();
+    }
+
+    function renderLocations() {
+        const tbody = document.getElementById('locationsBody');
+        if (prospLocations.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No target locations configured</td></tr>';
+            return;
+        }
+        tbody.innerHTML = prospLocations.map(loc => {
+            const zoneColor = loc.zone_type === 'primary' ? 'color:#06D6A0;' : 'color:#4CC9F0;';
+            const dimStyle = loc.is_active ? '' : 'opacity:0.45;';
+            return `
+                <tr style="${dimStyle}">
+                    <td class="text-txt font-medium text-sm">${esc(loc.city)}</td>
+                    <td class="text-txt-2 font-mono text-xs">${esc(loc.state_abbr)}</td>
+                    <td><span class="badge" style="background:rgba(${loc.zone_type === 'primary' ? '6,214,160' : '76,201,240'},0.12);${zoneColor}font-size:0.6rem;">${esc(loc.zone_type)}</span></td>
+                    <td class="font-mono text-xs text-txt-2">${loc.weight}</td>
+                    <td>
+                        <label class="toggle-switch">
+                            <input type="checkbox" ${loc.is_active ? 'checked' : ''} onchange="toggleLocationActive(${loc.id}, this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </td>
+                    <td>
+                        <button class="btn btn-ghost text-[0.6rem] py-0.5 px-2" onclick="deleteLocation(${loc.id}, '${esc(loc.city)}')">Del</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    async function addLocation() {
+        const city = document.getElementById('addLocCity').value.trim();
+        const state = document.getElementById('addLocState').value.trim().toUpperCase();
+        const zone = document.getElementById('addLocZone').value;
+        const weight = parseFloat(document.getElementById('addLocWeight').value) || 1.0;
+        if (!city || !state || state.length !== 2) { toast('Enter a city name and 2-letter state code.', 'error'); return; }
+
+        const result = await supabaseWrite('prosp_target_locations', 'POST', {
+            brand_id: 'carlton', city, state_abbr: state, zone_type: zone, weight, is_active: true
+        });
+        if (result) {
+            toast(`Added ${city}, ${state}`, 'success');
+            document.getElementById('addLocCity').value = '';
+            document.getElementById('addLocState').value = '';
+            fetchLocations();
+        } else { toast('Failed to add location. May already exist.', 'error'); }
+    }
+
+    async function toggleLocationActive(id, active) {
+        await supabaseWrite('prosp_target_locations', 'PATCH',
+            { is_active: active, updated_at: new Date().toISOString() },
+            `id=eq.${id}`
+        );
+        fetchLocations();
+    }
+
+    async function deleteLocation(id, city) {
+        if (!confirm(`Delete ${city}?`)) return;
+        await supabaseWrite('prosp_target_locations', 'DELETE', null, `id=eq.${id}`);
+        toast(`Deleted ${city}`, 'success');
+        fetchLocations();
+    }
+
+    // ── Categories ──
+    async function fetchCategories() {
+        const result = await supabaseSelect('prosp_target_categories',
+            'select=*&brand_id=eq.carlton&order=industry_group.asc,weight.desc'
+        );
+        prospCategories = Array.isArray(result) ? result : [];
+        document.getElementById('catCount').textContent = prospCategories.filter(c => c.is_active).length;
+        renderCategories();
+    }
+
+    function renderCategories() {
+        const panel = document.getElementById('categoriesPanel');
+        if (prospCategories.length === 0) {
+            panel.innerHTML = '<div class="empty-state">No target categories configured</div>';
+            return;
+        }
+
+        // Group by industry_group
+        const groups = {};
+        prospCategories.forEach(c => {
+            if (!groups[c.industry_group]) groups[c.industry_group] = [];
+            groups[c.industry_group].push(c);
+        });
+
+        let html = '';
+        Object.entries(groups).forEach(([group, items]) => {
+            const activeCount = items.filter(i => i.is_active).length;
+            html += `
+                <div class="group-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? '' : 'none'">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-semibold text-txt uppercase tracking-wider">${esc(group.replace(/_/g, ' '))}</span>
+                        <span class="badge badge-domain" style="font-size:0.55rem;">${activeCount}/${items.length}</span>
+                    </div>
+                    <span class="text-txt-3 text-xs">▾</span>
+                </div>
+                <div>
+                    <table class="contact-table"><tbody>
+                    ${items.map(cat => {
+                        const dimStyle = cat.is_active ? '' : 'opacity:0.45;';
+                        const kws = Array.isArray(cat.keywords) ? cat.keywords : [];
+                        return `
+                            <tr style="${dimStyle}">
+                                <td class="text-txt text-sm">${esc(cat.search_term)}</td>
+                                <td class="text-txt-3 text-xs">${esc(cat.sub_category || '—')}</td>
+                                <td>${kws.map(k => `<span class="kw-chip">${esc(k)}</span>`).join(' ')}</td>
+                                <td class="font-mono text-xs text-txt-2">${cat.weight}</td>
+                                <td>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" ${cat.is_active ? 'checked' : ''} onchange="toggleCategoryActive(${cat.id}, this.checked)">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </td>
+                                <td><button class="btn btn-ghost text-[0.6rem] py-0.5 px-2" onclick="deleteCategory(${cat.id}, '${esc(cat.search_term)}')">Del</button></td>
+                            </tr>
+                        `;
+                    }).join('')}
+                    </tbody></table>
+                </div>
+            `;
+        });
+        panel.innerHTML = html;
+    }
+
+    let addCatFormOpen = false;
+    function openAddCategoryForm() {
+        if (addCatFormOpen) { document.getElementById('addCatModal')?.classList.remove('active'); addCatFormOpen = false; return; }
+        // Get unique groups
+        const groups = [...new Set(prospCategories.map(c => c.industry_group))].sort();
+        const groupOptions = groups.map(g => `<option value="${esc(g)}">${esc(g.replace(/_/g, ' '))}</option>`).join('');
+
+        const modal = document.getElementById('addCatModal');
+        if (!modal) {
+            // Build inline form at top of categories panel
+            const panel = document.getElementById('categoriesPanel');
+            const form = document.createElement('div');
+            form.id = 'addCatInline';
+            form.style.cssText = 'padding:0.75rem 1rem;border-bottom:1px solid #1E2130;background:rgba(76,201,240,0.03);';
+            form.innerHTML = `
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-2">
+                    <div>
+                        <label class="block text-[0.6rem] text-txt-3 mb-0.5 uppercase">Industry Group</label>
+                        <input type="text" class="add-row-input" id="addCatGroup" placeholder="e.g. healthcare" list="catGroupList">
+                        <datalist id="catGroupList">${groupOptions}</datalist>
+                    </div>
+                    <div>
+                        <label class="block text-[0.6rem] text-txt-3 mb-0.5 uppercase">Search Term</label>
+                        <input type="text" class="add-row-input" id="addCatTerm" placeholder="e.g. dental office">
+                    </div>
+                    <div>
+                        <label class="block text-[0.6rem] text-txt-3 mb-0.5 uppercase">Sub-Category</label>
+                        <input type="text" class="add-row-input" id="addCatSub" placeholder="optional">
+                    </div>
+                    <div>
+                        <label class="block text-[0.6rem] text-txt-3 mb-0.5 uppercase">Weight</label>
+                        <input type="number" class="add-row-input" id="addCatWeight" value="1.0" min="0.5" max="3" step="0.5">
+                    </div>
+                    <div class="flex items-end">
+                        <button class="btn btn-primary text-xs py-1.5 px-3 w-full" onclick="addCategory()">Add</button>
+                    </div>
+                </div>
+            `;
+            panel.insertBefore(form, panel.firstChild);
+            addCatFormOpen = true;
+        } else {
+            document.getElementById('addCatInline')?.remove();
+            addCatFormOpen = false;
+        }
+    }
+
+    async function addCategory() {
+        const group = document.getElementById('addCatGroup').value.trim().toLowerCase().replace(/\s+/g, '_');
+        const term = document.getElementById('addCatTerm').value.trim();
+        const sub = document.getElementById('addCatSub').value.trim();
+        const weight = parseFloat(document.getElementById('addCatWeight').value) || 1.0;
+        if (!group || !term) { toast('Industry group and search term are required.', 'error'); return; }
+
+        const result = await supabaseWrite('prosp_target_categories', 'POST', {
+            brand_id: 'carlton', industry_group: group, search_term: term,
+            sub_category: sub || null, weight, is_active: true, keywords: []
+        });
+        if (result) {
+            toast(`Added "${term}" to ${group}`, 'success');
+            document.getElementById('addCatTerm').value = '';
+            document.getElementById('addCatSub').value = '';
+            document.getElementById('addCatInline')?.remove();
+            addCatFormOpen = false;
+            fetchCategories();
+        } else { toast('Failed to add. May already exist.', 'error'); }
+    }
+
+    async function toggleCategoryActive(id, active) {
+        await supabaseWrite('prosp_target_categories', 'PATCH',
+            { is_active: active, updated_at: new Date().toISOString() },
+            `id=eq.${id}`
+        );
+        fetchCategories();
+    }
+
+    async function deleteCategory(id, term) {
+        if (!confirm(`Delete "${term}"?`)) return;
+        await supabaseWrite('prosp_target_categories', 'DELETE', null, `id=eq.${id}`);
+        toast(`Deleted "${term}"`, 'success');
+        fetchCategories();
+    }
+
+    // ── Linked Sheets ──
+    async function fetchLinkedSheets() {
+        const result = await supabaseSelect('prosp_linked_sheets',
+            'select=*&brand_id=eq.carlton&order=created_at.desc'
+        );
+        prospSheets = Array.isArray(result) ? result : [];
+        document.getElementById('sheetCount').textContent = prospSheets.filter(s => s.is_active).length;
+        renderSheets();
+    }
+
+    function renderSheets() {
+        const tbody = document.getElementById('sheetsBody');
+        if (prospSheets.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No linked sheets</td></tr>';
+            return;
+        }
+        tbody.innerHTML = prospSheets.map(s => {
+            const dimStyle = s.is_active ? '' : 'opacity:0.45;';
+            return `
+                <tr style="${dimStyle}">
+                    <td class="text-txt text-sm font-medium">${esc(s.label || '—')}</td>
+                    <td><a href="${esc(s.sheet_url)}" target="_blank" rel="noopener" class="text-info hover:underline text-xs" style="max-width:200px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(s.sheet_url || '')}</a></td>
+                    <td class="text-txt-2 text-xs">${esc(s.sheet_name || 'Sheet1')}</td>
+                    <td class="text-txt-3 text-xs font-mono">${s.last_checked_at ? timeAgo(s.last_checked_at) : '—'}</td>
+                    <td class="text-txt-2 text-xs font-mono">${s.last_row_count ?? '—'}</td>
+                    <td>
+                        <label class="toggle-switch">
+                            <input type="checkbox" ${s.is_active ? 'checked' : ''} onchange="toggleSheetActive(${s.id}, this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </td>
+                    <td><button class="btn btn-ghost text-[0.6rem] py-0.5 px-2" onclick="deleteSheet(${s.id}, '${esc(s.label || '')}')">Del</button></td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    async function addSheet() {
+        const label = document.getElementById('addSheetLabel').value.trim();
+        const url = document.getElementById('addSheetUrl').value.trim();
+        const tab = document.getElementById('addSheetTab').value.trim() || 'Sheet1';
+        if (!label || !url) { toast('Label and URL are required.', 'error'); return; }
+
+        const result = await supabaseWrite('prosp_linked_sheets', 'POST', {
+            brand_id: 'carlton', label, sheet_url: url, sheet_name: tab, is_active: true
+        });
+        if (result) {
+            toast(`Linked "${label}"`, 'success');
+            document.getElementById('addSheetLabel').value = '';
+            document.getElementById('addSheetUrl').value = '';
+            document.getElementById('addSheetTab').value = 'Sheet1';
+            fetchLinkedSheets();
+        } else { toast('Failed to add sheet.', 'error'); }
+    }
+
+    async function toggleSheetActive(id, active) {
+        await supabaseWrite('prosp_linked_sheets', 'PATCH', { is_active: active }, `id=eq.${id}`);
+        fetchLinkedSheets();
+    }
+
+    async function deleteSheet(id, label) {
+        if (!confirm(`Remove "${label}"?`)) return;
+        await supabaseWrite('prosp_linked_sheets', 'DELETE', null, `id=eq.${id}`);
+        toast(`Removed "${label}"`, 'success');
+        fetchLinkedSheets();
+    }
+
+    // ── Lead Import ──
+    function switchImportMode(mode) {
+        document.getElementById('importSheetsForm').style.display = mode === 'sheets' ? '' : 'none';
+        document.getElementById('importJsonForm').style.display = mode === 'json' ? '' : 'none';
+        document.getElementById('importTabSheets').classList.toggle('active', mode === 'sheets');
+        document.getElementById('importTabJson').classList.toggle('active', mode === 'json');
+    }
+
+    async function importFromSheets() {
+        const url = document.getElementById('importSheetsUrl').value.trim();
+        const tab = document.getElementById('importSheetsTab').value.trim() || 'Sheet1';
+        if (!url) { toast('Enter a Google Sheets URL.', 'error'); return; }
+
+        const btn = document.getElementById('importSheetsBtn');
+        btn.disabled = true; btn.textContent = 'Importing...';
+        try {
+            const result = await fetchJSON('https://n8n.carltonaiservices.com/webhook/prosp-lead-import', {
+                sheets_url: url, sheet_name: tab, source: 'google_sheets', brand_id: 'carlton'
+            });
+            if (result?.success) {
+                toast(`Import started: ${result.import_id || 'processing'}`, 'success');
+                document.getElementById('importSheetsUrl').value = '';
+            } else { toast(`Import failed: ${result?.message || 'Unknown error'}`, 'error'); }
+        } catch (err) { toast(`Import failed: ${err.message}`, 'error'); }
+        finally { btn.disabled = false; btn.textContent = 'Import from Sheets'; }
+    }
+
+    async function importFromJson() {
+        const raw = document.getElementById('importJsonData').value.trim();
+        if (!raw) { toast('Paste a JSON array of leads.', 'error'); return; }
+
+        let leads;
+        try { leads = JSON.parse(raw); } catch { toast('Invalid JSON. Must be an array of objects.', 'error'); return; }
+        if (!Array.isArray(leads)) { toast('JSON must be an array.', 'error'); return; }
+        if (leads.length === 0) { toast('Array is empty.', 'error'); return; }
+        const missing = leads.filter(l => !l.business_name);
+        if (missing.length) { toast(`${missing.length} leads missing business_name.`, 'error'); return; }
+
+        const btn = document.getElementById('importJsonBtn');
+        btn.disabled = true; btn.textContent = `Importing ${leads.length} leads...`;
+        try {
+            const result = await fetchJSON('https://n8n.carltonaiservices.com/webhook/prosp-lead-import', {
+                leads, source: 'manual_import', brand_id: 'carlton'
+            });
+            if (result?.success) {
+                toast(`Import started: ${leads.length} leads queued`, 'success');
+                document.getElementById('importJsonData').value = '';
+            } else { toast(`Import failed: ${result?.message || 'Unknown error'}`, 'error'); }
+        } catch (err) { toast(`Import failed: ${err.message}`, 'error'); }
+        finally { btn.disabled = false; btn.textContent = 'Import Leads'; }
+    }
+
     // MODAL HANDLERS
     // ═══════════════════════════════════════
     document.querySelectorAll('.modal-backdrop').forEach(el => {
