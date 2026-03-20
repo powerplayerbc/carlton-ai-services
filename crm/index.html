@@ -169,6 +169,7 @@
 
         /* ── Lifecycle badges ── */
         .lc-subscriber { background: rgba(107,114,128,0.15); color: #9CA3AF; }
+        .lc-prospect { background: rgba(45,212,191,0.15); color: #2DD4BF; }
         .lc-lead { background: rgba(59,130,246,0.15); color: #60A5FA; }
         .lc-mql { background: rgba(76,201,240,0.15); color: #4CC9F0; }
         .lc-sql { background: rgba(168,85,247,0.15); color: #A855F7; }
@@ -685,6 +686,7 @@
                         <select id="filterLifecycle" class="form-input py-1 px-2 text-xs" style="width: auto;" onchange="applyContactFilters()">
                             <option value="all">All Stages</option>
                             <option value="subscriber">Subscriber</option>
+                            <option value="prospect">Prospect</option>
                             <option value="lead">Lead</option>
                             <option value="mql">MQL</option>
                             <option value="sql">SQL</option>
@@ -907,6 +909,7 @@
                     <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wider">New Stage</label>
                     <select id="csNewStage" class="form-input">
                         <option value="subscriber">Subscriber</option>
+                        <option value="prospect">Prospect</option>
                         <option value="lead">Lead</option>
                         <option value="mql">MQL</option>
                         <option value="sql">SQL</option>
@@ -1002,8 +1005,8 @@
     const SUPABASE_URL = 'https://yrwrswyjawmgtxrgbnim.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlyd3Jzd3lqYXdtZ3R4cmdibmltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzYzODY2MzMsImV4cCI6MjA1MTk2MjYzM30.CjKVHdkFnxFDyZSN4_5nTeX6K7SEu-DjvBH2lzfVrX8';
 
-    const LIFECYCLE_STAGES = ['subscriber', 'lead', 'mql', 'sql', 'opportunity', 'customer', 'evangelist', 'churned'];
-    const PIPELINE_STAGES = ['subscriber', 'lead', 'mql', 'sql', 'opportunity', 'customer'];
+    const LIFECYCLE_STAGES = ['subscriber', 'prospect', 'lead', 'mql', 'sql', 'opportunity', 'customer', 'evangelist', 'churned'];
+    const PIPELINE_STAGES = ['subscriber', 'prospect', 'lead', 'mql', 'sql', 'opportunity', 'customer'];
 
     // ═══════════════════════════════════════
     // STATE
@@ -1488,7 +1491,7 @@
         board.innerHTML = '<div class="empty-state" style="width:100%;">Loading pipeline...</div>';
 
         const result = await supabaseSelect('unified_contacts',
-            'select=contact_id,first_name,last_name,company,lifecycle_stage,engagement_level,engagement_score,last_interaction_at&merged_into=is.null&lifecycle_stage=in.(subscriber,lead,mql,sql,opportunity,customer)&order=engagement_score.desc'
+            'select=contact_id,first_name,last_name,company,lifecycle_stage,engagement_level,engagement_score,last_interaction_at&merged_into=is.null&lifecycle_stage=in.(subscriber,prospect,lead,mql,sql,opportunity,customer)&order=engagement_score.desc'
         );
         const data = Array.isArray(result) ? result : [];
 
@@ -1501,7 +1504,7 @@
         });
 
         const stageColors = {
-            subscriber: '#9CA3AF', lead: '#60A5FA', mql: '#4CC9F0',
+            subscriber: '#9CA3AF', prospect: '#2DD4BF', lead: '#60A5FA', mql: '#4CC9F0',
             sql: '#A855F7', opportunity: '#FFD93D', customer: '#06D6A0'
         };
 
