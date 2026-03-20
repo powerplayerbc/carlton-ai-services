@@ -1137,6 +1137,37 @@
         </div>
     </div>
 
+    <!-- ═══ CRM LOG REPLY MODAL ═══ -->
+    <div class="modal-backdrop" id="crmLogReplyModal">
+        <div class="modal-content" style="max-width: 520px;">
+            <div class="panel-header">
+                <h3 class="font-heading font-semibold text-sm tracking-wide uppercase">Log Social Reply</h3>
+                <button onclick="closeCrmLogReplyModal()" class="text-txt-3 hover:text-txt transition-colors">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div>
+                    <label class="block text-xs text-txt-2 font-mono uppercase tracking-wide mb-2">Reply Text</label>
+                    <textarea class="form-input" id="crmLogReplyText" placeholder="Paste the reply text here..." rows="4" style="resize: vertical; min-height: 100px;"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs text-txt-2 font-mono uppercase tracking-wide mb-2">Author Name</label>
+                    <input type="text" class="form-input" id="crmLogReplyAuthor" placeholder="Their name (optional)">
+                </div>
+                <div class="flex items-center justify-between">
+                    <label class="text-xs text-txt-2">Auto-draft response</label>
+                    <button type="button" class="on" id="crmLogReplyAutoDraft" onclick="this.classList.toggle('on')" style="position:relative;width:36px;height:20px;background:rgba(6,214,160,0.3);border-radius:10px;cursor:pointer;border:none;transition:background 0.2s;"></button>
+                </div>
+                <input type="hidden" id="crmLogReplyContactId">
+                <div class="flex gap-3">
+                    <button onclick="submitCrmLogReply()" class="btn btn-primary flex-1 py-2.5">Submit Reply</button>
+                    <button onclick="closeCrmLogReplyModal()" class="btn btn-ghost flex-1 py-2.5">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ═══ EMAIL PREVIEW MODAL ═══ -->
     <div class="modal-backdrop" id="emailPreviewModal">
         <div class="modal-content" style="max-width: 680px;">
@@ -1370,6 +1401,13 @@
         refreshAll();
         startAutoRefresh();
         checkPendingSnapshots();
+
+        // Cross-link: auto-open 360 panel if ?contact= param present
+        const params = new URLSearchParams(window.location.search);
+        const autoContactId = params.get('contact');
+        if (autoContactId) {
+            setTimeout(() => open360(autoContactId), 500);
+        }
     }
 
     async function checkPendingSnapshots() {
@@ -1691,6 +1729,9 @@
             `).join('')}
         </div></div>`;
 
+        // Social Activity section
+        html += await renderSocialActivity(contactId, name);
+
         // Action buttons
         html += `<div class="flex gap-2 flex-wrap">
             <button class="btn btn-primary text-xs" onclick="openLogInteraction('${esc(contactId)}')">Log Interaction</button>
@@ -1704,6 +1745,168 @@
         document.getElementById('panelOverlay').classList.remove('active');
         document.getElementById('panel360').classList.remove('active');
         current360ContactId = null;
+    }
+
+    // ═══════════════════════════════════════
+    // SOCIAL ACTIVITY IN 360 PANEL
+    // ═══════════════════════════════════════
+    async function renderSocialActivity(contactId, contactName) {
+        let socialData = null;
+        try {
+            const resp = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_contact_social_timeline`, {
+                method: 'POST',
+                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ p_contact_id: contactId, p_brand_id: 'carlton' })
+            });
+            socialData = await resp.json();
+        } catch (e) { /* silently skip if RPC doesn't exist yet */ }
+
+        if (!socialData || socialData.error || (!socialData.drafts?.length && !socialData.conversations?.length && !socialData.total_outreach)) {
+            return ''; // No social data, don't show section
+        }
+
+        const drafts = socialData.drafts || [];
+        const conversations = socialData.conversations || [];
+        const totalOutreach = socialData.total_outreach || 0;
+        const totalReplies = socialData.total_replies || 0;
+        const platformColors = {
+            linkedin: '#0A66C2', twitter: '#1DA1F2', facebook: '#1877F2',
+            instagram: '#E1306C', reddit: '#FF4500'
+        };
+
+        let items = '';
+        drafts.forEach(d => {
+            const pColor = platformColors[d.platform] || '#8A95A9';
+            const pLabel = d.platform ? d.platform.charAt(0).toUpperCase() + d.platform.slice(1) : 'Unknown';
+            const context = d.subreddit ? `r/${d.subreddit}` : (d.context_label || '');
+            const score = d.score || d.qualification_score || '';
+
+            items += `<div class="py-2 border-b border-border/30 last:border-0">
+                <div class="flex items-center justify-between mb-1">
+                    <div class="flex items-center gap-2">
+                        <span class="badge" style="background:rgba(${pColor === '#0A66C2' ? '10,102,194' : pColor === '#FF4500' ? '255,69,0' : '138,149,169'},0.15);color:${pColor};font-size:0.55rem;">${esc(pLabel)}</span>
+                        ${context ? `<span class="text-[0.65rem] text-txt-3">${esc(context)}</span>` : ''}
+                    </div>
+                    ${score ? `<span class="text-[0.6rem] text-txt-3 font-mono">Score: ${score}</span>` : ''}
+                </div>
+                <div class="text-xs text-txt ml-4 mb-1">
+                    <span class="text-accent">YOU</span> ${d.outreach_type === 'dm' ? 'sent' : 'commented'}: "${esc(truncateStr(d.message_content || d.content || '', 80))}"
+                </div>`;
+
+            if (d.has_reply && d.latest_reply) {
+                items += `<div class="text-xs text-txt-2 ml-4 mb-1">→ They replied: "${esc(truncateStr(d.latest_reply, 80))}"</div>`;
+            }
+            if (d.pending_response) {
+                items += `<div class="text-xs ml-4 mb-1" style="color:#FFD93D;">→ DRAFT REPLY: "${esc(truncateStr(d.pending_response, 80))}"</div>
+                <div class="flex items-center gap-1 ml-4">
+                    <button class="btn btn-primary text-xs py-0.5 px-2" style="font-size:0.6rem;" onclick="approveConvoFromCRM('${d.conversation_id}')">Approve</button>
+                    <button class="btn btn-ghost text-xs py-0.5 px-2" style="font-size:0.6rem;" onclick="copySocialText(\`${esc(d.pending_response).replace(/`/g, '')}\`)">Copy</button>
+                    <button class="btn btn-primary text-xs py-0.5 px-2" style="font-size:0.6rem;" onclick="markConvoSentFromCRM('${d.conversation_id}')">Mark Sent</button>
+                </div>`;
+            }
+            if (!d.has_reply && !d.pending_response) {
+                items += `<div class="text-xs text-txt-3 ml-4">→ No response yet</div>`;
+            }
+            items += '</div>';
+        });
+
+        const socialLink = encodeURIComponent(contactName || '');
+
+        return `<div class="panel"><div class="panel-header">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-semibold text-txt-3 uppercase tracking-wider">Social Activity (${totalOutreach} outreach | ${totalReplies} replies)</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="/social-dashboard?search=${socialLink}&auth=rdgr" target="_blank" class="text-xs text-info hover:underline" style="text-decoration:none;">View in Social →</a>
+                <button class="btn btn-ghost text-xs py-1 px-2" onclick="openCrmLogReply('${esc(contactId)}')">Log Reply</button>
+            </div>
+        </div>
+        <div class="panel-body" style="max-height: 400px; overflow-y: auto;">
+            ${items || '<div class="empty-state text-xs">No social activity recorded</div>'}
+        </div>
+        <div class="text-xs text-txt-3 px-4 py-2 border-t border-border/30">
+            Total: ${totalOutreach} outreach | ${totalReplies} replies
+        </div></div>`;
+    }
+
+    function truncateStr(str, max) {
+        if (!str) return '';
+        return str.length > max ? str.substring(0, max - 1) + '\u2026' : str;
+    }
+
+    async function copySocialText(text) {
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast('Copied to clipboard', 'success');
+        } catch (e) { showToast('Copy failed', 'error'); }
+    }
+
+    async function approveConvoFromCRM(convoId) {
+        try {
+            await fetch(`${SUPABASE_URL}/rest/v1/social_conversations?id=eq.${convoId}`, {
+                method: 'PATCH',
+                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                body: JSON.stringify({ approval_status: 'approved', approved_at: new Date().toISOString() }),
+            });
+            showToast('Response approved', 'success');
+            if (current360ContactId) open360(current360ContactId);
+        } catch (err) { showToast('Failed: ' + err.message, 'error'); }
+    }
+
+    async function markConvoSentFromCRM(convoId) {
+        try {
+            await fetch(`${SUPABASE_URL}/rest/v1/social_conversations?id=eq.${convoId}`, {
+                method: 'PATCH',
+                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                body: JSON.stringify({ action_status: 'acted', acted_at: new Date().toISOString() }),
+            });
+            showToast('Marked as sent', 'success');
+            if (current360ContactId) open360(current360ContactId);
+        } catch (err) { showToast('Failed: ' + err.message, 'error'); }
+    }
+
+    // ═══════════════════════════════════════
+    // CRM LOG REPLY MODAL
+    // ═══════════════════════════════════════
+    function openCrmLogReply(contactId) {
+        document.getElementById('crmLogReplyContactId').value = contactId;
+        document.getElementById('crmLogReplyText').value = '';
+        document.getElementById('crmLogReplyAuthor').value = '';
+        const toggle = document.getElementById('crmLogReplyAutoDraft');
+        if (!toggle.classList.contains('on')) toggle.classList.add('on');
+        document.getElementById('crmLogReplyModal').classList.add('active');
+    }
+
+    function closeCrmLogReplyModal() {
+        document.getElementById('crmLogReplyModal').classList.remove('active');
+    }
+
+    async function submitCrmLogReply() {
+        const replyText = document.getElementById('crmLogReplyText').value.trim();
+        if (!replyText) { showToast('Reply text is required', 'error'); return; }
+        const contactId = document.getElementById('crmLogReplyContactId').value;
+        const payload = {
+            contact_id: contactId,
+            reply_text: replyText,
+            author: document.getElementById('crmLogReplyAuthor').value.trim() || 'Unknown',
+            brand_id: 'carlton',
+            generate_response: document.getElementById('crmLogReplyAutoDraft').classList.contains('on'),
+        };
+        try {
+            const res = await fetch('https://n8n.carltonaiservices.com/webhook/social-reply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            const result = await res.json();
+            if (result && result.success) {
+                closeCrmLogReplyModal();
+                showToast('Reply logged' + (result.response_drafted ? ' — response drafted' : ''), 'success');
+                if (current360ContactId) open360(current360ContactId);
+            } else {
+                showToast('Failed: ' + (result.error || 'Unknown error'), 'error');
+            }
+        } catch (err) { showToast('Failed: ' + err.message, 'error'); }
     }
 
     // ═══════════════════════════════════════
