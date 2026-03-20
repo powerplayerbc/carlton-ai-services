@@ -673,6 +673,46 @@
                         <span class="text-sm text-txt-2">Include questions in body</span>
                         <label class="toggle-switch"><input type="checkbox" id="use_questions"><span class="toggle-slider"></span></label>
                     </div>
+                    <div class="form-row">
+                        <span class="text-sm text-txt-2">Identify as sender ("I'm [Name] from [Company]")</span>
+                        <label class="toggle-switch"><input type="checkbox" id="identify_as_sender"><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="form-row">
+                        <span class="text-sm text-txt-2">Include value propositions in prompt</span>
+                        <label class="toggle-switch"><input type="checkbox" id="include_value_props"><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="form-row">
+                        <span class="text-sm text-txt-2">Prefer industry-matched proof entries</span>
+                        <label class="toggle-switch"><input type="checkbox" id="industry_match_proofs"><span class="toggle-slider"></span></label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ Panel 5b: Creativity & Advanced ══ -->
+            <div class="panel" id="panel-creativity">
+                <div class="panel-header">
+                    <span class="font-heading font-semibold text-sm tracking-wide">Creativity & Advanced</span>
+                </div>
+                <div class="panel-body space-y-5">
+                    <div class="slider-row" data-field="creativity">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-xs text-txt-3 uppercase tracking-wider font-medium">Creativity</span>
+                            <span class="badge badge-accent text-xs" id="val_creativity">7</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs text-txt-2 w-16 text-right shrink-0">Predictable</span>
+                            <input type="range" class="tone-slider flex-1" id="creativity" min="1" max="10" value="7">
+                            <span class="text-xs text-txt-2 w-16 shrink-0">Creative</span>
+                        </div>
+                        <p class="text-xs text-txt-3 italic mt-1" id="desc_creativity"></p>
+                        <p class="text-xs text-txt-3 mt-1">Lower = more consistent emails, Higher = more unique approaches</p>
+                    </div>
+                    <div class="section-divider"></div>
+                    <div>
+                        <label class="form-label">Custom Instruction</label>
+                        <textarea class="form-input" id="custom_instruction" rows="3" placeholder="Additional guidance appended to every GPT prompt, e.g. &quot;Always reference the lead's city&quot; or &quot;Focus on how automation reduces hiring needs&quot;"></textarea>
+                        <p class="text-xs text-txt-3 mt-1">Free-text appended to every outreach prompt. Token budget auto-scales with email length.</p>
+                    </div>
                 </div>
             </div>
 
@@ -873,15 +913,28 @@
         signoff_style: 'warm', signoff_custom: '',
         email_length: 'medium', use_recipient_name: true,
         personalization_depth: 'medium', proof_style: 'case_study',
-        first_person_style: 'i', version: 1
+        first_person_style: 'i',
+        creativity: 7, identify_as_sender: true, include_value_props: true,
+        custom_instruction: '', industry_match_proofs: true,
+        version: 1
+    };
+
+    const TONE_LABELS = {
+        tone_warmth:     ['','Ice Cold','Very Direct','Businesslike','Reserved','Neutral','Friendly','Warm','Very Warm','Caring','Heartfelt'],
+        tone_formality:  ['','Text Message','Very Informal','Relaxed','Casual Pro','Balanced','Polished','Business Formal','Very Formal','Highly Formal','Executive'],
+        tone_confidence: ['','Tentative','Unsure','Modest','Humble','Balanced','Self-Assured','Confident','Bold','Very Bold','Absolute'],
+        tone_humor:      ['','Dead Serious','Strictly Pro','Mostly Serious','Dry Wit','Balanced','Light-Hearted','Playful','Witty','Very Humorous','Full Comedy'],
+        tone_salesiness: ['','Anti-Sales','Very Genuine','Helpful First','Subtle','Balanced','Lightly Persuasive','Persuasive','Sales-Forward','Aggressive','Hard Close'],
+        creativity:      ['','Predictable','Conservative','Conservative','Balanced','Balanced','Balanced','Creative','Creative','Wild','Wild'],
     };
 
     const TONE_DESCRIPTIONS = {
-        tone_warmth:     { low: 'Direct, straight to the point', mid: 'Professional but approachable', high: 'Warm, friendly, genuinely caring' },
-        tone_formality:  { low: 'Casual and conversational', mid: 'Professional but not stiff', high: 'Formal and polished' },
-        tone_confidence: { low: 'Humble and understated', mid: 'Confident but not arrogant', high: 'Bold and assertive' },
-        tone_humor:      { low: 'Serious and professional', mid: 'Occasionally light', high: 'Witty with humor' },
-        tone_salesiness: { low: 'Genuinely helpful, no pressure', mid: 'Subtly persuasive', high: 'Clearly making a pitch' },
+        tone_warmth:     ['','ice-cold and blunt — zero pleasantries','very direct — no small talk, facts only','businesslike and efficient — minimal warmth','polite but reserved — professional distance','neutral and balanced — neither cold nor warm','friendly and personable — like a colleague','warm and approachable — genuine interest in them','very warm — like writing to someone you want to help','caring and empathetic — you genuinely want their success','deeply personal and heartfelt — like writing to a friend'],
+        tone_formality:  ['','extremely casual — like a text message','very informal — slang is fine, contractions everywhere','relaxed and conversational — easy-going','casual professional — friendly but competent','balanced — standard business communication','polished professional — clean and composed','business formal — structured and precise','very formal — corporate boardroom appropriate','highly formal — no contractions, measured language','ultra-formal — executive correspondence level'],
+        tone_confidence: ['','extremely tentative — hedging everything','very unsure — lots of qualifiers and maybes','modest — downplaying your expertise','humble — letting results speak quietly','balanced — confident without overstatement','self-assured — clear belief in your value','confident — strong claims backed by experience','bold — assertive statements, no hedging','very bold — commanding authority on the topic','absolute conviction — unwavering certainty'],
+        tone_humor:      ['','dead serious — no levity whatsoever','very serious — strictly professional','mostly serious — an occasional light touch','professional with dry wit — subtle','balanced — a light moment feels natural','light-hearted — warm humor throughout','playful — witty observations, fun analogies','witty — clever wordplay and personality','very humorous — jokes and colorful language','full comedy — entertaining above all else'],
+        tone_salesiness: ['','anti-sales — purely helpful, zero pitch','very genuine — sharing info with no agenda','helpful first — any business angle is incidental','subtle — gently pointing toward a conversation','balanced — clear value prop but no pressure','lightly persuasive — nudging toward a next step','persuasive — making a clear case for action','sales-forward — definite pitch with urgency','aggressive pitch — strong push for commitment','hard close — maximum urgency and pressure'],
+        creativity:      ['','very consistent, safe, formulaic','reliable with minor variation','reliable with minor variation','good mix of consistency and creativity','good mix of consistency and creativity','good mix of consistency and creativity','more varied language and approaches','more varied language and approaches','maximum creativity, least predictable','maximum creativity, least predictable'],
     };
 
     // ═══════════════════════════════════════════════════
@@ -1019,8 +1072,8 @@
         document.getElementById('signature_name').value = s.signature_name || '';
         document.getElementById('company_name').value = s.company_name || '';
 
-        // Sliders
-        ['tone_warmth', 'tone_formality', 'tone_confidence', 'tone_humor', 'tone_salesiness'].forEach(f => {
+        // Sliders (including creativity)
+        ['tone_warmth', 'tone_formality', 'tone_confidence', 'tone_humor', 'tone_salesiness', 'creativity'].forEach(f => {
             const slider = document.getElementById(f);
             slider.value = s[f];
             updateSliderFill(slider);
@@ -1033,12 +1086,18 @@
         document.getElementById('max_paragraphs').value = s.max_paragraphs;
         document.getElementById('max_sentences_per_paragraph').value = s.max_sentences_per_paragraph;
 
+        // Text fields (advanced)
+        document.getElementById('custom_instruction').value = s.custom_instruction || '';
+
         // Toggles
         document.getElementById('subject_use_emoji').checked = !!s.subject_use_emoji;
         document.getElementById('use_recipient_name').checked = s.use_recipient_name !== false;
         document.getElementById('use_case_studies').checked = s.use_case_studies !== false;
         document.getElementById('use_specific_numbers').checked = s.use_specific_numbers !== false;
         document.getElementById('use_questions').checked = s.use_questions !== false;
+        document.getElementById('identify_as_sender').checked = s.identify_as_sender !== false;
+        document.getElementById('include_value_props').checked = s.include_value_props !== false;
+        document.getElementById('industry_match_proofs').checked = s.industry_match_proofs !== false;
 
         // Pills
         const pillFields = ['subject_style', 'subject_length_target', 'greeting_style', 'signoff_style',
@@ -1083,10 +1142,11 @@
 
     function updateSliderDesc(field, val) {
         const el = document.getElementById(`desc_${field}`);
-        if (!el || !TONE_DESCRIPTIONS[field]) return;
-        const d = TONE_DESCRIPTIONS[field];
+        if (!el) return;
         const v = parseInt(val);
-        el.textContent = v <= 3 ? d.low : v <= 7 ? d.mid : d.high;
+        const descs = TONE_DESCRIPTIONS[field];
+        const labels = TONE_LABELS[field];
+        if (descs && descs[v]) el.textContent = (labels && labels[v] ? labels[v] + ' — ' : '') + descs[v];
     }
 
     // Wire up sliders
@@ -1664,7 +1724,7 @@
     // ═══════════════════════════════════════════════════
 
     // Text inputs & textareas
-    ['about_you', 'signature_name', 'company_name', 'greeting_custom', 'signoff_custom'].forEach(id => {
+    ['about_you', 'signature_name', 'company_name', 'greeting_custom', 'signoff_custom', 'custom_instruction'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         el.addEventListener('input', () => {
@@ -1687,7 +1747,7 @@
     });
 
     // Toggles
-    ['subject_use_emoji', 'use_recipient_name', 'use_case_studies', 'use_specific_numbers', 'use_questions'].forEach(id => {
+    ['subject_use_emoji', 'use_recipient_name', 'use_case_studies', 'use_specific_numbers', 'use_questions', 'identify_as_sender', 'include_value_props', 'industry_match_proofs'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         el.addEventListener('change', () => {
