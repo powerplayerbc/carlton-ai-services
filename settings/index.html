@@ -389,8 +389,8 @@
                     <p class="text-txt-3 text-sm mt-1">Configure how outreach email copy is generated</p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="badge badge-accent" id="versionBadge">v—</span>
-                    <span class="text-xs text-txt-3 font-mono" id="lastSaved">—</span>
+                    <span class="badge badge-accent" id="versionBadge">loading...</span>
+                    <span class="text-xs text-txt-3 font-mono" id="lastSaved"></span>
                 </div>
             </div>
         </div>
@@ -1041,39 +1041,44 @@
     // INIT — LOAD ALL DATA
     // ═══════════════════════════════════════════════════
 
+    function safeGet(path) {
+        return supabaseGet(path).catch(err => { console.warn('Non-critical fetch failed:', path, err.message); return []; });
+    }
+
     async function initSettings() {
+        // Settings + proof bank are critical — fail visibly if they break
+        let settingsArr, proofArr;
         try {
-            const [settingsArr, proofArr, suggestionsArr, snapshotsArr, draftsArr] = await Promise.all([
+            [settingsArr, proofArr] = await Promise.all([
                 supabaseGet(`outreach_voice_settings?brand_id=eq.${BRAND_ID}&limit=1`),
-                supabaseGet(`outreach_proof_bank?brand_id=eq.${BRAND_ID}&is_active=eq.true&order=sort_order.asc`),
-                supabaseGet(`voice_learning_log?brand_id=eq.${BRAND_ID}&status=eq.pending&order=created_at.desc`),
-                supabaseGet(`voice_settings_snapshots?brand_id=eq.${BRAND_ID}&status=eq.pending&order=created_at.desc`),
-                supabaseGet(`copy_drafts?brand_id=eq.${BRAND_ID}&copy_type=eq.cold_outreach_email&review_status=in.(approved,rejected,skipped)&order=updated_at.desc&limit=50&select=id,review_status,human_feedback,updated_at`)
+                safeGet(`outreach_proof_bank?brand_id=eq.${BRAND_ID}&is_active=eq.true&order=sort_order.asc`)
             ]);
-
-            // Settings
-            const raw = settingsArr.length ? settingsArr[0] : { ...DEFAULTS };
-            currentSettings = { ...DEFAULTS, ...raw };
-            originalSettings = JSON.parse(JSON.stringify(currentSettings));
-            populateForm();
-
-            // Proof bank
-            proofBank = proofArr || [];
-            renderProofBank();
-
-            // AI Snapshots (primary)
-            renderSnapshot(snapshotsArr || []);
-
-            // Individual AI Suggestions (secondary)
-            renderSuggestions(suggestionsArr || []);
-
-            // Recent patterns
-            renderPatterns(draftsArr || []);
-
         } catch (err) {
-            console.error('Init failed:', err);
-            toast('Failed to load settings', 'error');
+            console.error('Settings load failed:', err);
+            toast('Failed to load settings: ' + err.message, 'error');
+            return;
         }
+
+        // Populate core settings
+        const raw = settingsArr.length ? settingsArr[0] : { ...DEFAULTS };
+        currentSettings = { ...DEFAULTS, ...raw };
+        originalSettings = JSON.parse(JSON.stringify(currentSettings));
+        populateForm();
+
+        // Proof bank
+        proofBank = proofArr || [];
+        renderProofBank();
+
+        // Non-critical data — load in parallel, each one independent
+        const [suggestionsArr, snapshotsArr, draftsArr] = await Promise.all([
+            safeGet(`voice_learning_log?brand_id=eq.${BRAND_ID}&status=eq.pending&order=created_at.desc`),
+            safeGet(`voice_settings_snapshots?brand_id=eq.${BRAND_ID}&status=eq.pending&order=created_at.desc`),
+            safeGet(`copy_drafts?brand_id=eq.${BRAND_ID}&copy_type=eq.cold_outreach_email&review_status=in.(approved,rejected,skipped)&order=updated_at.desc&limit=50&select=id,review_status,human_feedback,updated_at`)
+        ]);
+
+        renderSnapshot(snapshotsArr || []);
+        renderSuggestions(suggestionsArr || []);
+        renderPatterns(draftsArr || []);
     }
 
     // ═══════════════════════════════════════════════════
