@@ -2547,11 +2547,13 @@ function renderApprovalCard(draft) {
     const p = draft.platform;
 
     if (p === 'linkedin') {
-        const jobTitle = bio || rsd.sourceJobTitle || '';
+        const headline = rsd.headline || '';
+        const jobTitle = rsd.jobTitle || bio || '';
         const companyUrl = rsd.companyUrl || '';
         const email = rsd.email || draft.email_from_profile || '';
-        metaLine = [company ? (companyUrl ? `<a href="${escapeHtml(companyUrl)}" target="_blank" class="hover:text-info" onclick="event.stopPropagation()">${escapeHtml(company)}</a>` : escapeHtml(company)) : '', jobTitle ? escapeHtml(jobTitle) : '', followers, email ? escapeHtml(email) : '', score ? `Score: ${score}` : ''].filter(Boolean).join(' | ');
-        if (rsd.sourceJobTitle) contextHtml = `<div class="text-[0.65rem] text-txt-3 mb-1">Source: ${escapeHtml(rsd.sourceJobTitle)}</div>`;
+        metaLine = [company ? (companyUrl ? `<a href="${escapeHtml(companyUrl)}" target="_blank" class="hover:text-info" onclick="event.stopPropagation()">${escapeHtml(company)}</a>` : escapeHtml(company)) : '', jobTitle || headline ? escapeHtml(truncate(jobTitle || headline, 50)) : '', followers, score ? `Score: ${score}` : ''].filter(Boolean).join(' | ');
+        if (rsd.sourceJobTitle) contextHtml = `<div class="text-[0.65rem] text-txt-3 mb-1" onclick="event.stopPropagation()">Source job: ${escapeHtml(rsd.sourceJobTitle)}</div>`;
+        if (rsd.enriched && rsd.about) contextHtml += `<div class="text-[0.65rem] text-txt-3 mb-1" style="line-height:1.4;" onclick="event.stopPropagation()">${escapeHtml(truncate(rsd.about, 120))}</div>`;
     } else if (p === 'twitter') {
         const username = draft.platform_username ? `@${draft.platform_username}` : '';
         const tweetText = rsd.text || snippet || '';
@@ -3104,11 +3106,15 @@ function openOutreachDetail(draftId) {
     const details = [];
 
     if (draft.platform === 'linkedin') {
+        if (rsd.headline) details.push(['Headline', rsd.headline]);
         if (rsd.company) details.push(['Company', rsd.company]);
         if (rsd.companyUrl) details.push(['Company URL', `<a href="${escapeHtml(rsd.companyUrl)}" target="_blank" class="text-info hover:underline">${escapeHtml(rsd.companyUrl)}</a>`]);
-        if (rsd.sourceJobTitle) details.push(['Source Job', rsd.sourceJobTitle]);
-        if (rsd.email) details.push(['Email', rsd.email]);
+        if (rsd.jobTitle) details.push(['Job Title', rsd.jobTitle]);
+        if (rsd.sourceJobTitle) details.push(['Source Job Posting', rsd.sourceJobTitle]);
+        if (rsd.email) details.push(['Email', `<a href="mailto:${escapeHtml(rsd.email)}" class="text-info hover:underline">${escapeHtml(rsd.email)}</a>`]);
+        if (rsd.connectionsCount) details.push(['Connections', formatNum(rsd.connectionsCount)]);
         if (draft.follower_count) details.push(['Followers', formatNum(draft.follower_count)]);
+        if (rsd.skills && rsd.skills.length) details.push(['Skills', rsd.skills.slice(0, 8).join(', ')]);
     } else if (draft.platform === 'twitter') {
         if (rsd.text) details.push(['Tweet', null]);
         if (draft.follower_count) details.push(['Followers', formatNum(draft.follower_count)]);
@@ -3146,6 +3152,30 @@ function openOutreachDetail(draftId) {
                 <div class="text-xs text-txt-2" style="white-space:pre-wrap;line-height:1.6;">${escapeHtml(originalContent)}</div>
             </div>
         </div>`;
+    }
+
+    // ── LinkedIn enriched: About + Recent Posts ──
+    if (draft.platform === 'linkedin' && rsd.enriched) {
+        if (rsd.about) {
+            html += `<div class="mb-4">
+                <div class="text-[0.65rem] text-txt-3 font-mono uppercase tracking-wide mb-1.5">About</div>
+                <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:0.375rem;padding:0.75rem;">
+                    <div class="text-xs text-txt-2" style="white-space:pre-wrap;line-height:1.6;">${escapeHtml(truncate(rsd.about, 500))}</div>
+                </div>
+            </div>`;
+        }
+        if (rsd.posts && rsd.posts.length > 0) {
+            html += `<div class="mb-4">
+                <div class="text-[0.65rem] text-txt-3 font-mono uppercase tracking-wide mb-1.5">Recent Activity (${rsd.posts.length})</div>
+                <div class="space-y-2">
+                    ${rsd.posts.slice(0, 3).map(post => `
+                        <div style="background:rgba(10,102,194,0.04);border:1px solid rgba(10,102,194,0.08);border-radius:0.375rem;padding:0.625rem 0.75rem;">
+                            <div class="text-xs text-txt-2" style="line-height:1.5;">${escapeHtml(truncate(post.text || post.content || '', 200))}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>`;
+        }
     }
 
     // ── Matched phrase for pain prospector ──
