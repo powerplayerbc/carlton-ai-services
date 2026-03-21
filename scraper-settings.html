@@ -798,13 +798,20 @@ function renderRedditConfig() {
 
     // Wave Catcher
     if (wc) {
-        const groups = wc.subreddit_groups || {};
-        const groupKeys = Object.keys(groups);
         const labels = ['wcGroupA', 'wcGroupB', 'wcGroupC', 'wcGroupD'];
-        const dataKeys = groupKeys.length > 0 ? groupKeys : ['group_a', 'group_b', 'group_c', 'group_d'];
-        dataKeys.forEach((key, i) => {
-            if (labels[i]) initChipContainer(labels[i], groups[key] || []);
-        });
+        const groups = wc.subreddit_groups || [];
+        // Handle both array-of-objects [{group:"A",subreddits:[...]}] and flat-object {group_a:[...]} formats
+        if (Array.isArray(groups)) {
+            groups.forEach((g, i) => {
+                if (labels[i]) initChipContainer(labels[i], g.subreddits || g || []);
+            });
+            // Init remaining empty groups if fewer than 4
+            for (let i = groups.length; i < 4; i++) initChipContainer(labels[i], []);
+        } else {
+            const keys = Object.keys(groups);
+            keys.forEach((key, i) => { if (labels[i]) initChipContainer(labels[i], groups[key] || []); });
+            for (let i = keys.length; i < 4; i++) initChipContainer(labels[i], []);
+        }
         document.getElementById('wcPostsPerSub').value = wc.posts_per_subreddit || 25;
         document.getElementById('wcTopN').value = wc.top_n_to_qualify || 10;
     } else {
@@ -828,25 +835,44 @@ function initChipContainer(containerId, values) {
     const container = document.getElementById(containerId);
     container.innerHTML = '';
     values.forEach(v => addChip(container, v));
+
+    // Wrapper for input + add button
+    const wrapper = document.createElement('span');
+    wrapper.style.cssText = 'display:inline-flex;align-items:center;gap:4px;flex:1;min-width:100px;';
+
     const input = document.createElement('input');
     input.type = 'text';
     input.className = 'chip-input';
-    input.placeholder = 'Type and press Enter';
+    input.placeholder = 'Type + Enter or click +';
     input.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' || e.key === ',') {
             e.preventDefault();
             const val = this.value.trim().replace(/,$/,'');
-            if (val) {
-                addChip(container, val);
-                this.value = '';
-            }
+            if (val) { addChip(container, val); this.value = ''; }
         }
         if (e.key === 'Backspace' && !this.value) {
             const chips = container.querySelectorAll('.chip');
             if (chips.length) chips[chips.length - 1].remove();
         }
     });
-    container.appendChild(input);
+
+    const addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.textContent = '+';
+    addBtn.style.cssText = 'width:22px;height:22px;border-radius:4px;background:rgba(6,214,160,0.15);color:#06D6A0;border:1px solid rgba(6,214,160,0.3);cursor:pointer;font-size:0.85rem;font-weight:bold;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.15s;';
+    addBtn.title = 'Add item';
+    addBtn.addEventListener('mouseenter', function() { this.style.background = 'rgba(6,214,160,0.3)'; });
+    addBtn.addEventListener('mouseleave', function() { this.style.background = 'rgba(6,214,160,0.15)'; });
+    addBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const val = input.value.trim();
+        if (val) { addChip(container, val); input.value = ''; }
+        input.focus();
+    });
+
+    wrapper.appendChild(input);
+    wrapper.appendChild(addBtn);
+    container.appendChild(wrapper);
 }
 
 function addChip(container, value) {
@@ -854,8 +880,9 @@ function addChip(container, value) {
     chip.className = 'chip';
     chip.innerHTML = esc(value) + '<span class="chip-remove" onclick="this.parentElement.remove()">&times;</span>';
     chip.dataset.value = value;
-    const input = container.querySelector('.chip-input');
-    if (input) container.insertBefore(chip, input);
+    // Insert before the input wrapper (last child)
+    const wrapper = container.lastElementChild;
+    if (wrapper) container.insertBefore(chip, wrapper);
     else container.appendChild(chip);
 }
 
@@ -873,21 +900,13 @@ async function saveRedditConfig() {
     const wc = redditConfig.find(s => s.type === 'wave_catcher') || { type: 'wave_catcher' };
     const pp = redditConfig.find(s => s.type === 'pain_prospector') || { type: 'pain_prospector' };
 
-    // Gather wave catcher groups
-    const groupA = getChipValues('wcGroupA');
-    const groupB = getChipValues('wcGroupB');
-    const groupC = getChipValues('wcGroupC');
-    const groupD = getChipValues('wcGroupD');
-
-    // Reconstruct subreddit_groups preserving original keys
-    const origWc = redditConfig.find(s => s.type === 'wave_catcher');
-    const origKeys = origWc && origWc.subreddit_groups ? Object.keys(origWc.subreddit_groups) : [];
-    const groupKeys = origKeys.length >= 4 ? origKeys : ['group_a', 'group_b', 'group_c', 'group_d'];
-    const subreddit_groups = {};
-    subreddit_groups[groupKeys[0]] = groupA;
-    subreddit_groups[groupKeys[1]] = groupB;
-    subreddit_groups[groupKeys[2]] = groupC;
-    subreddit_groups[groupKeys[3]] = groupD;
+    // Gather wave catcher groups as array-of-objects (matching DB format)
+    const subreddit_groups = [
+        { group: 'A', subreddits: getChipValues('wcGroupA') },
+        { group: 'B', subreddits: getChipValues('wcGroupB') },
+        { group: 'C', subreddits: getChipValues('wcGroupC') },
+        { group: 'D', subreddits: getChipValues('wcGroupD') },
+    ];
 
     const newWc = {
         type: 'wave_catcher',
