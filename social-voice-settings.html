@@ -245,8 +245,8 @@
             <div class="flex items-center gap-2">
                 <span class="text-[0.65rem] text-txt-3 font-mono uppercase tracking-wider">Configuring:</span>
                 <div class="flex items-center gap-1 bg-surface rounded-lg p-0.5 border border-border/50">
-                    <button class="status-btn active" id="voiceTabEng" onclick="setVoiceMode('engagement')" style="padding:0.35rem 0.75rem;">Engagement Voice</button>
-                    <button class="status-btn" id="voiceTabDm" onclick="setVoiceMode('dm')" style="padding:0.35rem 0.75rem;">DM Voice</button>
+                    <button id="voiceTabEng" onclick="setVoiceMode('engagement')" style="padding:0.45rem 1rem;font-family:'Chakra Petch',system-ui;font-size:0.8rem;font-weight:600;letter-spacing:0.03em;text-transform:uppercase;border-radius:0.375rem;cursor:pointer;border:1px solid rgba(76,201,240,0.4);background:rgba(76,201,240,0.12);color:#4CC9F0;transition:all 0.2s;">Engagement Voice</button>
+                    <button id="voiceTabDm" onclick="setVoiceMode('dm')" style="padding:0.45rem 1rem;font-family:'Chakra Petch',system-ui;font-size:0.8rem;font-weight:600;letter-spacing:0.03em;text-transform:uppercase;border-radius:0.375rem;cursor:pointer;border:1px solid transparent;background:transparent;color:#525E73;transition:all 0.2s;">DM Voice</button>
                 </div>
                 <span class="text-[0.6rem] text-txt-3 italic" id="voiceModeHint">Controls how AI writes comments, replies, and engagement posts</span>
             </div>
@@ -549,8 +549,15 @@ function selectPlatform(platform) {
 // ═══ VOICE MODE (DM vs Engagement) ═══
 function setVoiceMode(mode) {
     voiceMode = mode;
-    document.getElementById('voiceTabEng').classList.toggle('active', mode === 'engagement');
-    document.getElementById('voiceTabDm').classList.toggle('active', mode === 'dm');
+    const engBtn = document.getElementById('voiceTabEng');
+    const dmBtn = document.getElementById('voiceTabDm');
+    if (mode === 'engagement') {
+        engBtn.style.background = 'rgba(76,201,240,0.12)'; engBtn.style.color = '#4CC9F0'; engBtn.style.borderColor = 'rgba(76,201,240,0.4)';
+        dmBtn.style.background = 'transparent'; dmBtn.style.color = '#525E73'; dmBtn.style.borderColor = 'transparent';
+    } else {
+        dmBtn.style.background = 'rgba(168,85,247,0.12)'; dmBtn.style.color = '#A855F7'; dmBtn.style.borderColor = 'rgba(168,85,247,0.4)';
+        engBtn.style.background = 'transparent'; engBtn.style.color = '#525E73'; engBtn.style.borderColor = 'transparent';
+    }
     document.getElementById('voiceModeHint').textContent = mode === 'dm'
         ? 'Controls how AI writes direct messages and connection requests'
         : 'Controls how AI writes comments, replies, and engagement posts';
