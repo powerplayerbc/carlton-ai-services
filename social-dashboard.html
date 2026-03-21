@@ -936,6 +936,26 @@
                 <div id="funnelWidget" style="display: none;"></div>
             </div>
 
+            <!-- ── Historical Stats Panel ── -->
+            <div class="max-w-[1600px] mx-auto px-4 sm:px-6 pb-3">
+                <div id="historyStatsPanel" class="panel" style="display: none;">
+                    <div class="panel-header" style="cursor:pointer;padding:0.5rem 1rem;" onclick="document.getElementById('historyStatsBody').style.display=document.getElementById('historyStatsBody').style.display==='none'?'':'none'; this.querySelector('.collapse-arrow').textContent=document.getElementById('historyStatsBody').style.display==='none'?'▸':'▾';">
+                        <div class="flex items-center gap-2">
+                            <span class="collapse-arrow text-txt-3 text-xs">▾</span>
+                            <span class="text-[0.65rem] font-mono text-txt-3 uppercase tracking-wider">Outreach History</span>
+                        </div>
+                        <div class="flex items-center gap-2" id="historyTimeToggle">
+                            <button class="status-btn active" data-hperiod="lifetime" onclick="event.stopPropagation();setHistoryPeriod('lifetime')">Lifetime</button>
+                            <button class="status-btn" data-hperiod="month" onclick="event.stopPropagation();setHistoryPeriod('month')">This Month</button>
+                            <button class="status-btn" data-hperiod="week" onclick="event.stopPropagation();setHistoryPeriod('week')">This Week</button>
+                        </div>
+                    </div>
+                    <div class="panel-body" id="historyStatsBody" style="padding:0.75rem 1rem;">
+                        <div class="text-xs text-txt-3">Loading...</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- ── Outreach Cards Container ── -->
             <div class="max-w-[1600px] mx-auto px-4 sm:px-6 pb-8">
                 <div id="outreachCards" class="space-y-3">
@@ -2147,6 +2167,7 @@ async function refreshOutreach() {
             fetchOutreachQueue(),
             fetchActiveConversations(),
             fetchConversionFunnel(),
+            fetchHistoryStats(),
         ]);
         showToast('Outreach data loaded', 'success');
     } catch (err) {
@@ -3127,6 +3148,111 @@ function renderConversionFunnel(data) {
             </div>
         </div>
     `;
+}
+
+// ═══════════════════════════════════════
+// OUTREACH — HISTORICAL STATS
+// ═══════════════════════════════════════
+let allActedDrafts = [];
+let historyPeriod = 'lifetime';
+
+async function fetchHistoryStats() {
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/social_outreach_drafts?action_status=eq.acted&select=id,platform,outreach_type,acted_at&brand_id=eq.carlton&order=acted_at.desc`, { headers: { 'apikey': ANON_KEY, 'Authorization': `Bearer ${ANON_KEY}` } });
+        if (!res.ok) throw new Error(res.status);
+        allActedDrafts = await res.json();
+        if (!Array.isArray(allActedDrafts)) allActedDrafts = [];
+        document.getElementById('historyStatsPanel').style.display = '';
+        renderHistoryStats();
+    } catch (e) {
+        // Table might not exist or no data — hide panel
+        document.getElementById('historyStatsPanel').style.display = 'none';
+    }
+}
+
+function setHistoryPeriod(period) {
+    historyPeriod = period;
+    document.querySelectorAll('[data-hperiod]').forEach(b => b.classList.toggle('active', b.dataset.hperiod === period));
+    renderHistoryStats();
+}
+
+function renderHistoryStats() {
+    const container = document.getElementById('historyStatsBody');
+    if (allActedDrafts.length === 0) {
+        container.innerHTML = '<div class="text-xs text-txt-3 py-2">No outreach actions recorded yet</div>';
+        return;
+    }
+
+    const now = new Date();
+    const weekStart = new Date(now); weekStart.setDate(weekStart.getDate() - weekStart.getDay()); weekStart.setHours(0,0,0,0);
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    let filtered = allActedDrafts;
+    if (historyPeriod === 'week') {
+        filtered = allActedDrafts.filter(d => d.acted_at && new Date(d.acted_at) >= weekStart);
+    } else if (historyPeriod === 'month') {
+        filtered = allActedDrafts.filter(d => d.acted_at && new Date(d.acted_at) >= monthStart);
+    }
+
+    // Group by platform
+    const platforms = {};
+    filtered.forEach(d => {
+        const p = d.platform || 'unknown';
+        if (!platforms[p]) platforms[p] = { dm: 0, engagement: 0, total: 0 };
+        const type = d.outreach_type || 'engagement';
+        if (type === 'dm') platforms[p].dm++;
+        else platforms[p].engagement++;
+        platforms[p].total++;
+    });
+
+    const grandTotal = filtered.length;
+    const grandDm = filtered.filter(d => d.outreach_type === 'dm').length;
+    const grandEng = grandTotal - grandDm;
+    const periodLabel = historyPeriod === 'lifetime' ? 'All Time' : historyPeriod === 'month' ? 'This Month' : 'This Week';
+
+    // Build table
+    let html = `
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-xs text-txt-2 font-semibold">${periodLabel}: <span class="text-accent font-mono">${grandTotal}</span> total</span>
+            <span class="text-[0.65rem] text-txt-3 font-mono">DM: ${grandDm} | ENG: ${grandEng}</span>
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.5rem;">
+    `;
+
+    const platOrder = ['linkedin', 'instagram', 'facebook', 'twitter', 'reddit'];
+    platOrder.forEach(pKey => {
+        const stats = platforms[pKey];
+        if (!stats) return;
+        const p = PLATFORMS[pKey] || { label: pKey, color: '#8A95A9' };
+        html += `
+            <div style="background:rgba(255,255,255,0.02);border:1px solid #1E2130;border-radius:0.5rem;padding:0.625rem 0.75rem;border-left:3px solid ${p.color};">
+                <div class="text-[0.65rem] font-semibold mb-1" style="color:${p.color};">${p.label}</div>
+                <div class="font-heading font-bold text-lg text-txt" style="line-height:1;">${stats.total}</div>
+                <div class="flex gap-2 mt-1">
+                    <span class="text-[0.6rem] text-txt-3 font-mono">DM ${stats.dm}</span>
+                    <span class="text-[0.6rem] text-txt-3 font-mono">ENG ${stats.engagement}</span>
+                </div>
+            </div>
+        `;
+    });
+
+    // Show any unknown platforms
+    Object.keys(platforms).filter(k => !platOrder.includes(k)).forEach(pKey => {
+        const stats = platforms[pKey];
+        html += `
+            <div style="background:rgba(255,255,255,0.02);border:1px solid #1E2130;border-radius:0.5rem;padding:0.625rem 0.75rem;">
+                <div class="text-[0.65rem] font-semibold mb-1 text-txt-2">${escapeHtml(pKey)}</div>
+                <div class="font-heading font-bold text-lg text-txt" style="line-height:1;">${stats.total}</div>
+                <div class="flex gap-2 mt-1">
+                    <span class="text-[0.6rem] text-txt-3 font-mono">DM ${stats.dm}</span>
+                    <span class="text-[0.6rem] text-txt-3 font-mono">ENG ${stats.engagement}</span>
+                </div>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
 }
 
 // ═══════════════════════════════════════
