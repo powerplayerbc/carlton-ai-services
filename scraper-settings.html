@@ -506,9 +506,7 @@ function handleGate(e) {
     e.preventDefault();
     if (document.getElementById('gateInput').value === 'Advance1!') {
         sessionStorage.setItem('registry-auth', 'true');
-        document.getElementById('gate').classList.add('hidden');
-        document.getElementById('mainContent').style.opacity = '1';
-        init();
+        unlockPage();
         return false;
     }
     document.getElementById('gateError').classList.add('show');
@@ -517,31 +515,27 @@ function handleGate(e) {
     setTimeout(() => document.getElementById('gateError').classList.remove('show'), 2000);
     return false;
 }
-if (sessionStorage.getItem('registry-auth') === 'true') {
+
+function unlockPage() {
     document.getElementById('gate').classList.add('hidden');
     document.getElementById('mainContent').style.opacity = '1';
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
-}
-
-// Re-init when restored from bfcache (back/forward navigation)
-window.addEventListener('pageshow', function(e) {
-    if (e.persisted && sessionStorage.getItem('registry-auth') === 'true') {
-        init();
-    }
-});
-
-/* ── Init ── */
-function init() {
     loadBudget();
     loadHistory();
     loadInputs();
-    // Pre-load Reddit config so it's ready when user clicks that tab
-    loadRedditConfig();
 }
+
+// Single entry point: wait for DOM, then check auth
+document.addEventListener('DOMContentLoaded', function() {
+    if (sessionStorage.getItem('registry-auth') === 'true') {
+        unlockPage();
+    }
+});
+// Also handle bfcache
+window.addEventListener('pageshow', function(e) {
+    if (e.persisted && sessionStorage.getItem('registry-auth') === 'true') {
+        unlockPage();
+    }
+});
 
 /* ── Toast ── */
 function toast(msg, type = 'success') {
@@ -564,12 +558,7 @@ function selectPlatform(platform) {
     if (platform === 'reddit') {
         document.getElementById('apifySection').style.display = 'none';
         document.getElementById('redditSection').style.display = 'block';
-        // If we already have data from init pre-load, just render; otherwise fetch
-        if (redditConfig && redditConfig.length > 0) {
-            renderRedditConfig();
-        } else {
-            loadRedditConfig(true);
-        }
+        loadRedditConfig();
     } else {
         document.getElementById('apifySection').style.display = 'block';
         document.getElementById('redditSection').style.display = 'none';
@@ -794,23 +783,34 @@ async function saveInput() {
 }
 
 /* ── Reddit Config ── */
-async function loadRedditConfig(showError) {
+async function loadRedditConfig() {
+    // Show loading state in the Reddit section
+    const containers = ['wcGroupA','wcGroupB','wcGroupC','wcGroupD','ppSearchPhrases','ppIndustrySubreddits'];
+    containers.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = '<span class="text-xs text-txt-3">Loading...</span>';
+    });
+
     try {
-        const res = await fetch(SUPABASE_URL + '/rest/v1/social_platform_config?brand_id=eq.' + BRAND_ID + '&platform=eq.reddit&select=search_strategies', {
+        const url = SUPABASE_URL + '/rest/v1/social_platform_config?brand_id=eq.' + BRAND_ID + '&platform=eq.reddit&select=search_strategies';
+        const res = await fetch(url, {
             headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
         });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-        if (data && data.length > 0 && data[0].search_strategies) {
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } catch (e) { throw new Error('Invalid JSON: ' + text.substring(0, 100)); }
+        if (!res.ok) throw new Error('HTTP ' + res.status + ': ' + text.substring(0, 200));
+
+        if (Array.isArray(data) && data.length > 0 && data[0].search_strategies) {
             redditConfig = data[0].search_strategies;
         } else {
             redditConfig = [];
         }
-        // Only render if Reddit tab is currently visible
-        if (selectedPlatform === 'reddit') renderRedditConfig();
+        renderRedditConfig();
     } catch (err) {
-        console.warn('Reddit config load error:', err.message);
-        if (showError) toast('Failed to load Reddit config: ' + err.message, 'error');
+        toast('Reddit config error: ' + err.message, 'error');
+        // Still init empty chip containers so user can add items
+        containers.forEach(id => initChipContainer(id, []));
     }
 }
 
