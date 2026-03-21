@@ -2351,13 +2351,13 @@ function updateOutreachResultCount(shown, total) {
 }
 
 function getRedditCardType(draft) {
-    const dt = draft.target?.discovery_type
+    // discovery_type is now a top-level field from the RPC join
+    const dt = draft.discovery_type
         || draft.generation_context?.discovery_type
-        || draft.discovery_type
-        || 'standard';
+        || draft.engagement_subtype;
     switch (dt) {
-        case 'wave_catcher': return 'wave';
-        case 'pain_prospector': return 'pain';
+        case 'wave_catcher': case 'reddit_wave_comment': return 'wave';
+        case 'pain_prospector': case 'reddit_pain_comment': return 'pain';
         default: return 'standard';
     }
 }
@@ -2424,10 +2424,10 @@ function renderApprovalCard(draft) {
     // REDDIT: WAVE CATCHER CARD
     // ══════════════════════════════════════
     if (redditType === 'wave') {
-        const subreddit = draft.subreddit || draft.target?.subreddit || '';
-        const threadTitle = draft.thread_title || draft.target?.thread_title || '';
-        const postCreatedAt = draft.target?.created_at || draft.post_created_at || draft.created_at || '';
-        const commentCount = draft.target?.comment_count ?? draft.target?.raw_scrape_data?.num_comments ?? '';
+        const subreddit = draft.subreddit || draft.raw_scrape_data?.subreddit || '';
+        const threadTitle = draft.thread_title || '';
+        const postCreatedAt = draft.raw_scrape_data?.created_utc ? new Date(draft.raw_scrape_data.created_utc * 1000) : null;
+        const commentCount = draft.raw_scrape_data?.num_comments ?? draft.target?.comment_count ?? '';
 
         return `
             <div class="outreach-card" id="out-card-${draft.id}" style="border-left: 3px solid #2DD4BF;">
@@ -2463,11 +2463,11 @@ function renderApprovalCard(draft) {
     // REDDIT: PAIN PROSPECTOR CARD
     // ══════════════════════════════════════
     if (redditType === 'pain') {
-        const subreddit = draft.subreddit || draft.target?.subreddit || '';
-        const threadTitle = draft.thread_title || draft.target?.thread_title || '';
-        const postCreatedAt = draft.target?.created_at || draft.post_created_at || draft.created_at || '';
-        const matchedPhrase = draft.target?.raw_scrape_data?.matched_phrase || draft.matched_phrase || '';
-        const postExcerpt = draft.target?.raw_scrape_data?.post_text || draft.target?.post_excerpt || threadTitle || '';
+        const subreddit = draft.subreddit || draft.raw_scrape_data?.subreddit || '';
+        const threadTitle = draft.thread_title || '';
+        const postCreatedAt = draft.raw_scrape_data?.created_utc ? new Date(draft.raw_scrape_data.created_utc * 1000) : null;
+        const matchedPhrase = draft.raw_scrape_data?.matched_phrase || '';
+        const postExcerpt = draft.raw_scrape_data?.post_text || threadTitle || '';
 
         return `
             <div class="outreach-card" id="out-card-${draft.id}" style="border-left: 3px solid #F59E0B;">
