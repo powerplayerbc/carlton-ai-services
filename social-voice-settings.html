@@ -240,6 +240,18 @@
             </div>
         </div>
 
+        <!-- ── Outreach Type Sub-tabs ── -->
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 pb-3">
+            <div class="flex items-center gap-2">
+                <span class="text-[0.65rem] text-txt-3 font-mono uppercase tracking-wider">Configuring:</span>
+                <div class="flex items-center gap-1 bg-surface rounded-lg p-0.5 border border-border/50">
+                    <button class="status-btn active" id="voiceTabEng" onclick="setVoiceMode('engagement')" style="padding:0.35rem 0.75rem;">Engagement Voice</button>
+                    <button class="status-btn" id="voiceTabDm" onclick="setVoiceMode('dm')" style="padding:0.35rem 0.75rem;">DM Voice</button>
+                </div>
+                <span class="text-[0.6rem] text-txt-3 italic" id="voiceModeHint">Controls how AI writes comments, replies, and engagement posts</span>
+            </div>
+        </div>
+
         <!-- ═══ SETTINGS GRID ═══ -->
         <div class="max-w-[1600px] mx-auto px-4 sm:px-6 pb-8">
             <div class="settings-grid" style="display:grid; grid-template-columns: 1fr 380px; gap: 1rem; align-items: start;">
@@ -465,6 +477,7 @@ const TONE_LABELS = {
 let selectedPlatform = 'linkedin';
 let currentSettings = {};
 let currentLimits = {};
+let voiceMode = 'engagement'; // 'engagement' or 'dm'
 
 // ═══ AUTH ═══
 const urlParams = new URLSearchParams(window.location.search);
@@ -533,6 +546,17 @@ function selectPlatform(platform) {
     loadDailyLimits(platform);
 }
 
+// ═══ VOICE MODE (DM vs Engagement) ═══
+function setVoiceMode(mode) {
+    voiceMode = mode;
+    document.getElementById('voiceTabEng').classList.toggle('active', mode === 'engagement');
+    document.getElementById('voiceTabDm').classList.toggle('active', mode === 'dm');
+    document.getElementById('voiceModeHint').textContent = mode === 'dm'
+        ? 'Controls how AI writes direct messages and connection requests'
+        : 'Controls how AI writes comments, replies, and engagement posts';
+    populateForm(currentSettings);
+}
+
 // ═══ LOAD SETTINGS ═══
 async function loadPlatformSettings(platform) {
     try {
@@ -542,38 +566,40 @@ async function loadPlatformSettings(platform) {
     } catch (e) {
         currentSettings = {};
         populateForm({});
-        // Not an error if RPC doesn't exist yet
     }
 }
 
 function populateForm(s) {
-    document.getElementById('sliderWarmth').value = s.tone_warmth || 7;
-    document.getElementById('sliderFormality').value = s.tone_formality || 6;
-    document.getElementById('sliderConfidence').value = s.tone_confidence || 8;
-    document.getElementById('sliderHumor').value = s.tone_humor || 3;
-    document.getElementById('sliderSalesiness').value = s.tone_salesiness || 2;
-    document.getElementById('sliderCreativity').value = s.creativity || 6;
+    // If DM mode, use dm_overrides if available, falling back to base values
+    const dm = (voiceMode === 'dm' && s.dm_overrides) ? s.dm_overrides : {};
+    const v = (field, fallback) => voiceMode === 'dm' ? (dm[field] ?? s[field] ?? fallback) : (s[field] ?? fallback);
+    document.getElementById('sliderWarmth').value = v('tone_warmth', 7);
+    document.getElementById('sliderFormality').value = v('tone_formality', 6);
+    document.getElementById('sliderConfidence').value = v('tone_confidence', 8);
+    document.getElementById('sliderHumor').value = v('tone_humor', 3);
+    document.getElementById('sliderSalesiness').value = v('tone_salesiness', 2);
+    document.getElementById('sliderCreativity').value = v('creativity', 6);
     ['Warmth','Formality','Confidence','Humor','Salesiness','Creativity'].forEach(updateSliderLabel);
 
-    document.getElementById('inputMaxLength').value = s.max_message_length || 300;
-    document.getElementById('selectMsgLength').value = s.message_length || 'short';
-    document.getElementById('selectOpening').value = s.opening_style || 'personalized';
-    document.getElementById('selectCta').value = s.cta_style || 'soft';
-    document.getElementById('selectPersonalization').value = s.personalization_depth || 'medium';
+    document.getElementById('inputMaxLength').value = v('max_message_length', 300);
+    document.getElementById('selectMsgLength').value = v('message_length', 'short');
+    document.getElementById('selectOpening').value = v('opening_style', 'personalized');
+    document.getElementById('selectCta').value = v('cta_style', 'soft');
+    document.getElementById('selectPersonalization').value = v('personalization_depth', 'medium');
 
-    const emojiOn = s.use_emoji || false;
+    const emojiOn = v('use_emoji', false);
     document.getElementById('toggleEmoji').classList.toggle('on', emojiOn);
-    document.getElementById('selectEmojiDensity').value = s.emoji_density || 'minimal';
+    document.getElementById('selectEmojiDensity').value = v('emoji_density', 'minimal');
     document.getElementById('selectEmojiDensity').style.display = emojiOn ? '' : 'none';
 
-    const hashOn = s.use_hashtags || false;
+    const hashOn = v('use_hashtags', false);
     document.getElementById('toggleHashtags').classList.toggle('on', hashOn);
-    document.getElementById('inputHashtagMin').value = s.hashtag_count_min || 3;
-    document.getElementById('inputHashtagMax').value = s.hashtag_count_max || 10;
+    document.getElementById('inputHashtagMin').value = v('hashtag_count_min', 3);
+    document.getElementById('inputHashtagMax').value = v('hashtag_count_max', 10);
     document.getElementById('hashtagRange').style.display = hashOn ? '' : 'none';
 
-    setChips('chipKeywords', s.keywords || []);
-    setChips('chipBanned', s.banned_phrases || []);
+    setChips('chipKeywords', voiceMode === 'dm' ? (dm.keywords || s.keywords || []) : (s.keywords || []));
+    setChips('chipBanned', voiceMode === 'dm' ? (dm.banned_phrases || s.banned_phrases || []) : (s.banned_phrases || []));
     setChips('chipValueProps', s.value_propositions || []);
     document.getElementById('inputCustomInstruction').value = s.custom_instruction || '';
 }
@@ -584,10 +610,9 @@ async function saveAllSettings() {
     btn.disabled = true;
     btn.textContent = 'Saving...';
 
-    // Helper: get select value with guaranteed fallback (DB may store empty strings)
-    const selVal = (id, fallback) => { const v = document.getElementById(id).value; return v && v.trim() ? v : fallback; };
+    const selVal = (id, fallback) => { const val = document.getElementById(id).value; return val && val.trim() ? val : fallback; };
 
-    const settings = {
+    const formValues = {
         tone_warmth: parseInt(document.getElementById('sliderWarmth').value) || 7,
         tone_formality: parseInt(document.getElementById('sliderFormality').value) || 6,
         tone_confidence: parseInt(document.getElementById('sliderConfidence').value) || 8,
@@ -610,14 +635,28 @@ async function saveAllSettings() {
         custom_instruction: document.getElementById('inputCustomInstruction').value.trim() || '',
     };
 
+    // Build settings object — if DM mode, save as dm_overrides; if engagement, save as base
+    let settings;
+    if (voiceMode === 'dm') {
+        settings = { dm_overrides: formValues };
+    } else {
+        settings = formValues;
+    }
+
+    const modeLabel = voiceMode === 'dm' ? 'DM' : 'Engagement';
+
     try {
         await supabaseRpc('save_social_voice_settings', {
             p_brand_id: 'carlton',
             p_platform: selectedPlatform,
             p_settings: settings,
         });
-        currentSettings = { ...currentSettings, ...settings };
-        showToast(`${selectedPlatform} voice settings saved`, 'success');
+        if (voiceMode === 'dm') {
+            currentSettings.dm_overrides = formValues;
+        } else {
+            currentSettings = { ...currentSettings, ...formValues };
+        }
+        showToast(`${selectedPlatform} ${modeLabel} voice saved`, 'success');
     } catch (err) {
         showToast('Save failed: ' + err.message, 'error');
     } finally {

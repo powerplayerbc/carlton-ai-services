@@ -2403,10 +2403,19 @@ function postAge(createdAt) {
     return `<span class="${stale ? 'post-age-stale' : 'post-age-fresh'}" title="${stale ? 'Wave may be fading' : 'Fresh post'}">Posted ${label}</span>`;
 }
 
+function getDraftDisplayName(draft) {
+    const rsd = draft.raw_scrape_data || {};
+    return draft.target_name || draft.display_name || draft.platform_username
+        || rsd.author?.displayName || rsd.author?.name || rsd.displayName
+        || rsd.ownerUsername || rsd.userName
+        || (draft.platform_username ? '@' + draft.platform_username : null)
+        || 'Unknown';
+}
+
 function renderApprovalCard(draft) {
     const platform = PLATFORMS[draft.platform] || { label: draft.platform, color: '#8A95A9' };
-    const name = draft.target_name || draft.display_name || draft.platform_username || 'Unknown';
-    const bio = draft.target_bio || draft.bio || '';
+    const name = getDraftDisplayName(draft);
+    const bio = draft.target_bio || draft.bio || draft.raw_scrape_data?.author?.description || '';
     const company = draft.raw_scrape_data?.company || draft.company || '';
     const followers = draft.follower_count ? `${formatNum(draft.follower_count)} followers` : '';
     const score = draft.relevance_score || draft.score || '';
@@ -2460,7 +2469,7 @@ function renderApprovalCard(draft) {
         const commentCount = draft.raw_scrape_data?.num_comments ?? draft.target?.comment_count ?? '';
 
         return `
-            <div class="outreach-card" id="out-card-${draft.id}" style="border-left: 3px solid #2DD4BF;">
+            <div class="outreach-card" id="out-card-${draft.id}" style="border-left: 3px solid #2DD4BF;cursor:pointer;" onclick="openOutreachDetail(${draft.id})">
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-2 flex-wrap">
                         <input type="checkbox" class="post-checkbox" ${isSelected ? 'checked' : ''} onchange="toggleOutreachSelect(${draft.id})" onclick="event.stopPropagation()">
@@ -2500,7 +2509,7 @@ function renderApprovalCard(draft) {
         const postExcerpt = draft.raw_scrape_data?.post_text || threadTitle || '';
 
         return `
-            <div class="outreach-card" id="out-card-${draft.id}" style="border-left: 3px solid #F59E0B;">
+            <div class="outreach-card" id="out-card-${draft.id}" style="border-left: 3px solid #F59E0B;cursor:pointer;" onclick="openOutreachDetail(${draft.id})">
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-2 flex-wrap">
                         <input type="checkbox" class="post-checkbox" ${isSelected ? 'checked' : ''} onchange="toggleOutreachSelect(${draft.id})" onclick="event.stopPropagation()">
@@ -2569,7 +2578,7 @@ function renderApprovalCard(draft) {
     const borderColor = platform.color || '#8A95A9';
 
     return `
-        <div class="outreach-card" id="out-card-${draft.id}" style="border-left: 3px solid ${borderColor};">
+        <div class="outreach-card" id="out-card-${draft.id}" style="border-left: 3px solid ${borderColor};cursor:pointer;" onclick="openOutreachDetail(${draft.id})">
             <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2 flex-wrap">
                     <input type="checkbox" class="post-checkbox" ${isSelected ? 'checked' : ''} onchange="toggleOutreachSelect(${draft.id})" onclick="event.stopPropagation()">
@@ -2601,7 +2610,7 @@ function renderApprovalCard(draft) {
 
 function renderActionCard(draft) {
     const platform = PLATFORMS[draft.platform] || { label: draft.platform, color: '#8A95A9' };
-    const name = draft.target_name || draft.display_name || draft.platform_username || 'Unknown';
+    const name = getDraftDisplayName(draft);
     const message = draft.final_content || draft.edited_content || draft.draft_content || draft.content || '';
     const profileUrl = draft.target_profile_url || '';
     const threadUrl = draft.thread_url || '';
@@ -2617,7 +2626,7 @@ function renderActionCard(draft) {
     const linkHtml = linkUrl ? `<a href="${escapeHtml(linkUrl)}" target="_blank" class="text-xs text-txt-3 hover:text-accent transition-colors">${linkLabel}</a>` : '';
 
     return `
-        <div class="outreach-card" id="out-card-${draft.id}">
+        <div class="outreach-card" id="out-card-${draft.id}" style="cursor:pointer;" onclick="openOutreachDetail(${draft.id})">
             <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2">
                     <span class="badge badge-${draft.platform}">${platform.label}</span>
@@ -3045,6 +3054,146 @@ async function markConvoSent(convoId) {
     } catch (err) {
         showToast('Failed: ' + err.message, 'error');
     }
+}
+
+// ═══════════════════════════════════════
+// OUTREACH — DETAIL SIDE PANEL
+// ═══════════════════════════════════════
+function openOutreachDetail(draftId) {
+    const draft = socialDrafts.find(d => d.id === parseInt(draftId) || d.id === draftId);
+    if (!draft) return;
+
+    const panel = document.getElementById('detailPanel');
+    const content = document.getElementById('detailContent');
+    const p = PLATFORMS[draft.platform] || { label: draft.platform, color: '#8A95A9' };
+    const rsd = draft.raw_scrape_data || {};
+    const name = getDraftDisplayName(draft);
+    const username = draft.platform_username || rsd.author?.userName || rsd.ownerUsername || '';
+    const bio = draft.target_bio || rsd.author?.description || draft.bio || '';
+    const message = draft.draft_content || draft.message_content || '';
+    const otype = draft.outreach_type || outreachType;
+    const score = draft.relevance_score || '';
+    const profileUrl = draft.target_profile_url || draft.target_url || '';
+    const threadUrl = draft.thread_url || '';
+    const targetUrl = draft.target_url || '';
+    const snippet = draft.target_content_snippet || '';
+    const isReddit = draft.platform === 'reddit';
+
+    let html = '';
+
+    // ── Header badges ──
+    html += `<div class="flex flex-wrap items-center gap-2 mb-3">
+        <span class="badge badge-${draft.platform}" style="font-size:0.7rem;padding:0.25rem 0.5rem;">${p.label}</span>
+        <span class="badge badge-${otype}" style="font-size:0.7rem;padding:0.25rem 0.5rem;">${otype.toUpperCase()}</span>
+        ${draft.engagement_subtype ? `<span class="badge badge-draft">${escapeHtml(draft.engagement_subtype)}</span>` : ''}
+        ${draft.discovery_type === 'wave_catcher' ? '<span class="badge" style="background:rgba(20,184,166,0.15);color:#2DD4BF;">Wave</span>' : ''}
+        ${draft.discovery_type === 'pain_prospector' ? '<span class="badge" style="background:rgba(245,158,11,0.15);color:#F59E0B;">Pain Point</span>' : ''}
+        ${score ? `<span class="badge badge-approved">Score: ${score}</span>` : ''}
+    </div>`;
+
+    // ── Target info ──
+    html += `<div class="mb-4">
+        <div class="text-sm font-semibold text-txt mb-1">${escapeHtml(name)}</div>
+        ${username ? `<div class="text-xs text-txt-3 font-mono mb-1">@${escapeHtml(username)}</div>` : ''}
+        ${bio ? `<div class="text-xs text-txt-2 mb-1" style="line-height:1.5;">${escapeHtml(bio)}</div>` : ''}
+    </div>`;
+
+    // ── Platform-specific context ──
+    html += '<div class="mb-4">';
+    html += '<div class="text-[0.65rem] text-txt-3 font-mono uppercase tracking-wide mb-1.5">Target Context</div>';
+    const details = [];
+
+    if (draft.platform === 'linkedin') {
+        if (rsd.company) details.push(['Company', rsd.company]);
+        if (rsd.companyUrl) details.push(['Company URL', `<a href="${escapeHtml(rsd.companyUrl)}" target="_blank" class="text-info hover:underline">${escapeHtml(rsd.companyUrl)}</a>`]);
+        if (rsd.sourceJobTitle) details.push(['Source Job', rsd.sourceJobTitle]);
+        if (rsd.email) details.push(['Email', rsd.email]);
+        if (draft.follower_count) details.push(['Followers', formatNum(draft.follower_count)]);
+    } else if (draft.platform === 'twitter') {
+        if (rsd.text) details.push(['Tweet', null]);
+        if (draft.follower_count) details.push(['Followers', formatNum(draft.follower_count)]);
+        if (rsd.retweetCount) details.push(['Retweets', rsd.retweetCount]);
+        if (rsd.likeCount) details.push(['Likes', rsd.likeCount]);
+    } else if (draft.platform === 'instagram') {
+        if (rsd.caption) details.push(['Caption', null]);
+        if (draft.follower_count) details.push(['Followers', formatNum(draft.follower_count)]);
+        if (rsd.likesCount) details.push(['Likes', rsd.likesCount]);
+    } else if (draft.platform === 'facebook') {
+        if (rsd.message) details.push(['Post', null]);
+        if (rsd.reactions) details.push(['Reactions', rsd.reactions]);
+    } else if (isReddit) {
+        if (draft.thread_subreddit || rsd.subreddit) details.push(['Subreddit', 'r/' + (draft.thread_subreddit || rsd.subreddit)]);
+        if (draft.thread_title) details.push(['Post Title', draft.thread_title]);
+        if (draft.thread_score || rsd.score) details.push(['Score', draft.thread_score || rsd.score]);
+        if (rsd.num_comments) details.push(['Comments', rsd.num_comments]);
+    }
+
+    if (draft.classification_reason) details.push(['AI Reasoning', draft.classification_reason]);
+    if (draft.contact_id) details.push(['Contact ID', draft.contact_id]);
+
+    details.forEach(([label, val]) => {
+        if (val === null) return; // Full-text fields handled separately below
+        html += `<div class="flex justify-between text-xs py-0.5"><span class="text-txt-3">${escapeHtml(label)}</span><span class="text-txt-2 text-right max-w-[60%]">${typeof val === 'string' && val.startsWith('<a') ? val : escapeHtml(String(val))}</span></div>`;
+    });
+    html += '</div>';
+
+    // ── Full original content (tweet, post, caption, thread body) ──
+    const originalContent = rsd.text || rsd.caption || rsd.message || rsd.selftext || draft.thread_body_snippet || snippet || '';
+    if (originalContent) {
+        html += `<div class="mb-4">
+            <div class="text-[0.65rem] text-txt-3 font-mono uppercase tracking-wide mb-1.5">Original ${isReddit ? 'Post' : draft.platform === 'twitter' ? 'Tweet' : 'Content'}</div>
+            <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:0.375rem;padding:0.75rem;border-left:3px solid ${p.color};">
+                <div class="text-xs text-txt-2" style="white-space:pre-wrap;line-height:1.6;">${escapeHtml(originalContent)}</div>
+            </div>
+        </div>`;
+    }
+
+    // ── Matched phrase for pain prospector ──
+    if (rsd.matched_phrase) {
+        html += `<div class="mb-4">
+            <div class="text-[0.65rem] text-txt-3 font-mono uppercase tracking-wide mb-1">Matched Pain Phrase</div>
+            <span class="pain-highlight">"${escapeHtml(rsd.matched_phrase)}"</span>
+        </div>`;
+    }
+
+    // ── Draft message ──
+    html += `<div class="mb-4">
+        <div class="text-[0.65rem] text-txt-3 font-mono uppercase tracking-wide mb-1.5">Draft ${otype === 'dm' ? 'Message' : 'Comment'}</div>
+        <div style="background:rgba(6,214,160,0.04);border:1px solid rgba(6,214,160,0.1);border-radius:0.375rem;padding:0.75rem;">
+            <div class="text-sm text-txt" style="white-space:pre-wrap;line-height:1.6;">${escapeHtml(message)}</div>
+        </div>
+    </div>`;
+
+    // ── Links ──
+    let links = [];
+    if (isReddit && (threadUrl || targetUrl)) links.push({ url: threadUrl || targetUrl, label: 'Open Thread' });
+    else if (targetUrl && otype === 'engagement') links.push({ url: targetUrl, label: draft.platform === 'twitter' ? 'View Tweet' : 'View Post' });
+    if (profileUrl) links.push({ url: profileUrl, label: 'View Profile' });
+    if (draft.contact_id) links.push({ url: `/crm?contact=${draft.contact_id}&auth=rdgr`, label: 'View in CRM' });
+
+    if (links.length) {
+        html += `<div class="flex flex-wrap gap-2 mb-4">
+            ${links.map(l => `<a href="${escapeHtml(l.url)}" target="_blank" class="btn btn-ghost text-xs py-1.5 px-3" style="text-decoration:none;">${escapeHtml(l.label)} →</a>`).join('')}
+        </div>`;
+    }
+
+    // ── Actions ──
+    html += `<div class="flex flex-wrap gap-2 pt-3 border-t border-border">
+        <button onclick="approveSocialDraft(${draft.id});closeDetail();" class="btn btn-approve text-xs py-1.5 px-3">Approve</button>
+        <button onclick="closeDetail();startSocialEdit(${draft.id});" class="btn btn-ghost text-xs py-1.5 px-3">Edit</button>
+        <button onclick="closeDetail();openRedraftModal(${draft.id});" class="btn btn-regenerate text-xs py-1.5 px-3">Redraft</button>
+        <button onclick="skipSocialDraft(${draft.id});closeDetail();" class="btn btn-skip text-xs py-1.5 px-3">Skip</button>
+        <span class="mx-1"></span>
+        <button onclick="copyToClip(\`${escapeHtml(message).replace(/`/g, '\\`')}\`)" class="btn btn-copy text-xs py-1.5 px-3">Copy</button>
+        <button onclick="quickActDraft(${draft.id});closeDetail();" class="btn btn-primary text-xs py-1.5 px-3" style="background:rgba(6,214,160,0.2);border-color:rgba(6,214,160,0.4);">Done</button>
+    </div>`;
+
+    // ── ID ──
+    html += `<div class="text-[0.55rem] text-txt-3 font-mono opacity-40 pt-3">Draft #${draft.id} | Target: ${escapeHtml(draft.directive_id || draft.target_id || '')}</div>`;
+
+    content.innerHTML = html;
+    document.getElementById('detailBackdrop').classList.add('open');
+    panel.classList.add('open');
 }
 
 // ═══════════════════════════════════════
