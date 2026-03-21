@@ -520,14 +520,30 @@ function handleGate(e) {
 if (sessionStorage.getItem('registry-auth') === 'true') {
     document.getElementById('gate').classList.add('hidden');
     document.getElementById('mainContent').style.opacity = '1';
-    document.addEventListener('DOMContentLoaded', init);
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 }
+
+// Re-init when restored from bfcache (back/forward navigation)
+window.addEventListener('pageshow', function(e) {
+    if (e.persisted && sessionStorage.getItem('registry-auth') === 'true') {
+        init();
+    }
+});
 
 /* ── Init ── */
 function init() {
     loadBudget();
-    loadInputs();
     loadHistory();
+    // Load data for the currently selected platform
+    if (selectedPlatform === 'reddit') {
+        loadRedditConfig();
+    } else {
+        loadInputs();
+    }
 }
 
 /* ── Toast ── */
@@ -776,9 +792,11 @@ async function saveInput() {
 }
 
 /* ── Reddit Config ── */
-async function loadRedditConfig() {
+async function loadRedditConfig(retries) {
+    retries = retries || 0;
     try {
         const res = await fetch(SUPABASE_URL + '/rest/v1/social_platform_config?brand_id=eq.' + BRAND_ID + '&platform=eq.reddit&select=search_strategies', { headers });
+        if (!res.ok) throw new Error(res.status);
         const data = await res.json();
         if (data && data.length > 0 && data[0].search_strategies) {
             redditConfig = data[0].search_strategies;
@@ -788,7 +806,11 @@ async function loadRedditConfig() {
             renderRedditConfig();
         }
     } catch (err) {
-        toast('Failed to load Reddit config', 'error');
+        if (retries < 2) {
+            setTimeout(() => loadRedditConfig(retries + 1), 500);
+        } else {
+            toast('Failed to load Reddit config: ' + err.message, 'error');
+        }
     }
 }
 
