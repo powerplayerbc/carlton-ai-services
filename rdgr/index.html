@@ -1881,6 +1881,14 @@
                     <div class="mt-2">
                         <textarea id="ht-feedback-${i}" class="form-input text-xs" rows="2" placeholder="Feedback (optional, used for redraft)" onclick="event.stopPropagation()"></textarea>
                     </div>
+                    ${threadUrl || profileUrl ? `
+                    <div class="mt-2">
+                        <a href="${esc(threadUrl || profileUrl)}" target="_blank" class="btn btn-ghost text-xs py-1.5 px-3 inline-flex items-center gap-1.5" onclick="event.stopPropagation()" style="border-color:${platTxt};color:${platTxt};">
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M5 1H2a1 1 0 00-1 1v8a1 1 0 001 1h8a1 1 0 001-1V7M7 1h4v4M4.5 7.5L11 1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            ${platform === 'reddit' && threadUrl ? 'Open Reddit Thread' : 'Open Profile'}
+                        </a>
+                    </div>
+                    ` : ''}
                     <div class="flex flex-wrap gap-1.5 mt-3" id="ht-buttons-${i}">
                         ${buttonsHtml}
                     </div>
