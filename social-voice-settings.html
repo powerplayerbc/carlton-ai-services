@@ -590,7 +590,7 @@ async function saveAllSettings() {
         cta_style: document.getElementById('selectCta').value,
         personalization_depth: document.getElementById('selectPersonalization').value,
         use_emoji: document.getElementById('toggleEmoji').classList.contains('on'),
-        emoji_density: document.getElementById('selectEmojiDensity').value,
+        emoji_density: document.getElementById('toggleEmoji').classList.contains('on') ? document.getElementById('selectEmojiDensity').value : 'none',
         use_hashtags: document.getElementById('toggleHashtags').classList.contains('on'),
         hashtag_count_min: parseInt(document.getElementById('inputHashtagMin').value),
         hashtag_count_max: parseInt(document.getElementById('inputHashtagMax').value),
