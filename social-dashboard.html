@@ -2405,27 +2405,36 @@ function postAge(createdAt) {
 
 function renderApprovalCard(draft) {
     const platform = PLATFORMS[draft.platform] || { label: draft.platform, color: '#8A95A9' };
-    const name = draft.target_name || draft.name || draft.platform_username || 'Unknown';
-    const title = draft.title || '';
-    const company = draft.company || '';
-    const followers = draft.followers_count ? `${formatNum(draft.followers_count)} followers` : '';
-    const score = draft.score || draft.qualification_score || '';
-    const message = draft.message_content || draft.draft_content || draft.content || '';
-    const reasoning = draft.ai_reasoning || draft.reasoning || '';
-    const profileUrl = draft.target_profile_url || draft.profile_url || '';
+    const name = draft.target_name || draft.display_name || draft.platform_username || 'Unknown';
+    const bio = draft.target_bio || draft.bio || '';
+    const company = draft.raw_scrape_data?.company || draft.company || '';
+    const followers = draft.follower_count ? `${formatNum(draft.follower_count)} followers` : '';
+    const score = draft.relevance_score || draft.score || '';
+    const message = draft.draft_content || draft.message_content || draft.content || '';
+    const reasoning = draft.classification_reason || draft.ai_reasoning || '';
+    const profileUrl = draft.target_profile_url || draft.target_url || '';
     const threadUrl = draft.thread_url || '';
-    const redraftCount = draft.redraft_count || 0;
-    const maxRedrafts = draft.max_redrafts || 3;
+    const targetUrl = draft.target_url || '';
+    const redraftCount = draft.revision_count || draft.redraft_count || 0;
+    const maxRedrafts = draft.max_revisions || draft.max_redrafts || 3;
     const isReddit = draft.platform === 'reddit';
     const isSelected = selectedOutreachDrafts.has(draft.id);
     const contactId = draft.contact_id || '';
     const redditType = isReddit ? getRedditCardType(draft) : null;
+    const otype = draft.outreach_type || outreachType;
+    const snippet = draft.target_content_snippet || '';
 
-    // ── Build link (Open Thread for Reddit, View Profile for DMs) ──
-    const linkHtml = isReddit && threadUrl
-        ? `<a href="${escapeHtml(threadUrl)}" target="_blank" class="text-xs text-txt-3 hover:text-accent transition-colors" title="Open thread to paste comment">Open Thread →</a>`
-        : profileUrl
-        ? `<a href="${escapeHtml(profileUrl)}" target="_blank" class="text-xs text-txt-3 hover:text-accent transition-colors" title="View profile">View Profile →</a>`
+    // ── Build link: engagement→post/thread link, dm→profile link ──
+    let linkLabel, linkUrl;
+    if (isReddit) {
+        linkUrl = threadUrl || targetUrl; linkLabel = 'Open Thread →';
+    } else if (otype === 'engagement' && targetUrl) {
+        linkUrl = targetUrl; linkLabel = draft.platform === 'facebook' ? 'View Post →' : draft.platform === 'twitter' ? 'View Tweet →' : 'View Post →';
+    } else {
+        linkUrl = profileUrl; linkLabel = 'View Profile →';
+    }
+    const linkHtml = linkUrl
+        ? `<a href="${escapeHtml(linkUrl)}" target="_blank" class="text-xs text-txt-3 hover:text-accent transition-colors" title="${escapeHtml(linkLabel)}">${linkLabel}</a>`
         : '';
 
     // ── Action buttons (shared across all card types) ──
@@ -2521,29 +2530,63 @@ function renderApprovalCard(draft) {
     }
 
     // ══════════════════════════════════════
-    // STANDARD CARD (non-Reddit or standard Reddit)
+    // ALL PLATFORMS: STANDARD CARD
     // ══════════════════════════════════════
-    let metaLine = [company, followers, score ? `Score: ${score}` : ''].filter(Boolean).join(' | ');
-    if (isReddit) {
-        metaLine = [draft.subreddit ? `r/${draft.subreddit}` : '', draft.thread_title ? `"${truncate(draft.thread_title, 50)}"` : '', score ? `Score: ${score}` : ''].filter(Boolean).join(' | ');
+    const rsd = draft.raw_scrape_data || {};
+    let metaLine = '';
+    let contextHtml = '';
+    const p = draft.platform;
+
+    if (p === 'linkedin') {
+        const jobTitle = bio || rsd.sourceJobTitle || '';
+        const companyUrl = rsd.companyUrl || '';
+        const email = rsd.email || draft.email_from_profile || '';
+        metaLine = [company ? (companyUrl ? `<a href="${escapeHtml(companyUrl)}" target="_blank" class="hover:text-info" onclick="event.stopPropagation()">${escapeHtml(company)}</a>` : escapeHtml(company)) : '', jobTitle ? escapeHtml(jobTitle) : '', followers, email ? escapeHtml(email) : '', score ? `Score: ${score}` : ''].filter(Boolean).join(' | ');
+        if (rsd.sourceJobTitle) contextHtml = `<div class="text-[0.65rem] text-txt-3 mb-1">Source: ${escapeHtml(rsd.sourceJobTitle)}</div>`;
+    } else if (p === 'twitter') {
+        const username = draft.platform_username ? `@${draft.platform_username}` : '';
+        const tweetText = rsd.text || snippet || '';
+        metaLine = [username, followers, score ? `Score: ${score}` : ''].filter(Boolean).join(' | ');
+        if (tweetText && otype === 'engagement') contextHtml = `<div class="text-xs text-txt-2 mb-2" style="border-left:2px solid rgba(29,161,242,0.3);padding-left:0.5rem;line-height:1.5;">${escapeHtml(truncate(tweetText, 200))}</div>`;
+    } else if (p === 'instagram') {
+        const username = draft.platform_username ? `@${draft.platform_username}` : '';
+        const caption = rsd.caption || snippet || '';
+        metaLine = [username, followers, score ? `Score: ${score}` : ''].filter(Boolean).join(' | ');
+        if (caption && otype === 'engagement') contextHtml = `<div class="text-xs text-txt-2 mb-2" style="border-left:2px solid rgba(225,48,108,0.3);padding-left:0.5rem;line-height:1.5;">${escapeHtml(truncate(caption, 200))}</div>`;
+    } else if (p === 'facebook') {
+        const authorName = rsd.author?.name || name;
+        const postMsg = rsd.message || snippet || '';
+        const reactions = rsd.reactions || '';
+        metaLine = [reactions ? `${reactions} reactions` : '', score ? `Score: ${score}` : ''].filter(Boolean).join(' | ');
+        if (postMsg && otype === 'engagement') contextHtml = `<div class="text-xs text-txt-2 mb-2" style="border-left:2px solid rgba(24,119,242,0.3);padding-left:0.5rem;line-height:1.5;">${escapeHtml(truncate(postMsg, 200))}</div>`;
+    } else if (isReddit) {
+        metaLine = [draft.thread_subreddit ? `r/${draft.thread_subreddit}` : (draft.subreddit ? `r/${draft.subreddit}` : ''), draft.thread_title ? `"${truncate(draft.thread_title, 50)}"` : '', score ? `Score: ${score}` : ''].filter(Boolean).join(' | ');
+    } else {
+        metaLine = [company, followers, score ? `Score: ${score}` : ''].filter(Boolean).join(' | ');
     }
 
+    const draftLabel = otype === 'dm' ? 'Draft message' : 'Draft comment';
+    const borderColor = platform.color || '#8A95A9';
+
     return `
-        <div class="outreach-card" id="out-card-${draft.id}">
+        <div class="outreach-card" id="out-card-${draft.id}" style="border-left: 3px solid ${borderColor};">
             <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2 flex-wrap">
                     <input type="checkbox" class="post-checkbox" ${isSelected ? 'checked' : ''} onchange="toggleOutreachSelect(${draft.id})" onclick="event.stopPropagation()">
                     <span class="badge badge-${draft.platform}">${platform.label}</span>
                     <span class="text-sm font-semibold text-txt">${escapeHtml(name)}</span>
-                    ${title ? `<span class="text-xs text-txt-3">${escapeHtml(title)}</span>` : ''}
-                    <span class="badge badge-${draft.outreach_type || outreachType}">${(draft.outreach_type || outreachType).toUpperCase()}</span>
+                    ${bio && p === 'linkedin' ? `<span class="text-xs text-txt-3">${escapeHtml(truncate(bio, 40))}</span>` : ''}
+                    <span class="badge badge-${otype}">${otype.toUpperCase()}</span>
+                    ${draft.engagement_subtype ? `<span class="text-[0.55rem] text-txt-3 font-mono">${escapeHtml(draft.engagement_subtype)}</span>` : ''}
                 </div>
                 <div class="flex items-center gap-2">
                     ${contactId ? `<button onclick="window.open('/crm?contact=${contactId}&auth=rdgr','_blank')" class="btn btn-ghost text-xs py-1 px-2" title="View in CRM">CRM</button>` : ''}
                     ${linkHtml}
                 </div>
             </div>
-            ${metaLine ? `<div class="text-xs text-txt-3 mb-2">${escapeHtml(metaLine)}</div>` : ''}
+            ${metaLine ? `<div class="text-xs text-txt-3 mb-2">${metaLine}</div>` : ''}
+            ${contextHtml}
+            <div class="text-[0.65rem] text-txt-3 uppercase tracking-wide mb-1 font-mono">${draftLabel}</div>
             <div class="msg-preview mb-2" id="out-msg-${draft.id}">${escapeHtml(message)}</div>
             ${reasoning ? `
                 <div class="mb-2">
@@ -2558,18 +2601,20 @@ function renderApprovalCard(draft) {
 
 function renderActionCard(draft) {
     const platform = PLATFORMS[draft.platform] || { label: draft.platform, color: '#8A95A9' };
-    const name = draft.target_name || draft.name || draft.platform_username || 'Unknown';
-    const message = draft.message_content || draft.draft_content || draft.content || '';
-    const profileUrl = draft.target_profile_url || draft.profile_url || '';
+    const name = draft.target_name || draft.display_name || draft.platform_username || 'Unknown';
+    const message = draft.final_content || draft.edited_content || draft.draft_content || draft.content || '';
+    const profileUrl = draft.target_profile_url || '';
     const threadUrl = draft.thread_url || '';
+    const targetUrl = draft.target_url || '';
     const contactId = draft.contact_id || '';
     const isReddit = draft.platform === 'reddit';
+    const otype = draft.outreach_type || outreachType;
 
-    const linkHtml = isReddit && threadUrl
-        ? `<a href="${escapeHtml(threadUrl)}" target="_blank" class="text-xs text-txt-3 hover:text-accent transition-colors">Open Thread →</a>`
-        : profileUrl
-        ? `<a href="${escapeHtml(profileUrl)}" target="_blank" class="text-xs text-txt-3 hover:text-accent transition-colors">View Profile →</a>`
-        : '';
+    let linkLabel, linkUrl;
+    if (isReddit) { linkUrl = threadUrl || targetUrl; linkLabel = 'Open Thread →'; }
+    else if (otype === 'engagement' && targetUrl) { linkUrl = targetUrl; linkLabel = draft.platform === 'facebook' ? 'View Post →' : draft.platform === 'twitter' ? 'View Tweet →' : 'View Post →'; }
+    else { linkUrl = profileUrl || targetUrl; linkLabel = 'View Profile →'; }
+    const linkHtml = linkUrl ? `<a href="${escapeHtml(linkUrl)}" target="_blank" class="text-xs text-txt-3 hover:text-accent transition-colors">${linkLabel}</a>` : '';
 
     return `
         <div class="outreach-card" id="out-card-${draft.id}">
