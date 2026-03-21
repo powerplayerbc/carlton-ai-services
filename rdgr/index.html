@@ -1566,7 +1566,7 @@
     async function fetchActivity() {
         const [dt, atq, execLog] = await Promise.all([
             supabaseSelect('directive_tasks',
-                'brand_id=eq.carlton&status=in.(completed,failed)&order=created_at.desc&limit=20&select=task_id,directive_id,title,domain,status,human_action_type,result_summary,created_at'),
+                'brand_id=eq.carlton&status=in.(completed,failed)&order=created_at.desc&limit=20&select=task_id,directive_id,title,domain,status,human_action_type,created_at'),
             supabaseSelect('autonomous_task_queue',
                 'status=in.(completed,failed)&order=created_at.desc&limit=20'),
             supabaseSelect('autonomous_execution_log',
@@ -1806,8 +1806,6 @@
         const discoveryType = cb.discovery_type || rc.discovery_type || '';
         const draftId = cb.draft_id;
         const isOutdated = !draftId;
-        // Debug: log what we have so we can verify fields
-        console.log('Social draft task params:', { taskId: task.task_id, threadUrl, profileUrl, rc, cb });
 
         // Platform badge
         const platColors = { reddit:'rgba(255,69,0,0.15)', linkedin:'rgba(10,102,194,0.15)', instagram:'rgba(225,48,108,0.15)', facebook:'rgba(24,119,242,0.15)', twitter:'rgba(29,161,242,0.15)' };
