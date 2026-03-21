@@ -784,14 +784,7 @@ function editInput(id) {
     document.getElementById('fMaxResults').value = row.max_results || 50;
     populateSearchTypes();
     document.getElementById('fSearchType').value = row.search_type || '';
-    toggleLinkedinExtras();
-    if (selectedPlatform === 'linkedin' && row.extra_params) {
-        const ep = typeof row.extra_params === 'string' ? JSON.parse(row.extra_params) : row.extra_params;
-        document.getElementById('fSplitCountry').value = ep.splitCountry || 'US';
-        document.getElementById('fMaxCompanies').value = ep.max_companies_to_scrape || 20;
-        document.getElementById('fMaxEmployees').value = ep.max_employees_per_company || 5;
-        initChipContainer('fTargetTitlesChips', ep.target_titles || []);
-    }
+    // LinkedIn targeting is now in the standalone panel, no inline fields needed
     document.getElementById('inlineForm').style.display = 'block';
     document.getElementById('fSearchTerm').focus();
 }
@@ -829,11 +822,12 @@ async function saveInput() {
     };
 
     if (selectedPlatform === 'linkedin') {
+        // Read targeting from the standalone panel
         payload.extra_params = {
-            splitCountry: document.getElementById('fSplitCountry').value || 'US',
-            max_companies_to_scrape: parseInt(document.getElementById('fMaxCompanies').value) || 20,
-            max_employees_per_company: parseInt(document.getElementById('fMaxEmployees').value) || 5,
-            target_titles: getChipValues('fTargetTitlesChips'),
+            splitCountry: document.getElementById('liCountry').value || 'US',
+            max_companies_to_scrape: parseInt(document.getElementById('liMaxCompanies').value) || 20,
+            max_employees_per_company: parseInt(document.getElementById('liMaxEmployees').value) || 5,
+            target_titles: getChipValues('liTargetTitles'),
         };
     }
 
