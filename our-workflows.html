@@ -428,16 +428,16 @@
                 <div class="nav-pulse"></div>
                 <h1 style="font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.125rem; letter-spacing: 0.05em; color: #F8FAFC;">RDGR <span style="color: rgba(248,250,252,0.45); font-weight: 400;">Command Center</span></h1>
                 <div class="flex gap-1 p-0.5 rounded-lg ml-2 hidden sm:flex" style="background: rgba(255,255,255,0.04);">
-                    <a href="/rdgr" class="task-tab" style="flex: none; padding: 0.3rem 0.75rem; text-decoration: none;">Dashboard</a>
-                    <a href="/rdgr?view=chat" class="task-tab" style="flex: none; padding: 0.3rem 0.75rem; text-decoration: none;">Chat</a>
+                    <a href="/rdgr?auth=rdgr" class="task-tab" style="flex: none; padding: 0.3rem 0.75rem; text-decoration: none;">Dashboard</a>
+                    <a href="/rdgr?view=chat&auth=rdgr" class="task-tab" style="flex: none; padding: 0.3rem 0.75rem; text-decoration: none;">Chat</a>
                     <a href="/org-chart?auth=rdgr" class="task-tab" style="flex: none; padding: 0.3rem 0.75rem; text-decoration: none;">Org Map</a>
                     <span class="task-tab active" style="flex: none; padding: 0.3rem 0.75rem;">Workflows</span>
                     <a href="/social-dashboard?auth=rdgr" class="task-tab" style="flex: none; padding: 0.3rem 0.75rem; text-decoration: none;">Social</a>
-                    <a href="/crm" class="task-tab" style="flex: none; padding: 0.3rem 0.75rem; text-decoration: none;">CRM</a>
+                    <a href="/crm?auth=rdgr" class="task-tab" style="flex: none; padding: 0.3rem 0.75rem; text-decoration: none;">CRM</a>
                 </div>
             </div>
             <div class="flex items-center gap-2 sm:gap-3">
-                <a href="/settings" class="text-txt-3 hover:text-accent transition-colors p-2 relative" title="Voice Settings" id="settingsLink">
+                <a href="/settings?auth=rdgr" class="text-txt-3 hover:text-accent transition-colors p-2 relative" title="Voice Settings" id="settingsLink">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6.86 1.33h2.28l.35 1.76.12.05a5.2 5.2 0 011.32.76l.1.08 1.66-.7.96 1.66-1.31 1.07.02.13a5.3 5.3 0 010 1.12l-.02.13 1.31 1.07-.96 1.66-1.66-.7-.1.08a5.2 5.2 0 01-1.32.76l-.12.05-.35 1.76H6.86l-.35-1.76-.12-.05a5.2 5.2 0 01-1.32-.76l-.1-.08-1.66.7-.96-1.66 1.31-1.07-.02-.13a5.3 5.3 0 010-1.12l.02-.13-1.31-1.07.96-1.66 1.66.7.1-.08a5.2 5.2 0 011.32-.76l.12-.05.35-1.76zM8 5.67a2.33 2.33 0 100 4.66 2.33 2.33 0 000-4.66z" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     <span class="hidden" id="settingsBadge" style="position:absolute;top:2px;right:2px;width:7px;height:7px;border-radius:50%;background:#FFD93D;border:1.5px solid #11131A;"></span>
                 </a>

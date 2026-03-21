@@ -195,16 +195,16 @@
                     <div class="pulse-dot"></div>
                     <h1 class="font-heading font-bold text-base sm:text-lg tracking-wide">RDGR <span class="text-txt-3 font-normal">Command Center</span></h1>
                     <div class="flex gap-1 p-0.5 rounded-lg ml-2 hidden sm:flex" style="background: rgba(255,255,255,0.04);">
-                        <a href="/rdgr" class="task-tab" style="flex:none;padding:0.3rem 0.75rem;text-decoration:none;">Dashboard</a>
-                        <a href="/rdgr?view=chat" class="task-tab" style="flex:none;padding:0.3rem 0.75rem;text-decoration:none;">Chat</a>
+                        <a href="/rdgr?auth=rdgr" class="task-tab" style="flex:none;padding:0.3rem 0.75rem;text-decoration:none;">Dashboard</a>
+                        <a href="/rdgr?view=chat&auth=rdgr" class="task-tab" style="flex:none;padding:0.3rem 0.75rem;text-decoration:none;">Chat</a>
                         <a href="/org-chart?auth=rdgr" class="task-tab" style="flex:none;padding:0.3rem 0.75rem;text-decoration:none;">Org Map</a>
-                        <a href="/our-workflows" class="task-tab" style="flex:none;padding:0.3rem 0.75rem;text-decoration:none;">Workflows</a>
+                        <a href="/our-workflows?auth=rdgr" class="task-tab" style="flex:none;padding:0.3rem 0.75rem;text-decoration:none;">Workflows</a>
                         <a href="/social-dashboard?auth=rdgr" class="task-tab" style="flex:none;padding:0.3rem 0.75rem;text-decoration:none;">Social</a>
-                        <a href="/crm" class="task-tab" style="flex:none;padding:0.3rem 0.75rem;text-decoration:none;">CRM</a>
+                        <a href="/crm?auth=rdgr" class="task-tab" style="flex:none;padding:0.3rem 0.75rem;text-decoration:none;">CRM</a>
                     </div>
                 </div>
                 <div class="flex items-center gap-2 sm:gap-3">
-                    <a href="/settings" class="text-txt-3 hover:text-txt transition-colors p-2" title="Email Voice Settings">
+                    <a href="/settings?auth=rdgr" class="text-txt-3 hover:text-txt transition-colors p-2" title="Email Voice Settings">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6.86 1.33h2.28l.35 1.76.12.05a5.2 5.2 0 011.32.76l.1.08 1.66-.7.96 1.66-1.31 1.07.02.13a5.3 5.3 0 010 1.12l-.02.13 1.31 1.07-.96 1.66-1.66-.7-.1.08a5.2 5.2 0 01-1.32.76l-.12.05-.35 1.76H6.86l-.35-1.76-.12-.05a5.2 5.2 0 01-1.32-.76l-.1-.08-1.66.7-.96-1.66 1.31-1.07-.02-.13a5.3 5.3 0 010-1.12l.02-.13-1.31-1.07.96-1.66 1.66.7.1-.08a5.2 5.2 0 011.32-.76l.12-.05.35-1.76zM8 5.67a2.33 2.33 0 100 4.66 2.33 2.33 0 000-4.66z" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </a>
                     <button onclick="saveAllSettings()" class="btn btn-primary text-xs py-2 px-3 flex items-center gap-1.5" id="saveBtn">
@@ -226,7 +226,7 @@
                     <h2 class="font-heading font-bold text-lg tracking-wide">Social Voice & Style</h2>
                     <p class="text-xs text-txt-3 mt-0.5">Configure how the AI writes DMs and engagement messages per platform</p>
                 </div>
-                <a href="/settings" class="text-xs text-txt-3 hover:text-info transition-colors" style="text-decoration:none;">Email Voice Settings →</a>
+                <a href="/settings?auth=rdgr" class="text-xs text-txt-3 hover:text-info transition-colors" style="text-decoration:none;">Email Voice Settings →</a>
             </div>
             <div class="flex gap-2 overflow-x-auto pb-2" id="platformTabs">
                 <button class="plat-tab active" style="--plat-color:#3B9BF5;--plat-dim:rgba(10,102,194,0.08);" onclick="selectPlatform('linkedin')">LinkedIn</button>
