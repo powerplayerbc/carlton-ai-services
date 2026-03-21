@@ -337,38 +337,6 @@
                             </div>
                         </div>
 
-                        <!-- LinkedIn targeting params -->
-                        <div id="linkedinExtras" style="display:none; border-top:1px solid #1E2130;" class="mt-3 pt-3">
-                            <div class="text-xs font-mono text-txt-3 uppercase tracking-wider mb-1">LinkedIn Employee Targeting</div>
-                            <div class="text-[0.6rem] text-txt-3 mb-3">Controls the 3-step pipeline: find jobs, scrape companies, extract employees</div>
-                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
-                                <div>
-                                    <label class="block text-xs text-txt-2 mb-1">Country</label>
-                                    <select class="form-input" id="fSplitCountry">
-                                        <option value="US" selected>United States</option>
-                                        <option value="GB">United Kingdom</option>
-                                        <option value="CA">Canada</option>
-                                        <option value="AU">Australia</option>
-                                        <option value="">All countries</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-txt-2 mb-1">Max Companies to Scrape</label>
-                                    <input type="number" class="form-input" id="fMaxCompanies" value="20" min="1" max="50">
-                                    <div class="text-[0.55rem] text-txt-3 mt-0.5">From job results</div>
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-txt-2 mb-1">Employees per Company</label>
-                                    <input type="number" class="form-input" id="fMaxEmployees" value="5" min="1" max="10">
-                                    <div class="text-[0.55rem] text-txt-3 mt-0.5">~$0.01/employee</div>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-xs text-txt-2 mb-1.5">Target Job Titles <span class="text-txt-3">(matched as contains-check)</span></label>
-                                <div class="chip-container" id="fTargetTitlesChips" onclick="focusChipInput(this)"></div>
-                            </div>
-                        </div>
-
                         <div class="flex items-center justify-end gap-2 mt-4">
                             <button class="btn btn-ghost text-xs py-1.5" onclick="hideForm()">Cancel</button>
                             <button class="btn btn-primary text-xs py-1.5" onclick="saveInput()" id="formSaveBtn">Save Input</button>
@@ -840,11 +808,7 @@ function populateSearchTypes() {
 }
 
 function toggleLinkedinExtras() {
-    const show = selectedPlatform === 'linkedin';
-    document.getElementById('linkedinExtras').style.display = show ? 'block' : 'none';
-    if (show && !document.querySelector('#fTargetTitlesChips .chip-input')) {
-        initChipContainer('fTargetTitlesChips', ['CEO', 'CTO', 'VP', 'Director', 'Founder', 'Owner', 'President', 'Head of', 'Managing Director', 'Partner']);
-    }
+    // No-op: LinkedIn targeting is now in the standalone panel
 }
 
 /* ── Save Input (Insert or Update) ── */
