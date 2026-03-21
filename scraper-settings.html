@@ -538,12 +538,9 @@ window.addEventListener('pageshow', function(e) {
 function init() {
     loadBudget();
     loadHistory();
-    // Load data for the currently selected platform
-    if (selectedPlatform === 'reddit') {
-        loadRedditConfig();
-    } else {
-        loadInputs();
-    }
+    loadInputs();
+    // Pre-load Reddit config so it's ready when user clicks that tab
+    loadRedditConfig();
 }
 
 /* ── Toast ── */
@@ -567,7 +564,12 @@ function selectPlatform(platform) {
     if (platform === 'reddit') {
         document.getElementById('apifySection').style.display = 'none';
         document.getElementById('redditSection').style.display = 'block';
-        loadRedditConfig();
+        // If we already have data from init pre-load, just render; otherwise fetch
+        if (redditConfig && redditConfig.length > 0) {
+            renderRedditConfig();
+        } else {
+            loadRedditConfig(true);
+        }
     } else {
         document.getElementById('apifySection').style.display = 'block';
         document.getElementById('redditSection').style.display = 'none';
@@ -792,25 +794,23 @@ async function saveInput() {
 }
 
 /* ── Reddit Config ── */
-async function loadRedditConfig(retries) {
-    retries = retries || 0;
+async function loadRedditConfig(showError) {
     try {
-        const res = await fetch(SUPABASE_URL + '/rest/v1/social_platform_config?brand_id=eq.' + BRAND_ID + '&platform=eq.reddit&select=search_strategies', { headers });
-        if (!res.ok) throw new Error(res.status);
+        const res = await fetch(SUPABASE_URL + '/rest/v1/social_platform_config?brand_id=eq.' + BRAND_ID + '&platform=eq.reddit&select=search_strategies', {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
         if (data && data.length > 0 && data[0].search_strategies) {
             redditConfig = data[0].search_strategies;
-            renderRedditConfig();
         } else {
             redditConfig = [];
-            renderRedditConfig();
         }
+        // Only render if Reddit tab is currently visible
+        if (selectedPlatform === 'reddit') renderRedditConfig();
     } catch (err) {
-        if (retries < 2) {
-            setTimeout(() => loadRedditConfig(retries + 1), 500);
-        } else {
-            toast('Failed to load Reddit config: ' + err.message, 'error');
-        }
+        console.warn('Reddit config load error:', err.message);
+        if (showError) toast('Failed to load Reddit config: ' + err.message, 'error');
     }
 }
 
