@@ -574,7 +574,7 @@ function unlockPage() {
     document.getElementById('mainContent').style.opacity = '1';
     loadBudget();
     loadHistory();
-    loadInputs();
+    selectPlatform(selectedPlatform);
 }
 
 // Single entry point: wait for DOM, then check auth
