@@ -580,27 +580,30 @@ async function saveAllSettings() {
     btn.disabled = true;
     btn.textContent = 'Saving...';
 
+    // Helper: get select value with guaranteed fallback (DB may store empty strings)
+    const selVal = (id, fallback) => { const v = document.getElementById(id).value; return v && v.trim() ? v : fallback; };
+
     const settings = {
-        tone_warmth: parseInt(document.getElementById('sliderWarmth').value),
-        tone_formality: parseInt(document.getElementById('sliderFormality').value),
-        tone_confidence: parseInt(document.getElementById('sliderConfidence').value),
-        tone_humor: parseInt(document.getElementById('sliderHumor').value),
-        tone_salesiness: parseInt(document.getElementById('sliderSalesiness').value),
-        creativity: parseInt(document.getElementById('sliderCreativity').value),
-        max_message_length: parseInt(document.getElementById('inputMaxLength').value),
-        message_length: document.getElementById('selectMsgLength').value || 'short',
-        opening_style: document.getElementById('selectOpening').value || 'personalized',
-        cta_style: document.getElementById('selectCta').value || 'soft',
-        personalization_depth: document.getElementById('selectPersonalization').value || 'medium',
+        tone_warmth: parseInt(document.getElementById('sliderWarmth').value) || 7,
+        tone_formality: parseInt(document.getElementById('sliderFormality').value) || 6,
+        tone_confidence: parseInt(document.getElementById('sliderConfidence').value) || 8,
+        tone_humor: parseInt(document.getElementById('sliderHumor').value) || 3,
+        tone_salesiness: parseInt(document.getElementById('sliderSalesiness').value) || 2,
+        creativity: parseInt(document.getElementById('sliderCreativity').value) || 6,
+        max_message_length: parseInt(document.getElementById('inputMaxLength').value) || 300,
+        message_length: selVal('selectMsgLength', 'short'),
+        opening_style: selVal('selectOpening', 'personalized'),
+        cta_style: selVal('selectCta', 'soft'),
+        personalization_depth: selVal('selectPersonalization', 'medium'),
         use_emoji: document.getElementById('toggleEmoji').classList.contains('on'),
-        emoji_density: document.getElementById('toggleEmoji').classList.contains('on') ? document.getElementById('selectEmojiDensity').value : 'none',
+        emoji_density: document.getElementById('toggleEmoji').classList.contains('on') ? selVal('selectEmojiDensity', 'minimal') : 'none',
         use_hashtags: document.getElementById('toggleHashtags').classList.contains('on'),
-        hashtag_count_min: parseInt(document.getElementById('inputHashtagMin').value),
-        hashtag_count_max: parseInt(document.getElementById('inputHashtagMax').value),
+        hashtag_count_min: parseInt(document.getElementById('inputHashtagMin').value) || 3,
+        hashtag_count_max: parseInt(document.getElementById('inputHashtagMax').value) || 10,
         keywords: getChips('chipKeywords'),
         banned_phrases: getChips('chipBanned'),
         value_propositions: getChips('chipValueProps'),
-        custom_instruction: document.getElementById('inputCustomInstruction').value.trim(),
+        custom_instruction: document.getElementById('inputCustomInstruction').value.trim() || '',
     };
 
     try {
