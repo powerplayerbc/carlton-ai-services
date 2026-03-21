@@ -2723,8 +2723,10 @@ async function submitRedraft() {
     const feedback = document.getElementById('redraftFeedback').value.trim();
     if (!feedback) { showToast('Please provide feedback', 'error'); return; }
 
+    const btn = document.querySelector('#redraftModal .btn-regenerate');
+    if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+
     try {
-        // Mark as redraft in DB
         await supabaseRpc('approve_social_draft', {
             p_draft_id: parseInt(draftId),
             p_action: 'redraft',
@@ -2733,7 +2735,6 @@ async function submitRedraft() {
             p_edited_content: null,
             p_override_type: null,
         });
-        // Trigger n8n redraft workflow
         await fetch(`${N8N_BASE}/social-approved`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2745,6 +2746,8 @@ async function submitRedraft() {
         showToast('Sent for redraft', 'success');
     } catch (err) {
         showToast('Redraft failed: ' + err.message, 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Redraft'; }
     }
 }
 
