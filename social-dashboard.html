@@ -669,7 +669,7 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2 sm:gap-3">
-                    <a href="/settings" class="text-txt-3 hover:text-accent transition-colors p-2 relative" title="Voice Settings" id="settingsLink">
+                    <a href="/social-voice-settings?auth=rdgr" class="text-txt-3 hover:text-accent transition-colors p-2 relative" title="Social Voice Settings" id="settingsLink">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6.86 1.33h2.28l.35 1.76.12.05a5.2 5.2 0 011.32.76l.1.08 1.66-.7.96 1.66-1.31 1.07.02.13a5.3 5.3 0 010 1.12l-.02.13 1.31 1.07-.96 1.66-1.66-.7-.1.08a5.2 5.2 0 01-1.32.76l-.12.05-.35 1.76H6.86l-.35-1.76-.12-.05a5.2 5.2 0 01-1.32-.76l-.1-.08-1.66.7-.96-1.66 1.31-1.07-.02-.13a5.3 5.3 0 010-1.12l.02-.13-1.31-1.07.96-1.66 1.66.7.1-.08a5.2 5.2 0 011.32-.76l.12-.05.35-1.76zM8 5.67a2.33 2.33 0 100 4.66 2.33 2.33 0 000-4.66z" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         <span class="hidden" id="settingsBadge" style="position:absolute;top:2px;right:2px;width:7px;height:7px;border-radius:50%;background:#FFD93D;border:1.5px solid #11131A;"></span>
                     </a>
@@ -924,6 +924,11 @@
                         <button class="status-btn" data-oplatform="reddit" onclick="setOutPlatformFilter('reddit')">Reddit</button>
                     </div>
                 </div>
+            </div>
+
+            <!-- ── Conversion Funnel Widget ── -->
+            <div class="max-w-[1600px] mx-auto px-4 sm:px-6 pb-3">
+                <div id="funnelWidget" style="display: none;"></div>
             </div>
 
             <!-- ── Outreach Cards Container ── -->
@@ -2136,6 +2141,7 @@ async function refreshOutreach() {
             fetchDailyCounters(),
             fetchOutreachQueue(),
             fetchActiveConversations(),
+            fetchConversionFunnel(),
         ]);
         showToast('Outreach data loaded', 'success');
     } catch (err) {
@@ -2324,14 +2330,15 @@ function updateOutreachResultCount(shown, total) {
 
 function renderApprovalCard(draft) {
     const platform = PLATFORMS[draft.platform] || { label: draft.platform, color: '#8A95A9' };
-    const name = draft.target_name || draft.name || draft.target_username || 'Unknown';
+    const name = draft.target_name || draft.name || draft.platform_username || 'Unknown';
     const title = draft.title || '';
     const company = draft.company || '';
     const followers = draft.followers_count ? `${formatNum(draft.followers_count)} followers` : '';
     const score = draft.score || draft.qualification_score || '';
     const message = draft.message_content || draft.draft_content || draft.content || '';
     const reasoning = draft.ai_reasoning || draft.reasoning || '';
-    const profileUrl = draft.profile_url || '';
+    const profileUrl = draft.target_profile_url || draft.profile_url || '';
+    const threadUrl = draft.thread_url || '';
     const redraftCount = draft.redraft_count || 0;
     const maxRedrafts = draft.max_redrafts || 3;
     const isReddit = draft.platform === 'reddit';
@@ -2342,6 +2349,13 @@ function renderApprovalCard(draft) {
     if (isReddit) {
         metaLine = [draft.subreddit ? `r/${draft.subreddit}` : '', draft.thread_title ? `"${truncate(draft.thread_title, 50)}"` : '', score ? `Score: ${score}` : ''].filter(Boolean).join(' | ');
     }
+
+    // Reddit: show Open Thread link to the post. DM platforms: show View Profile link.
+    const linkHtml = isReddit && threadUrl
+        ? `<a href="${escapeHtml(threadUrl)}" target="_blank" class="text-xs text-txt-3 hover:text-accent transition-colors" title="Open thread to paste comment">Open Thread →</a>`
+        : profileUrl
+        ? `<a href="${escapeHtml(profileUrl)}" target="_blank" class="text-xs text-txt-3 hover:text-accent transition-colors" title="View profile">View Profile →</a>`
+        : '';
 
     return `
         <div class="outreach-card" id="out-card-${draft.id}">
@@ -2355,7 +2369,7 @@ function renderApprovalCard(draft) {
                 </div>
                 <div class="flex items-center gap-2">
                     ${contactId ? `<button onclick="window.open('/crm?contact=${contactId}&auth=rdgr','_blank')" class="btn btn-ghost text-xs py-1 px-2" title="View in CRM">CRM</button>` : ''}
-                    ${profileUrl ? `<a href="${escapeHtml(profileUrl)}" target="_blank" class="text-xs text-txt-3 hover:text-accent transition-colors" title="Open profile">Profile →</a>` : ''}
+                    ${linkHtml}
                 </div>
             </div>
             ${metaLine ? `<div class="text-xs text-txt-3 mb-2">${escapeHtml(metaLine)}</div>` : ''}
@@ -2379,10 +2393,18 @@ function renderApprovalCard(draft) {
 
 function renderActionCard(draft) {
     const platform = PLATFORMS[draft.platform] || { label: draft.platform, color: '#8A95A9' };
-    const name = draft.target_name || draft.name || draft.target_username || 'Unknown';
+    const name = draft.target_name || draft.name || draft.platform_username || 'Unknown';
     const message = draft.message_content || draft.draft_content || draft.content || '';
-    const profileUrl = draft.profile_url || '';
+    const profileUrl = draft.target_profile_url || draft.profile_url || '';
+    const threadUrl = draft.thread_url || '';
     const contactId = draft.contact_id || '';
+    const isReddit = draft.platform === 'reddit';
+
+    const linkHtml = isReddit && threadUrl
+        ? `<a href="${escapeHtml(threadUrl)}" target="_blank" class="text-xs text-txt-3 hover:text-accent transition-colors">Open Thread →</a>`
+        : profileUrl
+        ? `<a href="${escapeHtml(profileUrl)}" target="_blank" class="text-xs text-txt-3 hover:text-accent transition-colors">View Profile →</a>`
+        : '';
 
     return `
         <div class="outreach-card" id="out-card-${draft.id}">
@@ -2393,7 +2415,7 @@ function renderActionCard(draft) {
                 </div>
                 <div class="flex items-center gap-2">
                     ${contactId ? `<button onclick="window.open('/crm?contact=${contactId}&auth=rdgr','_blank')" class="btn btn-ghost text-xs py-1 px-2" title="View in CRM">CRM</button>` : ''}
-                    ${profileUrl ? `<a href="${escapeHtml(profileUrl)}" target="_blank" class="text-xs text-txt-3 hover:text-accent transition-colors">Profile →</a>` : ''}
+                    ${linkHtml}
                 </div>
             </div>
             <div class="msg-preview mb-3">${escapeHtml(message)}</div>
@@ -2407,19 +2429,30 @@ function renderActionCard(draft) {
 
 function renderConvoCard(convo) {
     const platform = PLATFORMS[convo.platform] || { label: convo.platform, color: '#8A95A9' };
-    const name = convo.target_name || convo.name || convo.target_username || convo.username || 'Unknown';
-    const replyCount = convo.reply_count || convo.replies_received || 0;
-    const lastReply = convo.last_reply_at ? timeAgo(convo.last_reply_at) : '';
-    const ourMessage = convo.our_message || convo.original_message || '';
-    const theirReply = convo.their_reply || convo.latest_reply || '';
+    const name = convo.target_name || convo.platform_username || 'Unknown';
+    const inboundCount = convo.inbound_count || 0;
+    const convoCount = convo.conversation_count || 0;
+    const pendingReplies = convo.pending_replies || 0;
+    const lastActivity = convo.last_activity ? timeAgo(convo.last_activity) : '';
+    const ourMessage = convo.original_message || '';
     const draftResponse = convo.pending_response || convo.draft_reply || '';
     const isReddit = convo.platform === 'reddit';
     const contactId = convo.contact_id || '';
+    const threadUrl = convo.thread_url || '';
+    const profileUrl = convo.target_profile_url || '';
+    const draftId = convo.draft_id || convo.id;
+
+    const linkHtml = isReddit && threadUrl
+        ? `<a href="${escapeHtml(threadUrl)}" target="_blank" class="text-xs text-txt-3 hover:text-accent transition-colors">Open Thread →</a>`
+        : profileUrl
+        ? `<a href="${escapeHtml(profileUrl)}" target="_blank" class="text-xs text-txt-3 hover:text-accent transition-colors">View Profile →</a>`
+        : '';
 
     let contextLine = [
-        isReddit && convo.subreddit ? `r/${convo.subreddit}` : '',
-        replyCount > 0 ? `${replyCount} repl${replyCount === 1 ? 'y' : 'ies'}` : 'No replies',
-        lastReply ? `Last: ${lastReply}` : '',
+        isReddit && convo.thread_title ? `"${truncate(convo.thread_title, 50)}"` : '',
+        inboundCount > 0 ? `${inboundCount} repl${inboundCount === 1 ? 'y' : 'ies'} received` : 'No replies',
+        convoCount > 0 ? `${convoCount} messages` : '',
+        lastActivity ? `Last: ${lastActivity}` : '',
     ].filter(Boolean).join(' | ');
 
     return `
@@ -2428,26 +2461,22 @@ function renderConvoCard(convo) {
                 <div class="flex items-center gap-2">
                     <span class="badge badge-${convo.platform}">${platform.label}</span>
                     <span class="text-sm font-semibold text-txt">${escapeHtml(name)}</span>
+                    ${convo.response_received ? '<span class="badge badge-approved" style="font-size:0.5rem;">REPLIED</span>' : ''}
                 </div>
                 <div class="flex items-center gap-2">
                     ${contactId ? `<button onclick="window.open('/crm?contact=${contactId}&auth=rdgr','_blank')" class="btn btn-ghost text-xs py-1 px-2">CRM</button>` : ''}
-                    ${convo.thread_url ? `<a href="${escapeHtml(convo.thread_url)}" target="_blank" class="text-xs text-txt-3 hover:text-accent transition-colors">Open Thread →</a>` : ''}
+                    <button onclick="viewConvoThread('${draftId}')" class="btn btn-ghost text-xs py-1 px-2" title="View full thread">Thread</button>
+                    ${linkHtml}
                 </div>
             </div>
             <div class="text-xs text-txt-3 mb-3">${escapeHtml(contextLine)}</div>
             ${ourMessage ? `
                 <div class="mb-2">
-                    <div class="text-[0.65rem] text-txt-3 uppercase tracking-wide mb-1 font-mono">Your Message</div>
-                    <div class="convo-msg ours">${escapeHtml(ourMessage)}</div>
+                    <div class="reasoning-toggle" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'; this.textContent=this.textContent.includes('▸')?'▾ Your Original Message':'▸ Your Original Message'">▸ Your Original Message</div>
+                    <div class="convo-msg ours mt-1" style="display:none;">${escapeHtml(ourMessage)}</div>
                 </div>
             ` : ''}
-            ${theirReply ? `
-                <div class="mb-2">
-                    <div class="text-[0.65rem] text-txt-3 uppercase tracking-wide mb-1 font-mono">Their Reply</div>
-                    <div class="convo-msg theirs">${escapeHtml(theirReply)}</div>
-                </div>
-            ` : ''}
-            ${draftResponse ? `
+            ${pendingReplies > 0 && draftResponse ? `
                 <div class="mb-3">
                     <div class="text-[0.65rem] text-warn uppercase tracking-wide mb-1 font-mono">Drafted Response (needs approval)</div>
                     <div class="convo-msg draft-reply" id="convo-draft-${convo.id || convo.conversation_id}">${escapeHtml(draftResponse)}</div>
@@ -2459,7 +2488,7 @@ function renderConvoCard(convo) {
                 </div>
             ` : ''}
             <div class="flex items-center gap-2 pt-2 border-t border-border/30">
-                <button onclick="openLogReplyModal('${convo.draft_id || convo.id}', '${convo.platform}', '${contactId}')" class="btn btn-ghost text-xs py-1.5 px-3">Log New Reply</button>
+                <button onclick="openLogReplyModal('${draftId}', '${convo.platform}', '${contactId}')" class="btn btn-ghost text-xs py-1.5 px-3">Log New Reply</button>
             </div>
         </div>
     `;
@@ -2769,6 +2798,154 @@ async function markConvoSent(convoId) {
     } catch (err) {
         showToast('Failed: ' + err.message, 'error');
     }
+}
+
+// ═══════════════════════════════════════
+// OUTREACH — VIEW CONVERSATION THREAD
+// ═══════════════════════════════════════
+async function viewConvoThread(draftId) {
+    // Open detail panel with full thread
+    const panel = document.getElementById('detailPanel');
+    const content = document.getElementById('detailContent');
+    document.getElementById('detailBackdrop').classList.add('open');
+    panel.classList.add('open');
+    content.innerHTML = '<div class="empty-state py-8">Loading thread...</div>';
+
+    try {
+        const data = await supabaseRpc('get_conversation_thread', {
+            p_draft_id: parseInt(draftId),
+            p_brand_id: 'carlton',
+        });
+
+        if (!data || data.error) {
+            content.innerHTML = '<div class="empty-state py-8">Failed to load thread</div>';
+            return;
+        }
+
+        const target = data.target || {};
+        const messages = data.messages || [];
+        const originalMessage = data.original_message || '';
+
+        let html = `
+            <div class="flex items-center gap-2 mb-3">
+                <span class="font-heading font-bold text-sm text-txt">Thread with ${escapeHtml(target.name || target.target_name || 'Unknown')}</span>
+                ${target.platform ? `<span class="badge badge-${target.platform}">${(PLATFORMS[target.platform] || {}).label || target.platform}</span>` : ''}
+            </div>
+        `;
+
+        if (originalMessage) {
+            html += `
+                <div class="mb-3">
+                    <div class="text-[0.6rem] text-accent font-mono uppercase mb-1">Your outreach</div>
+                    <div class="convo-msg ours">${escapeHtml(originalMessage)}</div>
+                </div>
+            `;
+        }
+
+        if (messages.length > 0) {
+            html += '<div class="space-y-2">';
+            messages.forEach(msg => {
+                const isUs = msg.author_is_us;
+                const author = msg.author || (isUs ? 'You' : 'Them');
+                const msgClass = isUs ? 'ours' : 'theirs';
+                const dirLabel = isUs ? 'YOU' : escapeHtml(author);
+                const timeStr = msg.created_at ? formatDateTime(msg.created_at) : '';
+
+                html += `
+                    <div>
+                        <div class="flex items-center justify-between mb-0.5">
+                            <span class="text-[0.6rem] font-mono uppercase ${isUs ? 'text-accent' : 'text-info'}">${dirLabel}</span>
+                            <span class="text-[0.55rem] text-txt-3 font-mono">${timeStr}</span>
+                        </div>
+                        <div class="convo-msg ${msgClass}">${escapeHtml(msg.content || '')}</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+        } else {
+            html += '<div class="empty-state text-xs py-4">No messages in thread yet</div>';
+        }
+
+        content.innerHTML = html;
+    } catch (err) {
+        content.innerHTML = `<div class="empty-state py-8">Error loading thread: ${escapeHtml(err.message)}</div>`;
+    }
+}
+
+// ═══════════════════════════════════════
+// OUTREACH — CONVERSION FUNNEL
+// ═══════════════════════════════════════
+async function fetchConversionFunnel() {
+    try {
+        const data = await supabaseRpc('get_social_conversion_funnel', {
+            p_brand_id: 'carlton',
+            p_days: 30,
+            p_platform: outPlatformFilter,
+        });
+        renderConversionFunnel(data);
+    } catch (e) {
+        document.getElementById('funnelWidget').style.display = 'none';
+    }
+}
+
+function renderConversionFunnel(data) {
+    const container = document.getElementById('funnelWidget');
+    if (!data || data.error) { container.style.display = 'none'; return; }
+
+    const funnel = data.funnel || {};
+    const responseRates = data.response_rates || [];
+    const tta = data.time_to_act || {};
+    container.style.display = '';
+
+    const stages = [
+        { key: 'discovered', label: 'Discovered', color: '#525E73' },
+        { key: 'classified', label: 'Classified', color: '#8A95A9' },
+        { key: 'drafted', label: 'Drafted', color: '#4CC9F0' },
+        { key: 'approved', label: 'Approved', color: '#FFD93D' },
+        { key: 'acted', label: 'Acted', color: '#06D6A0' },
+        { key: 'conversations_started', label: 'Convos', color: '#A855F7' },
+    ];
+
+    const maxVal = Math.max(...stages.map(s => funnel[s.key] || 0), 1);
+
+    let funnelHtml = '<div class="flex items-end gap-1" style="height: 48px;">';
+    stages.forEach(s => {
+        const val = funnel[s.key] || 0;
+        const pct = Math.max((val / maxVal) * 100, 4);
+        funnelHtml += `
+            <div class="flex-1 flex flex-col items-center gap-0.5">
+                <span class="text-[0.6rem] font-mono font-bold" style="color:${s.color};">${val}</span>
+                <div style="width:100%;height:${pct}%;min-height:2px;background:${s.color};border-radius:2px 2px 0 0;opacity:0.7;"></div>
+                <span class="text-[0.5rem] text-txt-3 text-center leading-tight">${s.label}</span>
+            </div>
+        `;
+    });
+    funnelHtml += '</div>';
+
+    let rateHtml = '';
+    if (responseRates.length > 0) {
+        rateHtml = '<div class="flex gap-2 flex-wrap">';
+        responseRates.forEach(r => {
+            const p = PLATFORMS[r.platform] || { label: r.platform, color: '#8A95A9' };
+            rateHtml += `<span class="daily-badge counter-green"><span style="color:${p.color};font-weight:600;font-size:0.6rem;">${p.label}</span><span class="font-mono text-xs">${r.response_rate_pct || 0}% response</span></span>`;
+        });
+        rateHtml += '</div>';
+    }
+
+    const avgTotal = tta.avg_hours_total != null ? `${Number(tta.avg_hours_total).toFixed(1)}h` : '—';
+
+    container.innerHTML = `
+        <div class="panel">
+            <div class="panel-body" style="padding: 0.75rem 1rem;">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[0.65rem] font-mono text-txt-3 uppercase tracking-wider">30-Day Funnel</span>
+                    <span class="text-[0.6rem] text-txt-3">Avg time to act: <span class="text-accent font-mono">${avgTotal}</span></span>
+                </div>
+                ${funnelHtml}
+                ${rateHtml ? `<div class="mt-2">${rateHtml}</div>` : ''}
+            </div>
+        </div>
+    `;
 }
 
 // ═══════════════════════════════════════
