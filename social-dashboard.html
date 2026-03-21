@@ -893,6 +893,22 @@
                         </button>
                         <span class="text-xs text-txt-3 font-mono" id="outreachResultCount"></span>
                     </div>
+                    <!-- Run Discovery -->
+                    <div class="flex items-center gap-2">
+                        <select class="form-input text-xs py-1.5" style="max-width:140px;" id="discoveryPlatformSelect">
+                            <option value="">All Platforms</option>
+                            <option value="linkedin">LinkedIn</option>
+                            <option value="twitter">Twitter / X</option>
+                            <option value="instagram">Instagram</option>
+                            <option value="facebook">Facebook</option>
+                        </select>
+                        <button onclick="triggerDiscovery()" class="btn btn-ghost text-xs py-1.5 px-3 flex items-center gap-1.5 whitespace-nowrap" id="runDiscoveryBtn">
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.2"/><path d="M6 3.5v5M3.5 6h5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                            Run Discovery
+                        </button>
+                        <button onclick="triggerRedditDiscovery('wave_catcher')" class="btn btn-ghost text-xs py-1.5 px-2 whitespace-nowrap" style="border-color:rgba(20,184,166,0.3);color:#2DD4BF;" id="runWaveBtn" title="Run Reddit Wave Catcher">Wave</button>
+                        <button onclick="triggerRedditDiscovery('pain_prospector')" class="btn btn-ghost text-xs py-1.5 px-2 whitespace-nowrap" style="border-color:rgba(245,158,11,0.3);color:#F59E0B;" id="runPainBtn" title="Run Reddit Pain Prospector">Pain</button>
+                    </div>
                 </div>
 
                 <!-- Daily Counter Strip -->
@@ -2303,6 +2319,47 @@ function clearOutreachSearch() {
     document.getElementById('outreachSearchClear').style.display = 'none';
     document.getElementById('outreachResultCount').textContent = '';
     renderOutreachView();
+}
+
+// ═══════════════════════════════════════
+// OUTREACH — MANUAL DISCOVERY TRIGGER
+// ═══════════════════════════════════════
+async function triggerDiscovery() {
+    const platform = document.getElementById('discoveryPlatformSelect').value || null;
+    const btn = document.getElementById('runDiscoveryBtn');
+    btn.disabled = true; btn.textContent = 'Starting...';
+    try {
+        await fetch(`${N8N_BASE}/social-orchestrator`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ brand_id: 'carlton', platform }),
+        });
+        const label = platform ? PLATFORMS[platform]?.label || platform : 'all platforms';
+        showToast(`Discovery started for ${label} (may take 1-10 min)`, 'success');
+    } catch (err) {
+        showToast('Failed to trigger discovery: ' + err.message, 'error');
+    } finally {
+        setTimeout(() => { btn.disabled = false; btn.textContent = 'Run Discovery'; }, 5000);
+    }
+}
+
+async function triggerRedditDiscovery(mode) {
+    const btnId = mode === 'wave_catcher' ? 'runWaveBtn' : 'runPainBtn';
+    const btn = document.getElementById(btnId);
+    btn.disabled = true; const origText = btn.textContent; btn.textContent = '...';
+    try {
+        await fetch(`${N8N_BASE}/social-reddit-orch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ brand_id: 'carlton', mode }),
+        });
+        const label = mode === 'wave_catcher' ? 'Wave Catcher' : 'Pain Prospector';
+        showToast(`Reddit ${label} started`, 'success');
+    } catch (err) {
+        showToast('Failed: ' + err.message, 'error');
+    } finally {
+        setTimeout(() => { btn.disabled = false; btn.textContent = origText; }, 5000);
+    }
 }
 
 function filterByName(items) {
