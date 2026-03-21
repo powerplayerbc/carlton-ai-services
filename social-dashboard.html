@@ -926,7 +926,7 @@
                         <button class="status-btn" data-oplatform="instagram" onclick="setOutPlatformFilter('instagram')">Instagram</button>
                         <button class="status-btn" data-oplatform="facebook" onclick="setOutPlatformFilter('facebook')">Facebook</button>
                         <button class="status-btn" data-oplatform="twitter" onclick="setOutPlatformFilter('twitter')">X / Twitter</button>
-                        <button class="status-btn" data-oplatform="reddit" onclick="setOutPlatformFilter('reddit')">Reddit</button>
+                        <button class="status-btn" data-oplatform="reddit" onclick="setOutPlatformFilter('reddit')">Reddit <span id="redditWaveCount" class="inline-flex items-center justify-center rounded-full text-[0.55rem] font-mono font-bold" style="width:18px;height:18px;background:rgba(20,184,166,0.2);color:#2DD4BF;margin-left:2px;display:none;">0</span><span id="redditPainCount" class="inline-flex items-center justify-center rounded-full text-[0.55rem] font-mono font-bold" style="width:18px;height:18px;background:rgba(245,158,11,0.2);color:#F59E0B;margin-left:2px;display:none;">0</span></button>
                     </div>
                 </div>
             </div>
@@ -2301,6 +2301,8 @@ function filterByName(items) {
 function renderOutreachView() {
     const container = document.getElementById('outreachCards');
 
+    updateRedditTypeCounts();
+
     if (queueType === 'conversations') {
         const filtered = filterByName(activeConversations);
         updateOutreachResultCount(filtered.length, activeConversations.length);
@@ -2322,6 +2324,21 @@ function renderOutreachView() {
             container.innerHTML = filtered.map(d => renderActionCard(d)).join('');
         }
     }
+}
+
+function updateRedditTypeCounts() {
+    const waveBadge = document.getElementById('redditWaveCount');
+    const painBadge = document.getElementById('redditPainCount');
+    let waveCount = 0, painCount = 0;
+    socialDrafts.forEach(d => {
+        if (d.platform === 'reddit') {
+            const t = getRedditCardType(d);
+            if (t === 'wave') waveCount++;
+            else if (t === 'pain') painCount++;
+        }
+    });
+    if (waveBadge) { waveBadge.textContent = waveCount; waveBadge.style.display = waveCount > 0 ? '' : 'none'; }
+    if (painBadge) { painBadge.textContent = painCount; painBadge.style.display = painCount > 0 ? '' : 'none'; }
 }
 
 function updateOutreachResultCount(shown, total) {
