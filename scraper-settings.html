@@ -243,6 +243,50 @@
         <!-- Main Content Area -->
         <div class="max-w-[1600px] mx-auto px-4 sm:px-6 pb-4">
 
+            <!-- LinkedIn Employee Targeting (standalone panel, visible only on LinkedIn tab) -->
+            <div id="linkedinTargetingPanel" style="display:none;" class="mb-4">
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="text-xs font-semibold text-txt-3 uppercase tracking-wider font-mono">LinkedIn Employee Targeting</span>
+                        <button class="btn btn-primary text-xs py-1 px-2" onclick="saveLinkedinTargeting()" id="liTargetingSaveBtn">Save Targeting</button>
+                    </div>
+                    <div class="panel-body">
+                        <div class="text-[0.6rem] text-txt-3 mb-3">Controls the 3-step pipeline: find jobs, scrape companies, extract matching employees. These settings apply to all LinkedIn search inputs.</div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1">Country</label>
+                                <select class="form-input" id="liCountry">
+                                    <option value="US" selected>United States</option>
+                                    <option value="GB">United Kingdom</option>
+                                    <option value="CA">Canada</option>
+                                    <option value="AU">Australia</option>
+                                    <option value="">All countries</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1">Max Companies</label>
+                                <input type="number" class="form-input" id="liMaxCompanies" value="20" min="1" max="50">
+                                <div class="text-[0.55rem] text-txt-3 mt-0.5">From job results</div>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1">Employees / Company</label>
+                                <input type="number" class="form-input" id="liMaxEmployees" value="5" min="1" max="10">
+                                <div class="text-[0.55rem] text-txt-3 mt-0.5">~$0.01 each</div>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1">Est. Cost / Run</label>
+                                <div class="text-sm font-mono text-accent mt-1" id="liCostEstimate">$1.00</div>
+                                <div class="text-[0.55rem] text-txt-3 mt-0.5">companies x employees x $0.01</div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-txt-2 mb-1.5">Target Job Titles <span class="text-txt-3">(employees matching these titles will be scraped)</span></label>
+                            <div class="chip-container" id="liTargetTitles" onclick="focusChipInput(this)"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- APIFY Platforms: Inputs Table -->
             <div id="apifySection">
                 <div class="panel">
@@ -567,12 +611,15 @@ function selectPlatform(platform) {
     if (platform === 'reddit') {
         document.getElementById('apifySection').style.display = 'none';
         document.getElementById('redditSection').style.display = 'block';
+        document.getElementById('linkedinTargetingPanel').style.display = 'none';
         loadRedditConfig();
     } else {
         document.getElementById('apifySection').style.display = 'block';
         document.getElementById('redditSection').style.display = 'none';
+        document.getElementById('linkedinTargetingPanel').style.display = platform === 'linkedin' ? '' : 'none';
         hideForm();
         loadInputs();
+        if (platform === 'linkedin') loadLinkedinTargeting();
     }
 }
 
@@ -621,6 +668,59 @@ async function loadInputs() {
         renderInputs();
     } catch (err) {
         body.innerHTML = '<div class="empty-state" style="color:#FF6B6B;">Failed to load inputs</div>';
+    }
+}
+
+/* ── LinkedIn Targeting (standalone panel) ── */
+async function loadLinkedinTargeting() {
+    // Read targeting from the first LinkedIn input's extra_params
+    try {
+        const res = await fetch(SUPABASE_URL + '/rest/v1/social_discovery_inputs?brand_id=eq.' + BRAND_ID + '&platform=eq.linkedin&order=weight.desc&limit=1', {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+        });
+        const data = await res.json();
+        const ep = (data && data[0]?.extra_params) || {};
+        document.getElementById('liCountry').value = ep.splitCountry || 'US';
+        document.getElementById('liMaxCompanies').value = ep.max_companies_to_scrape || 20;
+        document.getElementById('liMaxEmployees').value = ep.max_employees_per_company || 5;
+        initChipContainer('liTargetTitles', ep.target_titles || ['CEO', 'CTO', 'VP', 'Director', 'Founder', 'Owner', 'President', 'Head of', 'Managing Director', 'Partner']);
+        updateLiCostEstimate();
+    } catch (e) {
+        initChipContainer('liTargetTitles', ['CEO', 'CTO', 'VP', 'Director', 'Founder', 'Owner']);
+    }
+    // Bind cost estimate update
+    document.getElementById('liMaxCompanies').addEventListener('input', updateLiCostEstimate);
+    document.getElementById('liMaxEmployees').addEventListener('input', updateLiCostEstimate);
+}
+
+function updateLiCostEstimate() {
+    const companies = parseInt(document.getElementById('liMaxCompanies').value) || 20;
+    const employees = parseInt(document.getElementById('liMaxEmployees').value) || 5;
+    const cost = (companies * employees * 0.01).toFixed(2);
+    document.getElementById('liCostEstimate').textContent = '$' + cost;
+}
+
+async function saveLinkedinTargeting() {
+    const btn = document.getElementById('liTargetingSaveBtn');
+    btn.disabled = true; btn.textContent = 'Saving...';
+    const ep = {
+        splitCountry: document.getElementById('liCountry').value || 'US',
+        max_companies_to_scrape: parseInt(document.getElementById('liMaxCompanies').value) || 20,
+        max_employees_per_company: parseInt(document.getElementById('liMaxEmployees').value) || 5,
+        target_titles: getChipValues('liTargetTitles'),
+    };
+    try {
+        // Update ALL LinkedIn inputs with these targeting params
+        await fetch(SUPABASE_URL + '/rest/v1/social_discovery_inputs?brand_id=eq.' + BRAND_ID + '&platform=eq.linkedin', {
+            method: 'PATCH',
+            headers: { ...headers, 'Prefer': 'return=minimal' },
+            body: JSON.stringify({ extra_params: ep }),
+        });
+        toast('LinkedIn targeting saved (applied to all inputs)', 'success');
+    } catch (err) {
+        toast('Failed to save: ' + err.message, 'error');
+    } finally {
+        btn.disabled = false; btn.textContent = 'Save Targeting';
     }
 }
 
