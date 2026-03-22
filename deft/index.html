@@ -2191,6 +2191,30 @@
     </div>
 
     <!-- Toast container -->
+    <!-- ═══ CREATE PROFILE MODAL ═══ -->
+    <div class="modal-backdrop" id="createProfileModal" onclick="if(event.target===this)closeModal('createProfileModal')">
+        <div class="modal-content" style="max-width: 420px;">
+            <div class="panel-header">
+                <span class="font-heading font-bold text-sm uppercase tracking-wide" style="color: var(--deft-txt-2);">New Profile</span>
+                <button onclick="closeModal('createProfileModal')" class="p-1 rounded hover:opacity-70 transition-opacity" style="color: var(--deft-txt-3);">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+            <div class="panel-body">
+                <div class="form-group mb-4">
+                    <label class="form-label" for="newProfileName">Display Name *</label>
+                    <input type="text" id="newProfileName" class="form-input" placeholder="e.g. Bradford, Dianna">
+                </div>
+                <div class="form-group mb-4">
+                    <label class="form-label" for="newProfileEmail">Email (optional)</label>
+                    <input type="email" id="newProfileEmail" class="form-input" placeholder="user@example.com">
+                </div>
+                <p class="text-xs mb-4" style="color: var(--deft-txt-3);">You can update body stats, macro targets, and preferences in the Profile tab after creating.</p>
+                <button id="createProfileBtn" onclick="createNewProfile()" class="btn btn-primary w-full py-2.5">Create Profile</button>
+            </div>
+        </div>
+    </div>
+
     <div class="toast-container" id="toasts" aria-live="polite"></div>
 
 </div>
@@ -2357,32 +2381,87 @@ async function syncThemeToSupabase(config) {
 // ═══════════════════════════════════════
 async function loadProfiles() {
     const profiles = await supabaseSelect('deft_user_profiles', 'select=user_id,display_name,email&order=display_name');
-    if (!profiles || profiles.length === 0) return;
 
     const dropdown = document.getElementById('profileDropdown');
     dropdown.innerHTML = '';
 
-    profiles.forEach(p => {
-        const btn = document.createElement('button');
-        btn.className = 'w-full text-left px-3 py-2 text-sm transition-colors flex items-center gap-2';
-        btn.style.cssText = 'color: var(--deft-txt); background: transparent;';
-        btn.onmouseenter = () => btn.style.background = 'rgba(255,255,255,0.04)';
-        btn.onmouseleave = () => btn.style.background = 'transparent';
+    if (profiles && profiles.length > 0) {
+        profiles.forEach(p => {
+            const btn = document.createElement('button');
+            btn.className = 'w-full text-left px-3 py-2 text-sm transition-colors flex items-center gap-2';
+            btn.style.cssText = 'color: var(--deft-txt); background: transparent;';
+            btn.onmouseenter = () => btn.style.background = 'rgba(255,255,255,0.04)';
+            btn.onmouseleave = () => btn.style.background = 'transparent';
 
-        const initial = (p.display_name || p.email || '?')[0].toUpperCase();
-        const isActive = p.user_id === activeProfileId;
-        btn.innerHTML = `
-            <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                 style="background: ${isActive ? 'var(--deft-accent-dim)' : 'rgba(255,255,255,0.06)'}; color: ${isActive ? 'var(--deft-accent)' : 'var(--deft-txt-2)'};">
-                ${initial}
-            </div>
-            <span>${p.display_name || p.email}</span>
-            ${isActive ? '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" class="ml-auto"><path d="M2 6l3 3 5-5" stroke="var(--deft-accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
-        `;
-        btn.setAttribute('role', 'menuitem');
-        btn.onclick = () => selectProfile(p.user_id, p.display_name || p.email);
-        dropdown.appendChild(btn);
+            const initial = (p.display_name || p.email || '?')[0].toUpperCase();
+            const isActive = p.user_id === activeProfileId;
+            btn.innerHTML = `
+                <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                     style="background: ${isActive ? 'var(--deft-accent-dim)' : 'rgba(255,255,255,0.06)'}; color: ${isActive ? 'var(--deft-accent)' : 'var(--deft-txt-2)'};">
+                    ${initial}
+                </div>
+                <span>${p.display_name || p.email}</span>
+                ${isActive ? '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" class="ml-auto"><path d="M2 6l3 3 5-5" stroke="var(--deft-accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+            `;
+            btn.setAttribute('role', 'menuitem');
+            btn.onclick = () => selectProfile(p.user_id, p.display_name || p.email);
+            dropdown.appendChild(btn);
+        });
+    }
+
+    // Divider + "New Profile" button
+    const divider = document.createElement('div');
+    divider.style.cssText = 'border-top: 1px solid var(--deft-border); margin: 4px 0;';
+    dropdown.appendChild(divider);
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'w-full text-left px-3 py-2 text-sm transition-colors flex items-center gap-2';
+    addBtn.style.cssText = 'color: var(--deft-accent); background: transparent;';
+    addBtn.onmouseenter = () => addBtn.style.background = 'rgba(255,255,255,0.04)';
+    addBtn.onmouseleave = () => addBtn.style.background = 'transparent';
+    addBtn.innerHTML = '<div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style="background: var(--deft-accent-dim); color: var(--deft-accent);">+</div><span>New Profile</span>';
+    addBtn.setAttribute('role', 'menuitem');
+    addBtn.onclick = () => { dropdown.classList.add('hidden'); openModal('createProfileModal'); };
+    dropdown.appendChild(addBtn);
+}
+
+async function createNewProfile() {
+    const name = document.getElementById('newProfileName').value.trim();
+    const email = document.getElementById('newProfileEmail').value.trim();
+    if (!name) { toast('Name is required', 'error'); return; }
+
+    const userId = crypto.randomUUID();
+    const btn = document.getElementById('createProfileBtn');
+    btn.disabled = true;
+    btn.textContent = 'Creating...';
+
+    const result = await supabaseWrite('deft_user_profiles', 'POST', {
+        user_id: userId,
+        display_name: name,
+        email: email || null,
+        height_inches: 68,
+        current_weight_lbs: 170,
+        target_weight_lbs: 160,
+        age: 30,
+        sex: 'male',
+        activity_level: 'moderately_active',
+        diet_type: 'keto',
+        meal_count_default: 3,
+        macro_targets: { calories: 2000, fat_g: 155, protein_g: 130, net_carbs_g: 20 },
+        preferences: { timezone: 'America/New_York', unit_system: 'imperial', allergens: [], avoid_ingredients: [] }
     });
+
+    btn.disabled = false;
+    btn.textContent = 'Create Profile';
+
+    if (result) {
+        toast('Profile "' + name + '" created!', 'success');
+        closeModal('createProfileModal');
+        document.getElementById('newProfileName').value = '';
+        document.getElementById('newProfileEmail').value = '';
+        await loadProfiles();
+        selectProfile(userId, name);
+    }
 }
 
 function selectProfile(userId, name) {
