@@ -1705,49 +1705,68 @@ async function initBrain() {
 
 async function loadDashboardData() {
     if (!activeProfileId) return;
+    const today = new Date().toLocaleDateString('en-CA');
 
-    // Parallel data fetch
-    const [profileResult, timerResult, streakResult, levelResult, leaderboardResult] = await Promise.all([
-        brainApi('get_profile', {}, { silent: true }),
-        brainApi('get_timer', {}, { silent: true }),
-        brainApi('get_streak', {}, { silent: true }),
-        brainApi('get_level_info', {}, { silent: true }),
+    // Read directly from Supabase tables (reliable) — webhook used only for writes
+    const [profileRows, catRows, timerRows, scoreRows, activityRows, leaderboardResult] = await Promise.all([
+        supabaseSelect('brain_user_profiles', `user_id=eq.${activeProfileId}&select=*`),
+        supabaseSelect('brain_categories', `user_id=eq.${activeProfileId}&is_active=eq.true&order=sort_order&select=*`),
+        supabaseSelect('brain_timers', `user_id=eq.${activeProfileId}&select=*`),
+        supabaseSelect('brain_daily_scores', `user_id=eq.${activeProfileId}&score_date=eq.${today}&select=*`),
+        supabaseSelect('brain_activities', `user_id=eq.${activeProfileId}&started_at=gte.${today}T00:00:00&started_at=lt.${today}T23:59:59&order=started_at.desc&select=*`),
         brainApi('get_leaderboard', { period: 'week' }, { silent: true }),
     ]);
 
-    if (profileResult) {
-        categories = profileResult.categories || profileResult.data?.categories || [];
-        dailySummary = profileResult.daily_summary || profileResult.data?.daily_summary || {};
-        const profile = profileResult.profile || profileResult.data?.profile || {};
-        // Populate settings fields
-        document.getElementById('settDisplayName').value = profile.display_name || activeProfileName;
-        document.getElementById('settWakeTime').value = profile.wake_time || '06:00';
-        document.getElementById('settSleepTime').value = profile.sleep_time || '22:00';
-        document.getElementById('settDailyGoal').value = profile.daily_goal_points || 100;
-        if (profile.timezone) document.getElementById('settTimezone').value = profile.timezone;
+    // Profile
+    const profile = (profileRows && profileRows[0]) || {};
+    document.getElementById('settDisplayName').value = activeProfileName;
+    document.getElementById('settWakeTime').value = (profile.wake_time || '06:00:00').slice(0, 5);
+    document.getElementById('settSleepTime').value = (profile.sleep_time || '22:00:00').slice(0, 5);
+    document.getElementById('settDailyGoal').value = profile.daily_goal_points || 100;
+    if (profile.google_credential_id) {
+        document.getElementById('calConnectionStatus').textContent = 'Connected';
+        document.getElementById('calConnectionStatus').className = 'badge badge-success';
+        document.getElementById('settCalendarId').value = profile.google_calendar_id || 'primary';
     }
 
-    if (timerResult) {
-        activeTimer = timerResult.timer || timerResult.data?.timer || null;
-        if (activeTimer) startStopwatchDisplay();
-    }
+    // Categories
+    categories = catRows || [];
 
-    // Get today's activities
-    const today = new Date().toLocaleDateString('en-CA');
-    const actResult = await brainApi('get_activities', { start_date: today, end_date: today }, { silent: true });
-    todayActivities = actResult?.data || actResult || [];
-    if (!Array.isArray(todayActivities)) todayActivities = [];
+    // Timer
+    activeTimer = (timerRows && timerRows.length > 0) ? timerRows[0] : null;
+    if (activeTimer) startStopwatchDisplay();
+    else stopStopwatchDisplay();
 
-    // Get daily score
-    const scoreResult = await brainApi('get_daily_score', { date: today }, { silent: true });
-    if (scoreResult) {
-        dailySummary = scoreResult.data || scoreResult;
-    }
+    // Daily score
+    dailySummary = (scoreRows && scoreRows[0]) || {};
+    dailySummary.daily_goal = profile.daily_goal_points || 100;
+
+    // Today's activities
+    todayActivities = activityRows || [];
+
+    // Level info from profile
+    const levelInfo = {
+        level: profile.level || 1,
+        xp: profile.xp || profile.total_points || 0,
+        xp_for_current_level: 0,
+        xp_for_next_level: 100,
+    };
+    // Level = floor(sqrt(total_xp / 100)) + 1
+    const totalXp = levelInfo.xp;
+    levelInfo.level = Math.floor(Math.sqrt(totalXp / 100)) + 1;
+    levelInfo.xp_for_current_level = Math.pow(levelInfo.level - 1, 2) * 100;
+    levelInfo.xp_for_next_level = Math.pow(levelInfo.level, 2) * 100;
+
+    // Streak from profile
+    const streakInfo = {
+        current_streak: profile.current_streak || 0,
+        longest_streak: profile.longest_streak || 0,
+    };
 
     // Render everything
     renderScoreRing();
-    renderStreakBadge(streakResult);
-    renderLevelBadge(levelResult);
+    renderStreakBadge(streakInfo);
+    renderLevelBadge(levelInfo);
     renderLeaderboardSnippet(leaderboardResult);
     renderCategoryDonut();
     renderTodayActivities();
@@ -2096,8 +2115,9 @@ function updateStopwatch() {
 // ═══════════════════════════════════════
 async function loadActivities() {
     if (!activeProfileId) return;
-    const result = await brainApi('get_activities', { start_date: activityLogDate, end_date: activityLogDate }, { silent: true });
-    const activities = result?.data || result || [];
+    // Read directly from Supabase
+    const activities = await supabaseSelect('brain_activities',
+        `user_id=eq.${activeProfileId}&started_at=gte.${activityLogDate}T00:00:00&started_at=lt.${activityLogDate}T23:59:59&order=started_at.desc&select=*`);
     renderActivityLog(Array.isArray(activities) ? activities : []);
     updateDateLabel();
 }
@@ -2590,8 +2610,29 @@ async function loadLeaderboard(period) {
     const container = document.getElementById('leaderboardFullList');
     container.innerHTML = '<div class="text-center py-12 text-xs" style="color: var(--brain-txt-3);">Loading...</div>';
 
+    // Try webhook first, fall back to direct Supabase read
+    let data = [];
     const result = await brainApi('get_leaderboard', { period }, { silent: true });
-    const data = result?.data?.leaderboard || result?.leaderboard || [];
+    data = result?.data?.leaderboard || result?.leaderboard || [];
+
+    // Fallback: build leaderboard from brain_user_profiles + platform_users
+    if (!data.length) {
+        const profiles = await supabaseSelect('brain_user_profiles', 'select=user_id,total_points,current_streak,level,xp');
+        const users = await supabaseSelect('platform_users', 'select=user_id,display_name,avatar_url');
+        if (profiles && users) {
+            const userMap = {};
+            users.forEach(u => userMap[u.user_id] = u);
+            data = profiles.map(p => ({
+                user_id: p.user_id,
+                display_name: userMap[p.user_id]?.display_name || 'User',
+                avatar_url: userMap[p.user_id]?.avatar_url,
+                total_points: p.total_points || 0,
+                period_points: p.total_points || 0,
+                level: p.level || 1,
+                current_streak: p.current_streak || 0,
+            })).sort((a, b) => b.total_points - a.total_points);
+        }
+    }
     renderFullLeaderboard(Array.isArray(data) ? data : []);
 }
 
@@ -2660,10 +2701,19 @@ async function loadAchievements() {
     const container = document.getElementById('achievementGrid');
     container.innerHTML = '<div class="text-center py-12 col-span-full text-xs" style="color: var(--brain-txt-3);">Loading...</div>';
 
-    const result = await brainApi('get_achievements', {}, { silent: true });
-    const data = result?.data || result || {};
-    const earned = data.earned || [];
-    const available = data.available || [];
+    // Read directly from Supabase
+    const rows = await supabaseSelect('brain_achievements', `user_id=eq.${activeProfileId}&select=*&order=earned_at.desc`);
+    const earned = (rows || []).filter(a => a.earned_at);
+    const available = (rows || []).filter(a => !a.earned_at);
+    // If no rows at all, show default definitions
+    if (!rows || rows.length === 0) {
+        const earnedXP = 0;
+        document.getElementById('achieveEarnedCount').textContent = 0;
+        document.getElementById('achieveTotalXP').textContent = '0 XP';
+        document.getElementById('achieveLockedCount').textContent = Object.keys(ACHIEVE_XP).length;
+        renderAchievementGrid([], []);
+        return;
+    }
 
     // Stats
     const earnedXP = earned.reduce((s, a) => s + (a.xp_value || ACHIEVE_XP[a.achievement_key] || 0), 0);
@@ -2745,25 +2795,45 @@ async function loadAnalytics(period) {
     const start = startD.toLocaleDateString('en-CA');
     document.getElementById('analyticsDateRange').textContent = `${start} to ${end}`;
 
-    // Parallel fetch
-    const [pointsResult, catResult, weeklyResult] = await Promise.all([
-        brainApi('get_analytics', { metric: 'points', start_date: start, end_date: end }, { silent: true }),
-        brainApi('get_category_summary', { start_date: start, end_date: end }, { silent: true }),
-        brainApi('get_weekly_report', {}, { silent: true }),
-    ]);
+    // Read daily scores directly from Supabase for the period
+    const scoreRows = await supabaseSelect('brain_daily_scores',
+        `user_id=eq.${activeProfileId}&score_date=gte.${start}&score_date=lte.${end}&order=score_date.asc&select=*`);
 
-    // Render points chart
-    const pointsData = pointsResult?.data || pointsResult || {};
-    const series = pointsData.series || [];
-    const stats = pointsData.stats || {};
-    renderPointsChart(series, stats.daily_goal || dailySummary?.daily_goal || 100);
+    // Build series from daily scores
+    let series = [];
+    let totalPts = 0, bestDay = 0, goalDays = 0, totalMins = 0;
+    const goal = dailySummary?.daily_goal || 100;
+    const catTotals = {};
+
+    if (scoreRows && scoreRows.length > 0) {
+        series = scoreRows.map(s => {
+            const pts = s.total_points || 0;
+            totalPts += pts;
+            totalMins += (s.total_minutes || 0);
+            if (pts > bestDay) bestDay = pts;
+            if (pts >= goal) goalDays++;
+            // Category breakdown aggregation
+            const breakdown = s.category_breakdown || {};
+            Object.entries(breakdown).forEach(([cat, val]) => {
+                catTotals[cat] = (catTotals[cat] || 0) + val;
+            });
+            return { date: s.score_date, value: pts, minutes: s.total_minutes || 0, goal_met: pts >= goal };
+        });
+    }
+
+    const days = Math.max(series.length, 1);
+    renderPointsChart(series, goal);
 
     // Stats cards
-    document.getElementById('anTotalPoints').textContent = Math.round(stats.total_points || 0);
-    document.getElementById('anAvgDaily').textContent = Math.round(stats.avg_daily || 0);
-    document.getElementById('anBestDay').textContent = Math.round(stats.best_day || 0);
-    document.getElementById('anGoalDays').textContent = stats.days_goal_met || 0;
-    document.getElementById('anTrendGoalLine').textContent = `Goal: ${stats.daily_goal || dailySummary?.daily_goal || 100}`;
+    document.getElementById('anTotalPoints').textContent = Math.round(totalPts);
+    document.getElementById('anAvgDaily').textContent = Math.round(totalPts / days);
+    document.getElementById('anBestDay').textContent = Math.round(bestDay);
+    document.getElementById('anGoalDays').textContent = goalDays;
+    document.getElementById('anTrendGoalLine').textContent = `Goal: ${goal}`;
+
+    // Category and weekly report (try webhook, accept empty gracefully)
+    const catResult = { categories: catTotals };
+    const weeklyResult = await brainApi('get_weekly_report', {}, { silent: true });
 
     // Category donut
     const catData = catResult?.data || catResult || {};
