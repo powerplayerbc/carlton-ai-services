@@ -1304,6 +1304,12 @@
                     <span class="font-heading font-bold text-sm uppercase tracking-wide" style="color: var(--deft-txt-2);">Food Database</span>
                     <span class="text-xs font-mono" style="color: var(--deft-txt-3);" id="foodCount"></span>
                 </div>
+                <button class="btn btn-primary text-xs" onclick="openModal('addFoodModal')">
+                    <span class="flex items-center gap-1.5">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2.5v7M2.5 6h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        Add Food
+                    </span>
+                </button>
             </div>
             <div class="panel-body">
                 <!-- Search & Filters -->
@@ -2191,6 +2197,97 @@
     </div>
 
     <!-- Toast container -->
+    <!-- ═══ ADD FOOD MODAL ═══ -->
+    <div class="modal-backdrop" id="addFoodModal" onclick="if(event.target===this)closeModal('addFoodModal')">
+        <div class="modal-content" style="max-width: 560px;">
+            <div class="panel-header">
+                <span class="font-heading font-bold text-sm uppercase tracking-wide" style="color: var(--deft-txt-2);">Add Food to Database</span>
+                <button onclick="closeModal('addFoodModal')" class="p-1 rounded hover:opacity-70 transition-opacity" style="color: var(--deft-txt-3);">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+            <div class="panel-body">
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div class="form-group col-span-2">
+                        <label class="form-label">Food Name *</label>
+                        <input type="text" id="newFoodName" class="form-input" placeholder="e.g. Grilled Chicken Breast">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Brand (optional)</label>
+                        <input type="text" id="newFoodBrand" class="form-input" placeholder="e.g. Tyson">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Serving Size *</label>
+                        <input type="text" id="newFoodServing" class="form-input" placeholder="e.g. 4 oz, 1 cup">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <select id="newFoodCategory" class="form-input">
+                            <option value="protein">Protein</option>
+                            <option value="dairy">Dairy</option>
+                            <option value="fat">Fat/Oil</option>
+                            <option value="nuts">Nuts/Seeds</option>
+                            <option value="vegetable">Vegetable</option>
+                            <option value="fruit">Fruit</option>
+                            <option value="condiment">Condiment</option>
+                            <option value="beverage">Beverage</option>
+                            <option value="keto_specialty">Keto Specialty</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Keto Tier</label>
+                        <select id="newFoodKetoTier" class="form-input">
+                            <option value="excellent">Excellent (&lt;2g carbs)</option>
+                            <option value="good">Good (2-5g)</option>
+                            <option value="moderate">Moderate (5-10g)</option>
+                            <option value="avoid">Avoid (&gt;10g)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="font-heading font-bold text-xs uppercase tracking-wide mb-2" style="color: var(--deft-txt-3);">Nutrition Per Serving</div>
+                <div class="grid grid-cols-3 gap-3 mb-4">
+                    <div class="form-group">
+                        <label class="form-label">Calories *</label>
+                        <input type="number" id="newFoodCal" class="form-input" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Total Fat (g)</label>
+                        <input type="number" step="0.1" id="newFoodFat" class="form-input" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Protein (g)</label>
+                        <input type="number" step="0.1" id="newFoodProtein" class="form-input" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Total Carbs (g)</label>
+                        <input type="number" step="0.1" id="newFoodTotalCarbs" class="form-input" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fiber (g)</label>
+                        <input type="number" step="0.1" id="newFoodFiber" class="form-input" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Net Carbs (g)</label>
+                        <input type="number" step="0.1" id="newFoodNetCarbs" class="form-input" placeholder="0" style="color: var(--deft-accent); font-weight: 600;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Sugar (g)</label>
+                        <input type="number" step="0.1" id="newFoodSugar" class="form-input" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Sodium (mg)</label>
+                        <input type="number" id="newFoodSodium" class="form-input" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Cholesterol (mg)</label>
+                        <input type="number" id="newFoodChol" class="form-input" placeholder="0">
+                    </div>
+                </div>
+                <button id="saveFoodBtn" onclick="saveNewFood()" class="btn btn-primary w-full py-2.5">Save Food</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ═══ CREATE PROFILE MODAL ═══ -->
     <div class="modal-backdrop" id="createProfileModal" onclick="if(event.target===this)closeModal('createProfileModal')">
         <div class="modal-content" style="max-width: 420px;">
@@ -2539,19 +2636,35 @@ async function supabaseWrite(table, method, body, matchQuery = '') {
 // ═══════════════════════════════════════
 // DEFT-BRIDGE API
 // ═══════════════════════════════════════
-async function deftApi(operation, data = {}) {
-    if (!activeProfileId) { toast('Please select a profile first', 'error'); return null; }
+async function deftApi(operation, data = {}, { silent = false } = {}) {
+    if (!activeProfileId) {
+        if (!silent) toast('Please select a profile first', 'error');
+        return null;
+    }
     try {
         const res = await fetch(DEFT_BRIDGE_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ operation, user_id: activeProfileId, data })
         });
-        const result = await res.json();
-        if (!result.success) { toast(result.error || 'Something went wrong', 'error'); return null; }
+        const text = await res.text();
+        if (!text) {
+            console.warn(`deftApi(${operation}): empty response`);
+            return null;
+        }
+        let result;
+        try { result = JSON.parse(text); } catch(e) {
+            console.warn(`deftApi(${operation}): non-JSON response:`, text.substring(0, 200));
+            return null;
+        }
+        if (result && result.success === false) {
+            if (!silent) toast(result.error || 'Something went wrong', 'error');
+            return null;
+        }
         return result;
     } catch (err) {
-        toast('Network error: ' + err.message, 'error');
+        console.warn(`deftApi(${operation}) error:`, err.message);
+        if (!silent) toast('Connection error — check if the backend is running', 'error');
         return null;
     }
 }
@@ -2981,6 +3094,106 @@ function loadMoreFoods() {
     fetchFoods(true);
 }
 
+async function saveNewFood() {
+    const name = document.getElementById('newFoodName').value.trim();
+    if (!name) { toast('Food name is required', 'error'); return; }
+    const serving = document.getElementById('newFoodServing').value.trim();
+    if (!serving) { toast('Serving size is required', 'error'); return; }
+
+    const totalCarbs = parseFloat(document.getElementById('newFoodTotalCarbs').value) || 0;
+    const fiber = parseFloat(document.getElementById('newFoodFiber').value) || 0;
+    const netCarbsInput = parseFloat(document.getElementById('newFoodNetCarbs').value);
+    const netCarbs = !isNaN(netCarbsInput) ? netCarbsInput : totalCarbs - fiber;
+
+    const food = {
+        name: name,
+        brand: document.getElementById('newFoodBrand').value.trim() || null,
+        serving_size: serving,
+        category: document.getElementById('newFoodCategory').value,
+        is_keto_friendly: netCarbs <= 10,
+        keto_tier: netCarbs < 2 ? 'excellent' : netCarbs <= 5 ? 'good' : netCarbs <= 10 ? 'moderate' : 'avoid',
+        nutrition_per_serving: {
+            calories: parseFloat(document.getElementById('newFoodCal').value) || 0,
+            total_fat_g: parseFloat(document.getElementById('newFoodFat').value) || 0,
+            protein_g: parseFloat(document.getElementById('newFoodProtein').value) || 0,
+            total_carbs_g: totalCarbs,
+            fiber_g: fiber,
+            net_carbs_g: netCarbs,
+            sugar_g: parseFloat(document.getElementById('newFoodSugar').value) || 0,
+            sodium_mg: parseFloat(document.getElementById('newFoodSodium').value) || 0,
+            cholesterol_mg: parseFloat(document.getElementById('newFoodChol').value) || 0,
+        }
+    };
+
+    const btn = document.getElementById('saveFoodBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    const result = await supabaseWrite('deft_food_database', 'POST', food);
+
+    btn.disabled = false;
+    btn.textContent = 'Save Food';
+
+    if (result) {
+        toast(name + ' added to food database!', 'success');
+        closeModal('addFoodModal');
+        // Clear form
+        ['newFoodName','newFoodBrand','newFoodServing','newFoodCal','newFoodFat','newFoodProtein','newFoodTotalCarbs','newFoodFiber','newFoodNetCarbs','newFoodSugar','newFoodSodium','newFoodChol'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+        foodBrowserLoaded = false;
+        loadFoodBrowser();
+    } else {
+        toast('Failed to save food', 'error');
+    }
+}
+
+// Food DB autocomplete for recipe ingredients
+let ingredientSearchTimeout;
+async function searchFoodForIngredient(query, index) {
+    if (!query || query.length < 2) {
+        hideIngredientSuggestions(index);
+        return;
+    }
+    clearTimeout(ingredientSearchTimeout);
+    ingredientSearchTimeout = setTimeout(async () => {
+        const results = await supabaseSelect('deft_food_database',
+            'name=ilike.*' + encodeURIComponent(query) + '*&select=name,serving_size,nutrition_per_serving&limit=6&order=name'
+        );
+        if (!results || results.length === 0) { hideIngredientSuggestions(index); return; }
+
+        const container = document.getElementById('ingSuggestions-' + index);
+        if (!container) return;
+        container.innerHTML = results.map(f => {
+            const n = f.nutrition_per_serving || {};
+            return '<button type="button" onclick="selectFoodForIngredient(' + index + ', this)" data-name="' + f.name + '" data-cal="' + (n.calories||0) + '" data-fat="' + (n.total_fat_g||0) + '" data-protein="' + (n.protein_g||0) + '" data-carbs="' + (n.total_carbs_g||0) + '" data-fiber="' + (n.fiber_g||0) + '" data-netcarbs="' + (n.net_carbs_g||0) + '" data-serving="' + (f.serving_size||'') + '" class="recipe-search-item">' +
+                '<span class="font-medium">' + f.name + '</span>' +
+                '<span class="text-xs font-mono" style="color:var(--deft-txt-3);">' + Math.round(n.calories||0) + ' cal · ' + (n.net_carbs_g||0).toFixed(1) + 'g carbs</span>' +
+            '</button>';
+        }).join('');
+        container.style.display = '';
+    }, 250);
+}
+
+function selectFoodForIngredient(index, btn) {
+    const ing = newRecipeIngredients[index];
+    if (!ing) return;
+    ing.name = btn.dataset.name;
+    ing.nutrition = {
+        calories: parseFloat(btn.dataset.cal) || 0,
+        total_fat_g: parseFloat(btn.dataset.fat) || 0,
+        protein_g: parseFloat(btn.dataset.protein) || 0,
+        total_carbs_g: parseFloat(btn.dataset.carbs) || 0,
+        fiber_g: parseFloat(btn.dataset.fiber) || 0,
+        net_carbs_g: parseFloat(btn.dataset.netcarbs) || 0,
+    };
+    hideIngredientSuggestions(index);
+    renderIngredientRows();
+}
+
+function hideIngredientSuggestions(index) {
+    const el = document.getElementById('ingSuggestions-' + index);
+    if (el) el.style.display = 'none';
+}
+
 async function loadRecipes() {
     if (!activeProfileId) return;
 
@@ -3146,8 +3359,9 @@ function renderIngredientRows() {
     const container = document.getElementById('ingredientRows');
     container.innerHTML = newRecipeIngredients.map((ing, i) => `
     <div class="grid grid-cols-12 gap-2 items-end mb-2">
-        <div class="col-span-4">
-            <input type="text" class="form-input text-xs py-1.5" placeholder="Ingredient name" value="${ing.name}" oninput="newRecipeIngredients[${i}].name=this.value">
+        <div class="col-span-4 relative">
+            <input type="text" class="form-input text-xs py-1.5" placeholder="Search food database..." value="${ing.name}" oninput="newRecipeIngredients[${i}].name=this.value; searchFoodForIngredient(this.value, ${i})" autocomplete="off">
+            <div id="ingSuggestions-${i}" class="absolute left-0 right-0 top-full mt-1 rounded-lg border overflow-hidden" style="background: var(--deft-surface-el); border-color: var(--deft-border); z-index: 10000; display: none; max-height: 200px; overflow-y: auto;"></div>
         </div>
         <div class="col-span-2">
             <input type="number" class="form-input text-xs py-1.5" placeholder="Qty" value="${ing.quantity}" oninput="newRecipeIngredients[${i}].quantity=parseFloat(this.value)||0">
@@ -3227,7 +3441,7 @@ async function loadExercises() {
     if (!activeProfileId) return;
     const today = new Date().toLocaleDateString('en-CA');
 
-    const result = await deftApi('get_exercises', { date: today });
+    const result = await deftApi('get_exercises', { date: today }, { silent: true });
     todayExercises = (result && result.data) ? (result.data.exercises || result.data) : [];
     if (!Array.isArray(todayExercises)) todayExercises = [];
     renderExercises();
@@ -3731,9 +3945,18 @@ let profileDirty = false;
 
 async function loadProfile() {
     if (!activeProfileId) return;
-    const result = await deftApi('get_profile');
-    if (!result || !result.data) return;
-    const p = result.data.profile || result.data;
+    // Try webhook first, fall back to direct Supabase read
+    let result = await deftApi('get_profile', {}, { silent: true });
+    let p;
+    if (result && result.data) {
+        p = result.data.profile || result.data;
+    } else {
+        // Fallback: read directly from Supabase
+        const rows = await supabaseSelect('deft_user_profiles', `user_id=eq.${activeProfileId}&select=*`);
+        if (!rows || rows.length === 0) return;
+        p = rows[0];
+    }
+    if (!p) return;
 
     // Populate form fields
     setVal('profHeight', p.height_inches);
@@ -3852,15 +4075,27 @@ async function saveProfile() {
     btn.disabled = true;
     btn.textContent = 'Saving...';
 
-    const result = await deftApi('update_profile', data);
+    // Try webhook first, fall back to direct Supabase write
+    let result = await deftApi('update_profile', data, { silent: true });
+    let saved = false;
+
+    if (result) {
+        saved = true;
+    } else {
+        // Fallback: write directly to Supabase
+        const sbResult = await supabaseWrite('deft_user_profiles', 'PATCH', data, `user_id=eq.${activeProfileId}`);
+        if (sbResult) saved = true;
+    }
 
     btn.disabled = false;
     btn.textContent = 'Save Profile';
 
-    if (result) {
+    if (saved) {
         toast('Profile saved', 'success');
         profileDirty = false;
         document.getElementById('profileSaveBar').style.display = 'none';
+    } else {
+        toast('Failed to save profile', 'error');
     }
 }
 
