@@ -1266,8 +1266,17 @@
                     <input type="color" class="form-input" id="addCatColor" value="#F59E0B" style="height: 40px; padding: 4px;">
                 </div>
                 <div>
-                    <label class="form-label">Icon (emoji)</label>
-                    <input type="text" class="form-input" id="addCatIcon" placeholder="&#128170;" maxlength="4">
+                    <label class="form-label">Icon</label>
+                    <div class="relative">
+                        <button type="button" class="form-input text-left flex items-center gap-2" id="addCatIconBtn" onclick="toggleEmojiPicker()" style="cursor: pointer;">
+                            <span id="addCatIconPreview" class="text-lg">&#11088;</span>
+                            <span class="text-xs" style="color: var(--brain-txt-3);">Pick emoji</span>
+                        </button>
+                        <input type="hidden" id="addCatIcon" value="star">
+                        <div id="emojiPickerDropdown" class="absolute left-0 top-full mt-1 p-2 rounded-lg border hidden" style="background: var(--brain-surface); border-color: var(--brain-border); z-index: 100; width: 260px;">
+                            <div class="grid grid-cols-7 gap-1" id="emojiPickerGrid"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
@@ -2408,6 +2417,63 @@ function populateCategoryDropdowns() {
     addChainRow();
     addChainRow();
 }
+
+// ═══════════════════════════════════════
+// EMOJI PICKER
+// ═══════════════════════════════════════
+const EMOJI_OPTIONS = [
+    { emoji: '\uD83D\uDCBC', name: 'briefcase' }, { emoji: '\uD83D\uDCDA', name: 'book' },
+    { emoji: '\uD83C\uDFCB\uFE0F', name: 'dumbbell' }, { emoji: '\uD83C\uDFE0', name: 'home' },
+    { emoji: '\u2764\uFE0F', name: 'heart' }, { emoji: '\u23F0', name: 'clock' },
+    { emoji: '\u2B50', name: 'star' }, { emoji: '\uD83D\uDD25', name: 'fire' },
+    { emoji: '\uD83E\uDDE0', name: 'brain' }, { emoji: '\uD83C\uDFB5', name: 'music' },
+    { emoji: '\uD83C\uDFA8', name: 'palette' }, { emoji: '\uD83D\uDCAC', name: 'chat' },
+    { emoji: '\uD83C\uDFC3', name: 'run' }, { emoji: '\uD83E\uDDD8', name: 'yoga' },
+    { emoji: '\uD83C\uDF73', name: 'cook' }, { emoji: '\uD83D\uDCBB', name: 'code' },
+    { emoji: '\u270D\uFE0F', name: 'write' }, { emoji: '\uD83D\uDCD6', name: 'read' },
+    { emoji: '\uD83D\uDE4F', name: 'pray' }, { emoji: '\uD83D\uDEB6', name: 'walk' },
+    { emoji: '\uD83C\uDF1F', name: 'sparkle' }, { emoji: '\uD83D\uDCA1', name: 'idea' },
+    { emoji: '\uD83C\uDFAF', name: 'target' }, { emoji: '\uD83D\uDE80', name: 'rocket' },
+    { emoji: '\uD83C\uDF3F', name: 'plant' }, { emoji: '\u2615', name: 'coffee' },
+    { emoji: '\uD83D\uDCF1', name: 'phone' }, { emoji: '\uD83D\uDCDD', name: 'memo' },
+    { emoji: '\uD83C\uDFAE', name: 'game' }, { emoji: '\uD83D\uDED2', name: 'cart' },
+    { emoji: '\uD83D\uDE97', name: 'car' }, { emoji: '\u2708\uFE0F', name: 'plane' },
+    { emoji: '\uD83C\uDFC6', name: 'trophy' }, { emoji: '\uD83D\uDC8E', name: 'gem' },
+    { emoji: '\uD83C\uDF08', name: 'rainbow' },
+];
+
+function initEmojiPicker() {
+    const grid = document.getElementById('emojiPickerGrid');
+    grid.innerHTML = EMOJI_OPTIONS.map(e =>
+        `<button type="button" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 text-lg cursor-pointer transition-transform" style="border: none; background: transparent;" onclick="selectEmoji('${e.name}', '${e.emoji}')" title="${e.name}">${e.emoji}</button>`
+    ).join('');
+}
+
+function toggleEmojiPicker() {
+    const dd = document.getElementById('emojiPickerDropdown');
+    dd.classList.toggle('hidden');
+    if (!dd.classList.contains('hidden')) {
+        setTimeout(() => {
+            document.addEventListener('click', closeEmojiPicker, { once: true });
+        }, 0);
+    }
+}
+
+function closeEmojiPicker(e) {
+    const dd = document.getElementById('emojiPickerDropdown');
+    if (!dd.contains(e.target) && e.target.id !== 'addCatIconBtn') {
+        dd.classList.add('hidden');
+    }
+}
+
+function selectEmoji(name, emoji) {
+    document.getElementById('addCatIcon').value = name;
+    document.getElementById('addCatIconPreview').textContent = emoji;
+    document.getElementById('emojiPickerDropdown').classList.add('hidden');
+}
+
+// Init emoji picker on page load
+initEmojiPicker();
 
 function populateCategoryDropdown(selectId, selectedSlug) {
     const sel = document.getElementById(selectId);
