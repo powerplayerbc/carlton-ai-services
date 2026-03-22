@@ -189,9 +189,20 @@
                         <a href="/our-workflows?auth=rdgr" class="task-tab" style="flex:none;padding:0.3rem 0.75rem;text-decoration:none;">Workflows</a>
                         <a href="/social-dashboard?auth=rdgr" class="task-tab" style="flex:none;padding:0.3rem 0.75rem;text-decoration:none;">Social</a>
                         <a href="/crm?auth=rdgr" class="task-tab" style="flex:none;padding:0.3rem 0.75rem;text-decoration:none;">CRM</a>
+                        <a href="/deft.html?auth=rdgr" class="task-tab" style="flex:none;padding:0.3rem 0.75rem;text-decoration:none;">DEFT</a>
                     </div>
                 </div>
                 <div class="flex items-center gap-2 sm:gap-3">
+                    <!-- Profile Switcher -->
+                    <div class="relative" id="profileSwitcher">
+                        <button onclick="toggleProfileDD()" class="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs" style="background: rgba(255,255,255,0.04); color: #8A95A9;" id="profileBtn">
+                            <div class="w-5 h-5 rounded-full flex items-center justify-center text-[0.6rem] font-bold" style="background: rgba(6,214,160,0.15); color: #06D6A0;" id="profileAvatar">B</div>
+                            <span class="hidden sm:inline" id="profileName">Bradford</span>
+                            <svg width="8" height="8" viewBox="0 0 10 10" fill="none"><path d="M2.5 4L5 6.5L7.5 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                        </button>
+                        <div class="absolute right-0 top-full mt-1 py-1 rounded-lg border hidden" style="background: #1A1D28; border-color: #2A2E3D; min-width: 160px; z-index: 60;" id="profileDropdown">
+                        </div>
+                    </div>
                     <a href="/settings?auth=rdgr" class="text-txt-3 hover:text-txt transition-colors p-2" title="Settings">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6.86 1.33h2.28l.35 1.76.12.05a5.2 5.2 0 011.32.76l.1.08 1.66-.7.96 1.66-1.31 1.07.02.13a5.3 5.3 0 010 1.12l-.02.13 1.31 1.07-.96 1.66-1.66-.7-.1.08a5.2 5.2 0 01-1.32.76l-.12.05-.35 1.76H6.86l-.35-1.76-.12-.05a5.2 5.2 0 01-1.32-.76l-.1-.08-1.66.7-.96-1.66 1.31-1.07-.02-.13a5.3 5.3 0 010-1.12l.02-.13-1.31-1.07.96-1.66 1.66.7.1-.08a5.2 5.2 0 011.32-.76l.12-.05.35-1.76zM8 5.67a2.33 2.33 0 100 4.66 2.33 2.33 0 000-4.66z" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </a>
@@ -1110,6 +1121,61 @@ async function triggerReddit(mode) {
         toast('Failed to trigger Reddit ' + mode.replace('_', ' '), 'error');
     }
     setTimeout(() => { btn.disabled = false; btn.innerHTML = origText; }, 5000);
+}
+
+// ── Profile Switcher ──
+(function initProfileSwitcher() {
+    const saved = localStorage.getItem('deft-active-profile');
+    if (saved) {
+        try {
+            const p = JSON.parse(saved);
+            const nameEl = document.getElementById('profileName');
+            const avatarEl = document.getElementById('profileAvatar');
+            if (nameEl) nameEl.textContent = p.name;
+            if (avatarEl) avatarEl.textContent = (p.name || 'B')[0].toUpperCase();
+        } catch(e) {}
+    }
+    const SB_URL = 'https://yrwrswyjawmgtxrgbnim.supabase.co';
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlyd3Jzd3lqYXdtZ3R4cmdibmltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzYzODY2MzMsImV4cCI6MjA1MTk2MjYzM30.CjKVHdkFnxFDyZSN4_5nTeX6K7SEu-DjvBH2lzfVrX8';
+    fetch(`${SB_URL}/rest/v1/deft_user_profiles?select=user_id,display_name,email&order=display_name`, {
+        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
+    }).then(r => r.json()).then(profiles => {
+        const dd = document.getElementById('profileDropdown');
+        if (!dd || !profiles || profiles.length === 0) return;
+        const activeId = saved ? JSON.parse(saved).id : null;
+        dd.innerHTML = profiles.map(p => {
+            const name = p.display_name || p.email || '?';
+            const initial = name[0].toUpperCase();
+            const isActive = p.user_id === activeId;
+            return `<button onclick="selectProfileGlobal('${p.user_id}','${name.replace(/'/g, "\\'")}')" class="w-full text-left px-3 py-2 text-xs flex items-center gap-2" style="color:#E8ECF1;background:transparent;" onmouseenter="this.style.background='rgba(255,255,255,0.04)'" onmouseleave="this.style.background='transparent'">
+                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[0.6rem] font-bold" style="background:${isActive?'rgba(6,214,160,0.15)':'rgba(255,255,255,0.06)'};color:${isActive?'#06D6A0':'#8A95A9'};">${initial}</div>
+                <span>${name}</span>
+                ${isActive ? '<svg width="10" height="10" viewBox="0 0 12 12" fill="none" class="ml-auto"><path d="M2 6l3 3 5-5" stroke="#06D6A0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+            </button>`;
+        }).join('');
+    }).catch(() => {});
+})();
+
+function toggleProfileDD() {
+    const dd = document.getElementById('profileDropdown');
+    dd.classList.toggle('hidden');
+    if (!dd.classList.contains('hidden')) {
+        setTimeout(() => document.addEventListener('click', function closePDD(e) {
+            if (!document.getElementById('profileSwitcher').contains(e.target)) {
+                dd.classList.add('hidden');
+            }
+            document.removeEventListener('click', closePDD);
+        }), 0);
+    }
+}
+
+function selectProfileGlobal(userId, name) {
+    localStorage.setItem('deft-active-profile', JSON.stringify({ id: userId, name: name }));
+    const nameEl = document.getElementById('profileName');
+    const avatarEl = document.getElementById('profileAvatar');
+    if (nameEl) nameEl.textContent = name;
+    if (avatarEl) avatarEl.textContent = name[0].toUpperCase();
+    document.getElementById('profileDropdown').classList.add('hidden');
 }
 </script>
 </body>

@@ -8,8 +8,13 @@
 !social-voice-settings.html
 !email-voice-settings.html
 !scraper-settings.html
+!settings-directory.html
+!deft-settings.html
 !brand_assets/**
 !rdgr/**
+!deft/**
+!crm/**
+!settings/**
 
 # Allow deployment config
 !Dockerfile
