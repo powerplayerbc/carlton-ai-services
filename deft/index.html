@@ -1042,7 +1042,7 @@
                         <span class="text-xs font-medium hidden sm:block" id="profileName">Bradford</span>
                         <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2.5 4L5 6.5L7.5 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
                     </button>
-                    <div class="absolute right-0 top-full mt-1 py-1 rounded-lg border hidden" style="background: var(--deft-surface-el); border-color: var(--deft-border); min-width: 180px; z-index: 60;" id="profileDropdown" role="menu">
+                    <div class="absolute right-0 top-full mt-1 py-1 rounded-lg border hidden" style="background: var(--deft-surface-el); border-color: var(--deft-border); min-width: 180px; z-index: 10000;" id="profileDropdown" role="menu">
                         <!-- Profiles populated by JS -->
                     </div>
                 </div>
@@ -1069,6 +1069,7 @@
         <div class="flex gap-1 p-0.5 rounded-lg overflow-x-auto" style="background: rgba(255,255,255,0.04);" role="tablist" aria-label="DEFT sections">
             <button class="deft-tab active" id="tab-today" onclick="switchView('today')" role="tab" aria-selected="true" aria-controls="view-today">Today</button>
             <button class="deft-tab" id="tab-recipes" onclick="switchView('recipes')" role="tab" aria-selected="false" aria-controls="view-recipes">Recipes</button>
+            <button class="deft-tab" id="tab-foods" onclick="switchView('foods')" role="tab" aria-selected="false" aria-controls="view-foods">Foods</button>
             <button class="deft-tab" id="tab-logmeal" onclick="switchView('logmeal')" role="tab" aria-selected="false" aria-controls="view-logmeal">Log Meal</button>
             <button class="deft-tab" id="tab-exercise" onclick="switchView('exercise')" role="tab" aria-selected="false" aria-controls="view-exercise">Exercise</button>
             <button class="deft-tab" id="tab-analytics" onclick="switchView('analytics')" role="tab" aria-selected="false" aria-controls="view-analytics">Analytics</button>
@@ -1288,6 +1289,72 @@
                         <p>Your recipe library will appear here</p>
                         <p class="text-sm mt-1" style="color: var(--deft-txt-3);">Browse, search, and manage your keto recipes</p>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         VIEW: FOODS (Food Database Browser)
+         ═══════════════════════════════════════ -->
+    <div id="view-foods" class="max-w-[1600px] mx-auto px-4 sm:px-6 pb-8" style="display:none;" role="tabpanel" aria-labelledby="tab-foods">
+        <div class="panel deft-reveal deft-reveal-1">
+            <div class="panel-header">
+                <div class="flex items-center gap-3 flex-1">
+                    <span class="font-heading font-bold text-sm uppercase tracking-wide" style="color: var(--deft-txt-2);">Food Database</span>
+                    <span class="text-xs font-mono" style="color: var(--deft-txt-3);" id="foodCount"></span>
+                </div>
+            </div>
+            <div class="panel-body">
+                <!-- Search & Filters -->
+                <div class="flex flex-col sm:flex-row gap-3 mb-4">
+                    <div class="flex-1 relative">
+                        <input type="text" id="foodBrowserSearch" class="form-input pl-9" placeholder="Search foods (e.g. chicken, avocado, butter...)" oninput="searchFoodBrowser(this.value)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="absolute left-3 top-1/2 -translate-y-1/2" style="color: var(--deft-txt-3);"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                    </div>
+                    <div class="flex gap-1 overflow-x-auto">
+                        <button class="recipe-filter active" data-cat="all" onclick="filterFoodCategory('all')">All</button>
+                        <button class="recipe-filter" data-cat="protein" onclick="filterFoodCategory('protein')">Protein</button>
+                        <button class="recipe-filter" data-cat="dairy" onclick="filterFoodCategory('dairy')">Dairy</button>
+                        <button class="recipe-filter" data-cat="fat" onclick="filterFoodCategory('fat')">Fats</button>
+                        <button class="recipe-filter" data-cat="nuts" onclick="filterFoodCategory('nuts')">Nuts</button>
+                        <button class="recipe-filter" data-cat="vegetable" onclick="filterFoodCategory('vegetable')">Vegetables</button>
+                        <button class="recipe-filter" data-cat="condiment" onclick="filterFoodCategory('condiment')">Condiments</button>
+                        <button class="recipe-filter" data-cat="beverage" onclick="filterFoodCategory('beverage')">Beverages</button>
+                        <button class="recipe-filter" data-cat="keto_specialty" onclick="filterFoodCategory('keto_specialty')">Keto</button>
+                        <button class="recipe-filter" data-cat="fruit" onclick="filterFoodCategory('fruit')">Fruit</button>
+                    </div>
+                </div>
+                <!-- Keto-only toggle -->
+                <div class="flex items-center gap-2 mb-4">
+                    <label class="flex items-center gap-2 cursor-pointer text-sm">
+                        <input type="checkbox" id="ketoOnlyToggle" onchange="searchFoodBrowser(document.getElementById('foodBrowserSearch').value)" class="rounded" style="accent-color: var(--deft-accent);">
+                        <span style="color: var(--deft-txt-2);">Keto-friendly only</span>
+                    </label>
+                </div>
+                <!-- Results table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm" id="foodTable">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--deft-border);">
+                                <th class="text-left py-2 px-3 font-heading font-bold text-xs uppercase tracking-wide" style="color: var(--deft-txt-3);">Food</th>
+                                <th class="text-left py-2 px-3 font-heading font-bold text-xs uppercase tracking-wide" style="color: var(--deft-txt-3);">Serving</th>
+                                <th class="text-right py-2 px-3 font-heading font-bold text-xs uppercase tracking-wide" style="color: var(--deft-txt-3);">Cal</th>
+                                <th class="text-right py-2 px-3 font-heading font-bold text-xs uppercase tracking-wide" style="color: var(--deft-txt-3);">Fat</th>
+                                <th class="text-right py-2 px-3 font-heading font-bold text-xs uppercase tracking-wide" style="color: var(--deft-txt-3);">Protein</th>
+                                <th class="text-right py-2 px-3 font-heading font-bold text-xs uppercase tracking-wide" style="color: var(--deft-txt-3);">Net Carbs</th>
+                                <th class="text-right py-2 px-3 font-heading font-bold text-xs uppercase tracking-wide" style="color: var(--deft-txt-3);">Fiber</th>
+                                <th class="text-center py-2 px-3 font-heading font-bold text-xs uppercase tracking-wide" style="color: var(--deft-txt-3);">Keto</th>
+                            </tr>
+                        </thead>
+                        <tbody id="foodTableBody">
+                            <tr><td colspan="8" class="py-8 text-center" style="color: var(--deft-txt-3);">Loading food database...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Load more -->
+                <div class="text-center mt-4" id="foodLoadMore" style="display:none;">
+                    <button class="btn btn-ghost text-xs" onclick="loadMoreFoods()">Load More</button>
                 </div>
             </div>
         </div>
@@ -2466,6 +2533,15 @@ async function initDeft() {
     // Load profiles for switcher
     await loadProfiles();
 
+    // Auto-select first profile if none saved
+    if (!activeProfileId) {
+        const profiles = await supabaseSelect('deft_user_profiles', 'select=user_id,display_name,email&order=display_name&limit=1');
+        if (profiles && profiles.length > 0) {
+            const p = profiles[0];
+            selectProfile(p.user_id, p.display_name || p.email);
+        }
+    }
+
     // Load today's data
     if (activeProfileId) {
         await refreshToday();
@@ -2477,7 +2553,7 @@ async function initDeft() {
 // ═══════════════════════════════════════
 function switchView(view) {
     currentView = view;
-    const views = ['today', 'recipes', 'logmeal', 'exercise', 'analytics', 'profile'];
+    const views = ['today', 'recipes', 'foods', 'logmeal', 'exercise', 'analytics', 'profile'];
     views.forEach(v => {
         const el = document.getElementById(`view-${v}`);
         if (el) el.style.display = v === view ? '' : 'none';
@@ -2502,6 +2578,7 @@ function switchView(view) {
     // Lazy-load data for views
     if (view === 'today') refreshToday();
     if (view === 'recipes') loadRecipes();
+    if (view === 'foods') loadFoodBrowser();
     if (view === 'analytics') loadAnalytics();
     if (view === 'exercise') loadExercises();
     if (view === 'profile') loadProfile();
@@ -2716,6 +2793,114 @@ async function submitWeighIn() {
 let allRecipes = [];
 let activeRecipeFilter = 'all';
 let recipeSearchQuery = '';
+
+// ═══════════════════════════════════════
+// FOOD DATABASE BROWSER
+// ═══════════════════════════════════════
+let allFoods = [];
+let foodBrowserLoaded = false;
+let foodSearchQuery = '';
+let foodCategory = 'all';
+let foodOffset = 0;
+const FOOD_LIMIT = 50;
+
+async function loadFoodBrowser() {
+    if (foodBrowserLoaded && foodSearchQuery === '' && foodCategory === 'all') return;
+    foodOffset = 0;
+    await fetchFoods();
+}
+
+async function fetchFoods(append = false) {
+    let query = `select=food_id,name,brand,serving_size,nutrition_per_serving,category,is_keto_friendly,keto_tier&order=name&limit=${FOOD_LIMIT}&offset=${foodOffset}`;
+
+    if (foodSearchQuery) {
+        query += `&name=ilike.*${encodeURIComponent(foodSearchQuery)}*`;
+    }
+    if (foodCategory !== 'all') {
+        query += `&category=eq.${foodCategory}`;
+    }
+    if (document.getElementById('ketoOnlyToggle')?.checked) {
+        query += `&is_keto_friendly=eq.true`;
+    }
+
+    const results = await supabaseSelect('deft_food_database', query);
+
+    if (append) {
+        allFoods = allFoods.concat(results || []);
+    } else {
+        allFoods = results || [];
+    }
+
+    foodBrowserLoaded = true;
+    renderFoodTable();
+
+    // Show/hide load more
+    const loadMore = document.getElementById('foodLoadMore');
+    if (loadMore) {
+        loadMore.style.display = (results && results.length === FOOD_LIMIT) ? '' : 'none';
+    }
+}
+
+function renderFoodTable() {
+    const tbody = document.getElementById('foodTableBody');
+    document.getElementById('foodCount').textContent = `${allFoods.length} food${allFoods.length !== 1 ? 's' : ''}`;
+
+    if (allFoods.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center" style="color: var(--deft-txt-3);">No foods found${foodSearchQuery ? ' — try a different search' : ''}</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = allFoods.map(f => {
+        const n = f.nutrition_per_serving || {};
+        const tierColors = {
+            excellent: 'var(--deft-success)',
+            good: 'var(--deft-accent)',
+            moderate: 'var(--deft-warning)',
+            avoid: 'var(--deft-danger)'
+        };
+        const tierColor = tierColors[f.keto_tier] || 'var(--deft-txt-3)';
+
+        return `<tr style="border-bottom: 1px solid var(--deft-border); transition: background 0.15s;" onmouseenter="this.style.background='rgba(255,255,255,0.02)'" onmouseleave="this.style.background='transparent'">
+            <td class="py-2.5 px-3">
+                <div class="font-medium text-sm" style="color: var(--deft-txt);">${f.name}</div>
+                ${f.brand ? `<div class="text-xs" style="color: var(--deft-txt-3);">${f.brand}</div>` : ''}
+            </td>
+            <td class="py-2.5 px-3 text-xs font-mono" style="color: var(--deft-txt-2);">${f.serving_size || '—'}</td>
+            <td class="py-2.5 px-3 text-right font-mono text-xs" style="color: var(--deft-txt);">${Math.round(n.calories || 0)}</td>
+            <td class="py-2.5 px-3 text-right font-mono text-xs" style="color: var(--deft-txt-2);">${(n.total_fat_g || 0).toFixed(1)}g</td>
+            <td class="py-2.5 px-3 text-right font-mono text-xs" style="color: var(--deft-txt-2);">${(n.protein_g || 0).toFixed(1)}g</td>
+            <td class="py-2.5 px-3 text-right font-mono text-xs font-bold" style="color: var(--deft-accent);">${(n.net_carbs_g || 0).toFixed(1)}g</td>
+            <td class="py-2.5 px-3 text-right font-mono text-xs" style="color: var(--deft-txt-2);">${(n.fiber_g || 0).toFixed(1)}g</td>
+            <td class="py-2.5 px-3 text-center">
+                ${f.keto_tier ? `<span class="badge" style="background: ${tierColor}20; color: ${tierColor}; border: 1px solid ${tierColor}30;">${f.keto_tier}</span>` : '—'}
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+let foodSearchTimeout;
+function searchFoodBrowser(query) {
+    foodSearchQuery = query;
+    clearTimeout(foodSearchTimeout);
+    foodSearchTimeout = setTimeout(() => {
+        foodOffset = 0;
+        fetchFoods();
+    }, 300);
+}
+
+function filterFoodCategory(cat) {
+    foodCategory = cat;
+    document.querySelectorAll('#view-foods .recipe-filter').forEach(f => {
+        f.classList.toggle('active', f.dataset.cat === cat);
+    });
+    foodOffset = 0;
+    fetchFoods();
+}
+
+function loadMoreFoods() {
+    foodOffset += FOOD_LIMIT;
+    fetchFoods(true);
+}
 
 async function loadRecipes() {
     if (!activeProfileId) return;
