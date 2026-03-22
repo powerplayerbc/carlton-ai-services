@@ -1,0 +1,2120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BRADFORD CARLTON | The System Architect</title>
+    
+    <!--
+    ====================================================================
+    CLICKFUNNELS INTEGRATION INSTRUCTIONS
+    ====================================================================
+    
+    CTA BUTTONS:
+    All "REQUEST AUDIT" buttons link to: /audit-request
+    
+    Update this URL to your ClickFunnels form/landing page:
+    1. Search for: href="/audit-request"
+    2. Replace with your actual page URL
+    3. Locations to update:
+       - Hero section primary button (line ~1463)
+       - CTA section button (line ~1929)
+       - Nav bar "GET STARTED" (line ~1425)
+       - Footer "CONTACT" link (line ~2009)
+    
+    NAVIGATION:
+    The navigation bar automatically scrolls to each section using smooth scroll.
+    All nav links use data-scroll="section-id" to target sections.
+    "GET STARTED" links to your audit request page.
+    
+    ====================================================================
+    -->
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ===== CSS RESET FOR CLICKFUNNELS COMPATIBILITY ===== */
+        .architect-page,
+        .architect-page *,
+        .architect-page *::before,
+        .architect-page *::after {
+            margin: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+        }
+
+        .architect-page {
+            --void-black: #000000;
+            --deep-black: #050505;
+            --panel-bg: rgba(5, 5, 5, 0.95);
+            --electric-blue: #04BAFF;
+            --electric-blue-dim: rgba(4, 186, 255, 0.15);
+            --electric-blue-glow: rgba(4, 186, 255, 0.4);
+            --critical-yellow: #FFFF00;
+            --critical-yellow-dim: rgba(255, 255, 0, 0.15);
+            --alert-red: #FF0000;
+            --alert-red-dim: rgba(255, 0, 0, 0.15);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.6);
+            --text-tertiary: rgba(255, 255, 255, 0.35);
+            --border-subtle: rgba(4, 186, 255, 0.2);
+            --border-active: rgba(4, 186, 255, 0.5);
+            --glass-bg: rgba(4, 186, 255, 0.05);
+            --font-display: 'Orbitron', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --font-body: 'Space Grotesk', sans-serif;
+            
+            font-family: var(--font-body) !important;
+            background-color: var(--void-black) !important;
+            color: var(--text-primary) !important;
+            overflow-x: hidden !important;
+            line-height: 1.6 !important;
+            width: 100% !important;
+            min-height: 100vh !important;
+            position: relative !important;
+        }
+
+        .architect-page html {
+            scroll-behavior: smooth !important;
+        }
+
+        /* ===== NOISE & GRID OVERLAY ===== */
+        .architect-page .noise-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            pointer-events: none !important;
+            z-index: 9999 !important;
+            opacity: 0.03 !important;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E") !important;
+        }
+
+        .architect-page .grid-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+            background-image: 
+                linear-gradient(rgba(4, 186, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(4, 186, 255, 0.03) 1px, transparent 1px) !important;
+            background-size: 60px 60px !important;
+        }
+
+        .architect-page .scanline {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 4px !important;
+            background: linear-gradient(90deg, transparent, var(--electric-blue-glow), transparent) !important;
+            z-index: 9998 !important;
+            animation: scanline 8s linear infinite !important;
+            opacity: 0.5 !important;
+        }
+
+        @keyframes scanline {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100vh); }
+        }
+
+        /* ===== CONTAINER ===== */
+        .architect-page .container {
+            max-width: 1400px !important;
+            margin: 0 auto !important;
+            padding: 0 24px !important;
+            position: relative !important;
+            z-index: 10 !important;
+            width: 100% !important;
+        }
+
+        /* ===== NAVIGATION ===== */
+        .architect-page .nav {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            z-index: 1000 !important;
+            background: rgba(0, 0, 0, 0.95) !important;
+            backdrop-filter: blur(20px) !important;
+            border-bottom: 1px solid var(--border-subtle) !important;
+        }
+
+        .architect-page .nav-inner {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            padding: 16px 0 !important;
+            max-width: 1400px !important;
+            margin: 0 auto !important;
+            padding-left: 24px !important;
+            padding-right: 24px !important;
+        }
+
+        .architect-page .logo {
+            font-family: var(--font-display) !important;
+            font-size: 0.85rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.2em !important;
+            color: var(--electric-blue) !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+            text-decoration: none !important;
+            cursor: pointer !important;
+        }
+
+        .architect-page .logo-icon {
+            width: 32px !important;
+            height: 32px !important;
+            border: 2px solid var(--electric-blue) !important;
+            position: relative !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex-shrink: 0 !important;
+        }
+
+        .architect-page .logo-icon::before {
+            content: '' !important;
+            width: 12px !important;
+            height: 12px !important;
+            background: var(--electric-blue) !important;
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%) !important;
+        }
+
+        .architect-page .logo-text {
+            display: flex !important;
+            flex-direction: column !important;
+            line-height: 1.2 !important;
+        }
+
+        .architect-page .logo-name {
+            font-size: 0.65rem !important;
+            color: var(--text-secondary) !important;
+            letter-spacing: 0.12em !important;
+        }
+
+        /* Main Navigation Tabs */
+        .architect-page .nav-tabs {
+            display: flex !important;
+            gap: 0 !important;
+        }
+
+        .architect-page .nav-tab {
+            padding: 16px 20px !important;
+            background: transparent !important;
+            border: none !important;
+            font-family: var(--font-mono) !important;
+            font-size: 0.6rem !important;
+            letter-spacing: 0.1em !important;
+            color: var(--text-tertiary) !important;
+            cursor: pointer !important;
+            position: relative !important;
+            transition: all 0.3s ease !important;
+            text-transform: uppercase !important;
+            text-decoration: none !important;
+        }
+
+        .architect-page .nav-tab::after {
+            content: '' !important;
+            position: absolute !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 2px !important;
+            background: var(--electric-blue) !important;
+            transform: scaleX(0) !important;
+            transition: transform 0.3s ease !important;
+        }
+
+        .architect-page .nav-tab:hover {
+            color: var(--text-secondary) !important;
+        }
+
+        .architect-page .nav-tab.active {
+            color: var(--electric-blue) !important;
+        }
+
+        .architect-page .nav-tab.active::after {
+            transform: scaleX(1) !important;
+        }
+
+        .architect-page .nav-status {
+            display: flex !important;
+            align-items: center !important;
+            gap: 24px !important;
+        }
+
+        .architect-page .status-indicator {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            font-family: var(--font-mono) !important;
+            font-size: 0.6rem !important;
+            color: var(--text-secondary) !important;
+            letter-spacing: 0.1em !important;
+        }
+
+        .architect-page .status-dot {
+            width: 6px !important;
+            height: 6px !important;
+            background: var(--electric-blue) !important;
+            border-radius: 50% !important;
+            animation: pulse 2s ease-in-out infinite !important;
+        }
+
+        .architect-page .status-dot.active {
+            background: #00ff88 !important;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(4, 186, 255, 0.4); }
+            50% { opacity: 0.5; box-shadow: 0 0 0 8px rgba(4, 186, 255, 0); }
+        }
+
+        /* ===== HERO SECTION ===== */
+        .architect-page .hero {
+            min-height: 100vh !important;
+            display: flex !important;
+            align-items: center !important;
+            position: relative !important;
+            padding-top: 100px !important;
+            padding-bottom: 60px !important;
+        }
+
+        .architect-page .hero-grid {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 60px !important;
+            align-items: center !important;
+            width: 100% !important;
+        }
+
+        .architect-page .hero-content {
+            position: relative !important;
+            text-align: left !important;
+        }
+
+        .architect-page .system-tag {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            font-family: var(--font-mono) !important;
+            font-size: 0.65rem !important;
+            letter-spacing: 0.2em !important;
+            color: var(--electric-blue) !important;
+            padding: 8px 16px !important;
+            border: 1px solid var(--border-subtle) !important;
+            background: var(--glass-bg) !important;
+            margin-bottom: 24px !important;
+        }
+
+        .architect-page .system-tag::before {
+            content: '' !important;
+            width: 4px !important;
+            height: 4px !important;
+            background: var(--electric-blue) !important;
+            animation: blink 1s steps(1) infinite !important;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .architect-page .hero-title {
+            font-family: var(--font-display) !important;
+            font-size: clamp(2.2rem, 4.5vw, 3.5rem) !important;
+            font-weight: 800 !important;
+            line-height: 1.15 !important;
+            letter-spacing: -0.02em !important;
+            margin-bottom: 24px !important;
+            text-align: left !important;
+        }
+
+        /* FIXED: Using underline highlight instead of glow for blue text */
+        .architect-page .hero-title .highlight {
+            color: var(--electric-blue) !important;
+            position: relative !important;
+            display: inline-block !important;
+            background: linear-gradient(180deg, transparent 60%, rgba(4, 186, 255, 0.3) 60%) !important;
+            padding: 0 4px !important;
+        }
+
+        .architect-page .hero-title .highlight-yellow {
+            color: var(--critical-yellow) !important;
+            text-shadow: 
+                0 0 10px rgba(255, 255, 0, 0.8),
+                0 0 20px rgba(255, 255, 0, 0.6),
+                0 0 30px rgba(255, 255, 0, 0.4),
+                0 0 40px rgba(255, 255, 0, 0.2) !important;
+        }
+
+        .architect-page .hero-subtitle {
+            font-size: 1.05rem !important;
+            color: var(--text-secondary) !important;
+            max-width: 520px !important;
+            margin-bottom: 40px !important;
+            line-height: 1.7 !important;
+            text-align: left !important;
+        }
+
+        .architect-page .hero-cta-group {
+            display: flex !important;
+            gap: 16px !important;
+            justify-content: flex-start !important;
+        }
+
+        .architect-page .btn-primary {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+            padding: 16px 32px !important;
+            background: var(--critical-yellow) !important;
+            color: var(--void-black) !important;
+            font-family: var(--font-mono) !important;
+            font-size: 0.75rem !important;
+            font-weight: 600 !important;
+            letter-spacing: 0.15em !important;
+            text-decoration: none !important;
+            text-transform: uppercase !important;
+            border: none !important;
+            cursor: pointer !important;
+            position: relative !important;
+            overflow: hidden !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .architect-page .btn-primary::before {
+            content: '' !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: -100% !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent) !important;
+            transition: left 0.5s ease !important;
+        }
+
+        .architect-page .btn-primary:hover::before {
+            left: 100% !important;
+        }
+
+        .architect-page .btn-primary:hover {
+            box-shadow: 0 0 40px rgba(255, 255, 0, 0.4) !important;
+            transform: translateY(-2px) !important;
+        }
+
+        .architect-page .btn-secondary {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+            padding: 16px 32px !important;
+            background: transparent !important;
+            color: var(--text-primary) !important;
+            font-family: var(--font-mono) !important;
+            font-size: 0.75rem !important;
+            font-weight: 500 !important;
+            letter-spacing: 0.15em !important;
+            text-decoration: none !important;
+            text-transform: uppercase !important;
+            border: 1px solid var(--border-subtle) !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .architect-page .btn-secondary:hover {
+            border-color: var(--electric-blue) !important;
+            background: var(--electric-blue-dim) !important;
+        }
+
+        /* ===== HUD PANEL - FIXED POSITIONING ===== */
+        .architect-page .hero-visual {
+            position: relative !important;
+        }
+
+        .architect-page .hud-frame {
+            position: relative !important;
+            border: 1px solid var(--border-subtle) !important;
+            background: var(--panel-bg) !important;
+        }
+
+        .architect-page .hud-corner {
+            position: absolute !important;
+            width: 20px !important;
+            height: 20px !important;
+            border: 2px solid var(--electric-blue) !important;
+            z-index: 5 !important;
+        }
+
+        .architect-page .hud-corner.tl { top: -2px !important; left: -2px !important; border-right: none !important; border-bottom: none !important; }
+        .architect-page .hud-corner.tr { top: -2px !important; right: -2px !important; border-left: none !important; border-bottom: none !important; }
+        .architect-page .hud-corner.bl { bottom: -2px !important; left: -2px !important; border-right: none !important; border-top: none !important; }
+        .architect-page .hud-corner.br { bottom: -2px !important; right: -2px !important; border-left: none !important; border-top: none !important; }
+
+        .architect-page .hud-header {
+            background: linear-gradient(180deg, var(--electric-blue-dim) 0%, transparent 100%) !important;
+            border-bottom: 1px solid var(--border-subtle) !important;
+            padding: 12px 20px !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            font-family: var(--font-mono) !important;
+            font-size: 0.6rem !important;
+            color: var(--text-tertiary) !important;
+            letter-spacing: 0.15em !important;
+        }
+
+        .architect-page .hud-content {
+            padding: 20px !important;
+            overflow: hidden !important;
+        }
+
+        /* NEW: Vertical Scrolling Stats Ticker */
+        .architect-page .stats-ticker {
+            position: relative !important;
+            overflow: hidden !important;
+            height: 400px !important;
+            background: var(--glass-bg) !important;
+            border: 1px solid var(--border-subtle) !important;
+        }
+
+        .architect-page .stats-track {
+            display: flex !important;
+            flex-direction: column !important;
+            animation: scroll-stats-vertical 30s linear infinite !important;
+            gap: 16px !important;
+        }
+
+        @keyframes scroll-stats-vertical {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-50%); }
+        }
+
+        .architect-page .stat-item {
+            flex-shrink: 0 !important;
+            padding: 20px !important;
+            background: rgba(0, 0, 0, 0.6) !important;
+            border-left: 3px solid var(--electric-blue) !important;
+            text-align: left !important;
+        }
+
+        .architect-page .stat-item.critical {
+            border-left-color: var(--alert-red) !important;
+        }
+
+        .architect-page .stat-item.warning {
+            border-left-color: var(--critical-yellow) !important;
+        }
+
+        .architect-page .stat-label {
+            font-family: var(--font-mono) !important;
+            font-size: 0.55rem !important;
+            color: var(--text-tertiary) !important;
+            letter-spacing: 0.15em !important;
+            text-transform: uppercase !important;
+            margin-bottom: 8px !important;
+            display: block !important;
+        }
+
+        .architect-page .stat-value {
+            font-family: var(--font-display) !important;
+            font-size: 1.8rem !important;
+            font-weight: 700 !important;
+            color: var(--electric-blue) !important;
+            margin-bottom: 4px !important;
+            display: block !important;
+        }
+
+        .architect-page .stat-item.critical .stat-value {
+            color: var(--alert-red) !important;
+        }
+
+        .architect-page .stat-item.warning .stat-value {
+            color: var(--critical-yellow) !important;
+        }
+
+        .architect-page .stat-desc {
+            font-family: var(--font-mono) !important;
+            font-size: 0.6rem !important;
+            color: var(--text-secondary) !important;
+            line-height: 1.4 !important;
+        }
+
+        .architect-page .system-status {
+            background: var(--glass-bg) !important;
+            border: 1px solid var(--border-subtle) !important;
+            padding: 16px 20px !important;
+            margin-top: 16px !important;
+        }
+
+        .architect-page .status-row {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            font-family: var(--font-mono) !important;
+            font-size: 0.65rem !important;
+            padding: 10px 0 !important;
+            border-bottom: 1px solid var(--border-subtle) !important;
+        }
+
+        .architect-page .status-row:last-child {
+            border-bottom: none !important;
+        }
+
+        .architect-page .status-name {
+            color: var(--text-secondary) !important;
+            letter-spacing: 0.1em !important;
+            text-align: left !important;
+        }
+
+        .architect-page .status-value {
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            text-align: right !important;
+        }
+
+        .architect-page .status-value.online { color: #00ff88 !important; }
+        .architect-page .status-value.warning { color: var(--critical-yellow) !important; }
+        .architect-page .status-value.offline { color: var(--alert-red) !important; }
+
+        .architect-page .system-status {
+            background: var(--glass-bg) !important;
+            border: 1px solid var(--border-subtle) !important;
+            padding: 16px 20px !important;
+        }
+
+        .architect-page .status-row {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            font-family: var(--font-mono) !important;
+            font-size: 0.65rem !important;
+            padding: 10px 0 !important;
+            border-bottom: 1px solid var(--border-subtle) !important;
+        }
+
+        .architect-page .status-row:last-child {
+            border-bottom: none !important;
+        }
+
+        .architect-page .status-name {
+            color: var(--text-secondary) !important;
+            letter-spacing: 0.1em !important;
+            text-align: left !important;
+        }
+
+        .architect-page .status-value {
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            text-align: right !important;
+        }
+
+        .architect-page .status-value.online { color: #00ff88 !important; }
+        .architect-page .status-value.warning { color: var(--critical-yellow) !important; }
+        .architect-page .status-value.offline { color: var(--alert-red) !important; }
+
+        /* ===== SECTION STYLING ===== */
+        .architect-page .section-header {
+            text-align: center !important;
+            margin-bottom: 60px !important;
+        }
+
+        .architect-page .section-tag {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            font-family: var(--font-mono) !important;
+            font-size: 0.6rem !important;
+            letter-spacing: 0.3em !important;
+            color: var(--electric-blue) !important;
+            margin-bottom: 16px !important;
+        }
+
+        .architect-page .section-tag::before,
+        .architect-page .section-tag::after {
+            content: '' !important;
+            width: 40px !important;
+            height: 1px !important;
+            background: var(--electric-blue) !important;
+        }
+
+        .architect-page .section-tag.red {
+            color: var(--alert-red) !important;
+        }
+
+        .architect-page .section-tag.red::before,
+        .architect-page .section-tag.red::after {
+            background: var(--alert-red) !important;
+        }
+
+        .architect-page .section-tag.yellow {
+            color: var(--critical-yellow) !important;
+        }
+
+        .architect-page .section-tag.yellow::before,
+        .architect-page .section-tag.yellow::after {
+            background: var(--critical-yellow) !important;
+        }
+
+        .architect-page .section-title {
+            font-family: var(--font-display) !important;
+            font-size: clamp(1.8rem, 3.5vw, 2.5rem) !important;
+            font-weight: 700 !important;
+            margin-bottom: 16px !important;
+        }
+
+        .architect-page .section-subtitle {
+            font-size: 1rem !important;
+            color: var(--text-secondary) !important;
+            max-width: 650px !important;
+            margin: 0 auto !important;
+            line-height: 1.7 !important;
+        }
+
+        /* ===== COMPANY LOGOS SCROLLER ===== */
+        .architect-page .logos-section {
+            padding: 60px 0 !important;
+            border-top: 1px solid var(--border-subtle) !important;
+            border-bottom: 1px solid var(--border-subtle) !important;
+            overflow: hidden !important;
+        }
+
+        .architect-page .logos-header {
+            text-align: center !important;
+            margin-bottom: 40px !important;
+        }
+
+        .architect-page .logos-label {
+            font-family: var(--font-mono) !important;
+            font-size: 0.6rem !important;
+            letter-spacing: 0.3em !important;
+            color: var(--text-tertiary) !important;
+            text-transform: uppercase !important;
+        }
+
+        .architect-page .logos-track {
+            display: flex !important;
+            animation: scroll-logos 30s linear infinite !important;
+            width: max-content !important;
+        }
+
+        .architect-page .logos-track:hover {
+            animation-play-state: paused !important;
+        }
+
+        @keyframes scroll-logos {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .architect-page .logo-item {
+            flex-shrink: 0 !important;
+            width: 180px !important;
+            height: 80px !important;
+            margin: 0 40px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: var(--glass-bg) !important;
+            border: 1px solid var(--border-subtle) !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .architect-page .logo-item:hover {
+            border-color: var(--electric-blue) !important;
+            background: var(--electric-blue-dim) !important;
+        }
+
+        .architect-page .logo-placeholder {
+            font-family: var(--font-mono) !important;
+            font-size: 0.7rem !important;
+            color: var(--text-tertiary) !important;
+            letter-spacing: 0.1em !important;
+            text-align: center !important;
+        }
+
+        /* ===== DIAGNOSTIC SECTION ===== */
+        .architect-page .diagnostic {
+            padding: 100px 0 !important;
+        }
+
+        .architect-page .diagnostic-grid {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 24px !important;
+        }
+
+        .architect-page .glitch-card {
+            background: var(--panel-bg) !important;
+            border: 1px solid var(--alert-red-dim) !important;
+            padding: 32px !important;
+            position: relative !important;
+            overflow: hidden !important;
+            transition: all 0.4s ease !important;
+            text-align: left !important;
+        }
+
+        .architect-page .glitch-card::before {
+            content: '' !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 3px !important;
+            background: linear-gradient(90deg, transparent, var(--alert-red), transparent) !important;
+            animation: glitchLine 3s ease-in-out infinite !important;
+        }
+
+        @keyframes glitchLine {
+            0%, 100% { transform: translateX(-100%); }
+            50% { transform: translateX(100%); }
+        }
+
+        .architect-page .glitch-card:hover {
+            border-color: var(--alert-red) !important;
+            box-shadow: 0 0 40px var(--alert-red-dim) !important;
+            transform: translateY(-4px) !important;
+        }
+
+        .architect-page .glitch-icon {
+            width: 48px !important;
+            height: 48px !important;
+            border: 1px solid var(--alert-red) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            margin-bottom: 20px !important;
+            position: relative !important;
+        }
+
+        .architect-page .glitch-icon::after {
+            content: '!' !important;
+            font-family: var(--font-display) !important;
+            font-size: 1.5rem !important;
+            color: var(--alert-red) !important;
+        }
+
+        .architect-page .glitch-title {
+            font-family: var(--font-display) !important;
+            font-size: 0.85rem !important;
+            font-weight: 600 !important;
+            letter-spacing: 0.1em !important;
+            color: var(--alert-red) !important;
+            margin-bottom: 12px !important;
+            text-align: left !important;
+        }
+
+        .architect-page .glitch-desc {
+            font-size: 0.9rem !important;
+            color: var(--text-secondary) !important;
+            line-height: 1.7 !important;
+            text-align: left !important;
+        }
+
+        .architect-page .glitch-stat {
+            display: flex !important;
+            align-items: baseline !important;
+            gap: 8px !important;
+            margin-top: 20px !important;
+            padding-top: 20px !important;
+            border-top: 1px solid var(--alert-red-dim) !important;
+            justify-content: flex-start !important;
+        }
+
+        .architect-page .glitch-stat-value {
+            font-family: var(--font-display) !important;
+            font-size: 1.8rem !important;
+            font-weight: 700 !important;
+            color: var(--alert-red) !important;
+        }
+
+        .architect-page .glitch-stat-label {
+            font-family: var(--font-mono) !important;
+            font-size: 0.55rem !important;
+            color: var(--text-tertiary) !important;
+            letter-spacing: 0.1em !important;
+        }
+
+        /* ===== 9-STEP SYSTEM SECTION ===== */
+        .architect-page .systems {
+            padding: 100px 0 !important;
+        }
+
+        .architect-page .phase-container {
+            margin-bottom: 80px !important;
+        }
+
+        .architect-page .phase-header {
+            display: flex !important;
+            align-items: center !important;
+            gap: 20px !important;
+            margin-bottom: 40px !important;
+            padding-bottom: 20px !important;
+            border-bottom: 1px solid var(--border-subtle) !important;
+        }
+
+        .architect-page .phase-number {
+            font-family: var(--font-display) !important;
+            font-size: 0.7rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.2em !important;
+            color: var(--void-black) !important;
+            background: var(--electric-blue) !important;
+            padding: 8px 16px !important;
+        }
+
+        .architect-page .phase-title {
+            font-family: var(--font-display) !important;
+            font-size: 1.5rem !important;
+            font-weight: 700 !important;
+            color: var(--text-primary) !important;
+        }
+
+        .architect-page .steps-grid {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 24px !important;
+        }
+
+        .architect-page .step-card {
+            background: var(--panel-bg) !important;
+            border: 1px solid var(--border-subtle) !important;
+            padding: 0 !important;
+            position: relative !important;
+            overflow: hidden !important;
+            transition: all 0.4s ease !important;
+            text-align: left !important;
+        }
+
+        .architect-page .step-card:hover {
+            border-color: var(--electric-blue) !important;
+            box-shadow: 0 0 40px var(--electric-blue-dim) !important;
+            transform: translateY(-4px) !important;
+        }
+
+        .architect-page .step-image-placeholder {
+            width: 100% !important;
+            height: 180px !important;
+            background: linear-gradient(135deg, var(--electric-blue-dim) 0%, var(--glass-bg) 100%) !important;
+            border-bottom: 1px solid var(--border-subtle) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+
+        .architect-page .step-image-placeholder::before {
+            content: '' !important;
+            position: absolute !important;
+            width: 60px !important;
+            height: 60px !important;
+            border: 2px solid var(--electric-blue) !important;
+            opacity: 0.3 !important;
+        }
+
+        .architect-page .step-image-placeholder::after {
+            content: 'GRAPHIC PLACEHOLDER' !important;
+            font-family: var(--font-mono) !important;
+            font-size: 0.6rem !important;
+            letter-spacing: 0.2em !important;
+            color: var(--text-tertiary) !important;
+        }
+
+        .architect-page .step-content {
+            padding: 24px !important;
+        }
+
+        .architect-page .step-number {
+            font-family: var(--font-display) !important;
+            font-size: 2.5rem !important;
+            font-weight: 800 !important;
+            color: var(--electric-blue-dim) !important;
+            line-height: 1 !important;
+            margin-bottom: 8px !important;
+            text-align: left !important;
+        }
+
+        .architect-page .step-name {
+            font-family: var(--font-display) !important;
+            font-size: 0.9rem !important;
+            font-weight: 600 !important;
+            letter-spacing: 0.05em !important;
+            color: var(--text-primary) !important;
+            margin-bottom: 12px !important;
+            text-align: left !important;
+        }
+
+        .architect-page .step-desc {
+            font-size: 0.85rem !important;
+            color: var(--text-secondary) !important;
+            line-height: 1.7 !important;
+            margin-bottom: 16px !important;
+            text-align: left !important;
+        }
+
+        .architect-page .step-metrics {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            justify-content: flex-start !important;
+        }
+
+        .architect-page .step-metric {
+            font-family: var(--font-mono) !important;
+            font-size: 0.55rem !important;
+            letter-spacing: 0.1em !important;
+            color: var(--electric-blue) !important;
+            background: var(--electric-blue-dim) !important;
+            padding: 6px 10px !important;
+            border: 1px solid var(--border-subtle) !important;
+        }
+
+        /* ===== CASE STUDIES SECTION ===== */
+        .architect-page .case-studies {
+            padding: 100px 0 !important;
+            background: linear-gradient(180deg, transparent 0%, var(--electric-blue-dim) 50%, transparent 100%) !important;
+        }
+
+        .architect-page .case-grid {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 30px !important;
+        }
+
+        .architect-page .case-card {
+            background: var(--panel-bg) !important;
+            border: 1px solid var(--border-subtle) !important;
+            overflow: hidden !important;
+            transition: all 0.4s ease !important;
+        }
+
+        .architect-page .case-card:hover {
+            border-color: var(--electric-blue) !important;
+            transform: translateY(-8px) !important;
+            box-shadow: 0 20px 60px rgba(4, 186, 255, 0.15) !important;
+        }
+
+        .architect-page .case-image {
+            width: 100% !important;
+            height: 200px !important;
+            background: linear-gradient(135deg, var(--glass-bg) 0%, var(--electric-blue-dim) 100%) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-bottom: 1px solid var(--border-subtle) !important;
+            position: relative !important;
+        }
+
+        .architect-page .case-image::before {
+            content: '' !important;
+            width: 80px !important;
+            height: 80px !important;
+            border: 2px dashed var(--border-subtle) !important;
+            border-radius: 50% !important;
+        }
+
+        .architect-page .case-image-label {
+            position: absolute !important;
+            font-family: var(--font-mono) !important;
+            font-size: 0.55rem !important;
+            letter-spacing: 0.2em !important;
+            color: var(--text-tertiary) !important;
+        }
+
+        .architect-page .case-content {
+            padding: 28px !important;
+            text-align: left !important;
+        }
+
+        .architect-page .case-industry {
+            font-family: var(--font-mono) !important;
+            font-size: 0.55rem !important;
+            letter-spacing: 0.2em !important;
+            color: var(--electric-blue) !important;
+            margin-bottom: 12px !important;
+            display: block !important;
+            text-align: left !important;
+        }
+
+        .architect-page .case-title {
+            font-family: var(--font-display) !important;
+            font-size: 1.1rem !important;
+            font-weight: 600 !important;
+            margin-bottom: 12px !important;
+            text-align: left !important;
+        }
+
+        .architect-page .case-excerpt {
+            font-size: 0.85rem !important;
+            color: var(--text-secondary) !important;
+            line-height: 1.7 !important;
+            margin-bottom: 20px !important;
+            text-align: left !important;
+        }
+
+        .architect-page .case-results {
+            display: flex !important;
+            gap: 20px !important;
+            padding-top: 20px !important;
+            border-top: 1px solid var(--border-subtle) !important;
+            justify-content: flex-start !important;
+        }
+
+        .architect-page .case-stat {
+            text-align: left !important;
+        }
+
+        .architect-page .case-stat-value {
+            font-family: var(--font-display) !important;
+            font-size: 1.4rem !important;
+            font-weight: 700 !important;
+            color: var(--electric-blue) !important;
+            display: block !important;
+        }
+
+        .architect-page .case-stat-label {
+            font-family: var(--font-mono) !important;
+            font-size: 0.5rem !important;
+            letter-spacing: 0.1em !important;
+            color: var(--text-tertiary) !important;
+        }
+
+        /* ===== AUTHORITY SECTION ===== */
+        .architect-page .authority {
+            padding: 100px 0 !important;
+        }
+
+        .architect-page .authority-grid {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 50px !important;
+            align-items: start !important;
+        }
+
+        .architect-page .credentials-stack {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 20px !important;
+        }
+
+        .architect-page .credential-card {
+            background: var(--panel-bg) !important;
+            border: 1px solid var(--border-subtle) !important;
+            padding: 24px !important;
+            display: flex !important;
+            gap: 20px !important;
+            align-items: flex-start !important;
+            transition: all 0.3s ease !important;
+            text-align: left !important;
+        }
+
+        .architect-page .credential-card:hover {
+            border-color: var(--electric-blue) !important;
+            transform: translateX(8px) !important;
+        }
+
+        .architect-page .credential-icon {
+            width: 48px !important;
+            height: 48px !important;
+            min-width: 48px !important;
+            background: var(--electric-blue-dim) !important;
+            border: 1px solid var(--electric-blue) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex-shrink: 0 !important;
+        }
+
+        .architect-page .credential-icon svg {
+            width: 24px !important;
+            height: 24px !important;
+            stroke: var(--electric-blue) !important;
+            fill: none !important;
+        }
+
+        .architect-page .credential-content h4 {
+            font-family: var(--font-display) !important;
+            font-size: 0.85rem !important;
+            font-weight: 600 !important;
+            letter-spacing: 0.05em !important;
+            margin-bottom: 8px !important;
+            text-align: left !important;
+        }
+
+        .architect-page .credential-content p {
+            font-size: 0.85rem !important;
+            color: var(--text-secondary) !important;
+            line-height: 1.7 !important;
+            text-align: left !important;
+        }
+
+        .architect-page .trust-metrics {
+            background: var(--panel-bg) !important;
+            border: 1px solid var(--border-subtle) !important;
+            padding: 36px !important;
+        }
+
+        .architect-page .trust-header {
+            font-family: var(--font-mono) !important;
+            font-size: 0.6rem !important;
+            letter-spacing: 0.2em !important;
+            color: var(--text-tertiary) !important;
+            margin-bottom: 28px !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+        }
+
+        .architect-page .trust-header::after {
+            content: '' !important;
+            flex: 1 !important;
+            height: 1px !important;
+            background: var(--border-subtle) !important;
+        }
+
+        .architect-page .trust-grid {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 28px !important;
+        }
+
+        .architect-page .trust-item {
+            text-align: center !important;
+        }
+
+        .architect-page .trust-value {
+            font-family: var(--font-display) !important;
+            font-size: 2.2rem !important;
+            font-weight: 700 !important;
+            color: var(--electric-blue) !important;
+            margin-bottom: 6px !important;
+        }
+
+        .architect-page .trust-label {
+            font-family: var(--font-mono) !important;
+            font-size: 0.55rem !important;
+            letter-spacing: 0.12em !important;
+            color: var(--text-tertiary) !important;
+        }
+
+        /* ===== CTA SECTION ===== */
+        .architect-page .cta-section {
+            padding: 100px 0 !important;
+        }
+
+        .architect-page .cta-container {
+            background: var(--panel-bg) !important;
+            border: 1px solid var(--critical-yellow-dim) !important;
+            padding: 70px !important;
+            text-align: center !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+
+        .architect-page .cta-container::before {
+            content: '' !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            height: 3px !important;
+            background: linear-gradient(90deg, transparent, var(--critical-yellow), transparent) !important;
+        }
+
+        .architect-page .cta-corners {
+            position: absolute !important;
+            inset: 16px !important;
+            border: 1px solid var(--border-subtle) !important;
+            pointer-events: none !important;
+        }
+
+        .architect-page .cta-tag {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            font-family: var(--font-mono) !important;
+            font-size: 0.6rem !important;
+            letter-spacing: 0.3em !important;
+            color: var(--critical-yellow) !important;
+            margin-bottom: 20px !important;
+        }
+
+        .architect-page .cta-title {
+            font-family: var(--font-display) !important;
+            font-size: clamp(1.8rem, 3.5vw, 2.5rem) !important;
+            font-weight: 700 !important;
+            margin-bottom: 16px !important;
+        }
+
+        .architect-page .cta-subtitle {
+            font-size: 1rem !important;
+            color: var(--text-secondary) !important;
+            max-width: 580px !important;
+            margin: 0 auto 36px auto !important;
+            line-height: 1.7 !important;
+        }
+
+        .architect-page .cta-actions {
+            display: flex !important;
+            justify-content: center !important;
+            gap: 16px !important;
+        }
+
+        .architect-page .cta-note {
+            margin-top: 20px !important;
+            font-family: var(--font-mono) !important;
+            font-size: 0.6rem !important;
+            color: var(--text-tertiary) !important;
+            letter-spacing: 0.1em !important;
+        }
+
+        /* ===== FOOTER ===== */
+        .architect-page .footer {
+            padding: 50px 0 !important;
+            border-top: 1px solid var(--border-subtle) !important;
+        }
+
+        .architect-page .footer-grid {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+        }
+
+        .architect-page .footer-logo {
+            font-family: var(--font-display) !important;
+            font-size: 0.8rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.15em !important;
+            color: var(--text-tertiary) !important;
+        }
+
+        .architect-page .footer-links {
+            display: flex !important;
+            gap: 28px !important;
+        }
+
+        .architect-page .footer-link {
+            font-family: var(--font-mono) !important;
+            font-size: 0.6rem !important;
+            letter-spacing: 0.1em !important;
+            color: var(--text-tertiary) !important;
+            text-decoration: none !important;
+            transition: color 0.3s ease !important;
+            cursor: pointer !important;
+        }
+
+        .architect-page .footer-link:hover {
+            color: var(--electric-blue) !important;
+        }
+
+        .architect-page .footer-copy {
+            font-family: var(--font-mono) !important;
+            font-size: 0.55rem !important;
+            color: var(--text-tertiary) !important;
+        }
+
+        /* ===== REVEAL ANIMATION ===== */
+        .architect-page .reveal {
+            opacity: 0 !important;
+            transform: translateY(30px) !important;
+            transition: all 0.8s ease !important;
+        }
+
+        .architect-page .reveal.active {
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+        }
+
+        /* Counter styling */
+        .architect-page .counter {
+            display: inline-block !important;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1100px) {
+            .architect-page .nav-tabs {
+                display: none !important;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .architect-page .hero-grid {
+                grid-template-columns: 1fr !important;
+                gap: 50px !important;
+            }
+
+            .architect-page .diagnostic-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .architect-page .steps-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .architect-page .case-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .architect-page .authority-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .architect-page .nav-status {
+                display: none !important;
+            }
+
+            .architect-page .hero-cta-group {
+                flex-direction: column !important;
+            }
+
+            .architect-page .cta-container {
+                padding: 40px 24px !important;
+            }
+
+            .architect-page .cta-actions {
+                flex-direction: column !important;
+                align-items: center !important;
+            }
+
+            .architect-page .footer-grid {
+                flex-direction: column !important;
+                gap: 24px !important;
+                text-align: center !important;
+            }
+
+            .architect-page .footer-links {
+                flex-wrap: wrap !important;
+                justify-content: center !important;
+            }
+
+            .architect-page .trust-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .architect-page .metrics-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="architect-page">
+    <div class="noise-overlay"></div>
+    <div class="grid-overlay"></div>
+    <div class="scanline"></div>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-inner">
+            <a class="logo" data-scroll="hero">
+                <div class="logo-icon"></div>
+                <div class="logo-text">
+                    <span>BRADFORD CARLTON</span>
+                    <span class="logo-name">THE SYSTEM ARCHITECT</span>
+                </div>
+            </a>
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-scroll="hero">HOME</button>
+                <button class="nav-tab" data-scroll="diagnostic">DIAGNOSIS</button>
+                <button class="nav-tab" data-scroll="systems">THE 9-STEP SYSTEM</button>
+                <button class="nav-tab" data-scroll="case-studies">CASE STUDIES</button>
+                <button class="nav-tab" data-scroll="about">ABOUT</button>
+                <a href="/audit-request" class="nav-tab">GET STARTED</a>
+            </div>
+            <div class="nav-status">
+                <div class="status-indicator">
+                    <div class="status-dot active"></div>
+                    <span id="current-time">00:00:00</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <div class="container">
+            <div class="hero-grid">
+                <div class="hero-content">
+                    <div class="system-tag">SYSTEM STATUS: ACTIVE</div>
+                    <h1 class="hero-title">
+                        Move from <span class="highlight-yellow">Hustle</span> to <span class="highlight">Flow</span>.<br>
+                        Scale with <span class="highlight">Confidence</span>.
+                    </h1>
+                    <p class="hero-subtitle">
+                        We build AI-powered operational infrastructure for high-activity businesses—reducing errors, eliminating repetitive work, and saving hundreds of hours across your organization.
+                    </p>
+                    <div class="hero-cta-group">
+                        <a href="/audit-request" class="btn-primary">
+                            <span>REQUEST SYSTEM AUDIT</span>
+                        </a>
+                        <a href="#systems" class="btn-secondary">
+                            <span>SEE THE 9-STEP SYSTEM</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="hero-visual">
+                    <div class="hud-frame">
+                        <div class="hud-corner tl"></div>
+                        <div class="hud-corner tr"></div>
+                        <div class="hud-corner bl"></div>
+                        <div class="hud-corner br"></div>
+                        <div class="hud-header">
+                            <span>DIAGNOSTIC PANEL // LIVE</span>
+                            <span id="diagnostic-status">SCANNING...</span>
+                        </div>
+                        <div class="hud-content">
+                            <div class="stats-ticker">
+                                <div class="stats-track">
+                                    <!-- First set of stats -->
+                                    <div class="stat-item critical">
+                                        <div class="stat-label">TIME WASTE DETECTED</div>
+                                        <div class="stat-value">26 hrs/week</div>
+                                        <div class="stat-desc">↑ Admin tasks stealing billable hours</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-label">AUTOMATION POTENTIAL</div>
+                                        <div class="stat-value">89%</div>
+                                        <div class="stat-desc">Tasks ready for AI takeover</div>
+                                    </div>
+                                    <div class="stat-item critical">
+                                        <div class="stat-label">REVENUE LEAKAGE</div>
+                                        <div class="stat-value">$47K/mo</div>
+                                        <div class="stat-desc">Lost to inefficient processes</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-label">RESPONSE TIME REDUCTION</div>
+                                        <div class="stat-value">83%</div>
+                                        <div class="stat-desc">With AI-powered client systems</div>
+                                    </div>
+                                    <div class="stat-item warning">
+                                        <div class="stat-label">MANUAL BOTTLENECKS</div>
+                                        <div class="stat-value">73%</div>
+                                        <div class="stat-desc">Processes requiring founder input</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-label">CAPACITY INCREASE</div>
+                                        <div class="stat-value">3.2x</div>
+                                        <div class="stat-desc">Client load without new hires</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-label">PROPOSAL GENERATION</div>
+                                        <div class="stat-value">15 min</div>
+                                        <div class="stat-desc">Down from 4 hours average</div>
+                                    </div>
+                                    <div class="stat-item critical">
+                                        <div class="stat-label">FOLLOW-UP FAILURE RATE</div>
+                                        <div class="stat-value">62%</div>
+                                        <div class="stat-desc">Leads lost to inconsistent outreach</div>
+                                    </div>
+                                    <!-- Duplicate set for seamless loop -->
+                                    <div class="stat-item critical">
+                                        <div class="stat-label">TIME WASTE DETECTED</div>
+                                        <div class="stat-value">26 hrs/week</div>
+                                        <div class="stat-desc">↑ Admin tasks stealing billable hours</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-label">AUTOMATION POTENTIAL</div>
+                                        <div class="stat-value">89%</div>
+                                        <div class="stat-desc">Tasks ready for AI takeover</div>
+                                    </div>
+                                    <div class="stat-item critical">
+                                        <div class="stat-label">REVENUE LEAKAGE</div>
+                                        <div class="stat-value">$47K/mo</div>
+                                        <div class="stat-desc">Lost to inefficient processes</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-label">RESPONSE TIME REDUCTION</div>
+                                        <div class="stat-value">83%</div>
+                                        <div class="stat-desc">With AI-powered client systems</div>
+                                    </div>
+                                    <div class="stat-item warning">
+                                        <div class="stat-label">MANUAL BOTTLENECKS</div>
+                                        <div class="stat-value">73%</div>
+                                        <div class="stat-desc">Processes requiring founder input</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-label">CAPACITY INCREASE</div>
+                                        <div class="stat-value">3.2x</div>
+                                        <div class="stat-desc">Client load without new hires</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-label">PROPOSAL GENERATION</div>
+                                        <div class="stat-value">15 min</div>
+                                        <div class="stat-desc">Down from 4 hours average</div>
+                                    </div>
+                                    <div class="stat-item critical">
+                                        <div class="stat-label">FOLLOW-UP FAILURE RATE</div>
+                                        <div class="stat-value">62%</div>
+                                        <div class="stat-desc">Leads lost to inconsistent outreach</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="system-status">
+                                <div class="status-row">
+                                    <span class="status-name">WORKFLOW EFFICIENCY</span>
+                                    <span class="status-value warning">⚠ NEEDS OPTIMIZATION</span>
+                                </div>
+                                <div class="status-row">
+                                    <span class="status-name">SALES PIPELINE</span>
+                                    <span class="status-value offline">✕ MANUAL PROCESS</span>
+                                </div>
+                                <div class="status-row">
+                                    <span class="status-name">AI INTEGRATION</span>
+                                    <span class="status-value warning">⚠ UNDERUTILIZED</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Company Logos Scroller -->
+    <section class="logos-section">
+        <div class="logos-header">
+            <div class="logos-label">TRUSTED BY BUSINESSES LIKE YOURS</div>
+        </div>
+        <div class="logos-track">
+            <!-- First set of logos -->
+            <div class="logo-item"><div class="logo-placeholder">LOGO 1</div></div>
+            <div class="logo-item"><div class="logo-placeholder">LOGO 2</div></div>
+            <div class="logo-item"><div class="logo-placeholder">LOGO 3</div></div>
+            <div class="logo-item"><div class="logo-placeholder">LOGO 4</div></div>
+            <div class="logo-item"><div class="logo-placeholder">LOGO 5</div></div>
+            <div class="logo-item"><div class="logo-placeholder">LOGO 6</div></div>
+            <div class="logo-item"><div class="logo-placeholder">LOGO 7</div></div>
+            <div class="logo-item"><div class="logo-placeholder">LOGO 8</div></div>
+            <!-- Duplicate set for seamless loop -->
+            <div class="logo-item"><div class="logo-placeholder">LOGO 1</div></div>
+            <div class="logo-item"><div class="logo-placeholder">LOGO 2</div></div>
+            <div class="logo-item"><div class="logo-placeholder">LOGO 3</div></div>
+            <div class="logo-item"><div class="logo-placeholder">LOGO 4</div></div>
+            <div class="logo-item"><div class="logo-placeholder">LOGO 5</div></div>
+            <div class="logo-item"><div class="logo-placeholder">LOGO 6</div></div>
+            <div class="logo-item"><div class="logo-placeholder">LOGO 7</div></div>
+            <div class="logo-item"><div class="logo-placeholder">LOGO 8</div></div>
+        </div>
+    </section>
+
+    <!-- Diagnostic Section -->
+    <section class="diagnostic" id="diagnostic">
+        <div class="container">
+            <div class="section-header reveal">
+                <div class="section-tag red">⚠ OPERATIONAL FRICTION IDENTIFIED</div>
+                <h2 class="section-title">Where Time, Accuracy, and Efficiency Break Down</h2>
+                <p class="section-subtitle">
+                    High-activity businesses don’t struggle from lack of effort — they struggle from systems that haven’t caught up with their growth.
+                </p>
+            </div>
+            <div class="diagnostic-grid">
+                <div class="glitch-card reveal">
+                    <div class="glitch-icon"></div>
+                    <h3 class="glitch-title">MANUAL WORKLOAD DRAIN</h3>
+                    <p class="glitch-desc">
+                        Your team spends hours moving information between emails, spreadsheets, CRMs, and project tools. Copy. Paste. Update. Repeat. Manual steps increases cost and error risk.
+                    </p>
+                    <div class="glitch-stat">
+                        <span class="glitch-stat-value">28</span>
+                        <span class="glitch-stat-label">HOURS PER WEEK LOST TO REPETITIVE TASKS</span>
+                    </div>
+                </div>
+                <div class="glitch-card reveal">
+                    <div class="glitch-icon"></div>
+                    <h3 class="glitch-title">TRIBAL KNOWLEDGE DECAY</h3>
+                    <p class="glitch-desc">
+                        Your best processes live in your employees' heads. When key people leave, they take institutional knowledge with them. Every new hire starts from zero.
+                    </p>
+                    <div class="glitch-stat">
+                        <span class="glitch-stat-value">89</span>
+                        <span class="glitch-stat-label">% UNDOCUMENTED PROCESSES</span>
+                    </div>
+                </div>
+                <div class="glitch-card reveal">
+                    <div class="glitch-icon"></div>
+                    <h3 class="glitch-title">LEADERSHIP DEPENDENCY</h3>
+                    <p class="glitch-desc">
+                        Approvals, exceptions, and escalations route upward instead of through structured workflows. As volume increases, leadership becomes the throughput constraint.
+                    </p>
+                    <div class="glitch-stat">
+                        <span class="glitch-stat-value">63</span>
+                        <span class="glitch-stat-label">% OF WORKFLOW DECISIONS ESCALATE UNNECESSARILY</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 9-Step System Section -->
+    <section class="systems" id="systems">
+        <div class="container">
+            <div class="section-header reveal">
+                <div class="section-tag">◆ THE AUTOMATE BUSINESS AI SYSTEM</div>
+                <h2 class="section-title">The 9-Step Transformation Framework</h2>
+                <p class="section-subtitle">
+                    A comprehensive system to take you from manual chaos to automated excellence—across production, promotion, and profit.
+                </p>
+            </div>
+
+            <!-- PHASE 1: PRODUCE -->
+            <div class="phase-container reveal">
+                <div class="phase-header">
+                    <div class="phase-number">PHASE 1</div>
+                    <div class="phase-title">PRODUCE</div>
+                </div>
+                <div class="steps-grid">
+                    <!-- Step 1 -->
+                    <div class="step-card">
+                        <div class="step-image-placeholder"></div>
+                        <div class="step-content">
+                            <div class="step-number">01</div>
+                            <h3 class="step-name">The Machine-First Mandate</h3>
+                            <p class="step-desc">Replace "we do this manually" with "our AI/systems do this." Map every recurring task and triage into Automate Now / Automate Next / Keep Human.</p>
+                            <div class="step-metrics">
+                                <span class="step-metric">% TASKS MAPPED</span>
+                                <span class="step-metric">HOURS SAVED/MO</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Step 2 -->
+                    <div class="step-card">
+                        <div class="step-image-placeholder"></div>
+                        <div class="step-content">
+                            <div class="step-number">02</div>
+                            <h3 class="step-name">The Infinite Pipeline System</h3>
+                            <p class="step-desc">Use AI to go from idea → validated offer → fulfillment with minimal manual effort. Build sales system blueprints from idea → checkout → delivery.</p>
+                            <div class="step-metrics">
+                                <span class="step-metric">TIME-TO-MVP</span>
+                                <span class="step-metric">% DELIVERY AUTOMATED</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Step 3 -->
+                    <div class="step-card">
+                        <div class="step-image-placeholder"></div>
+                        <div class="step-content">
+                            <div class="step-number">03</div>
+                            <h3 class="step-name">The Client Continuum Framework</h3>
+                            <p class="step-desc">Design the customer lifecycle and insert automation where it creates leverage. Map outer paths and inner shifts with AI touchpoints at every stage.</p>
+                            <div class="step-metrics">
+                                <span class="step-metric">LEAD-TO-SALE CVR</span>
+                                <span class="step-metric">ONBOARDING %</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PHASE 2: PROMOTE -->
+            <div class="phase-container reveal">
+                <div class="phase-header">
+                    <div class="phase-number">PHASE 2</div>
+                    <div class="phase-title">PROMOTE</div>
+                </div>
+                <div class="steps-grid">
+                    <!-- Step 4 -->
+                    <div class="step-card">
+                        <div class="step-image-placeholder"></div>
+                        <div class="step-content">
+                            <div class="step-number">04</div>
+                            <h3 class="step-name">The Omnipresence Engine</h3>
+                            <p class="step-desc">Automate visibility and thought leadership without burnout. One-to-many content repurposing via AI: video → shorts → posts → emails.</p>
+                            <div class="step-metrics">
+                                <span class="step-metric">AUTO POSTS/WK</span>
+                                <span class="step-metric">ORGANIC LEADS</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Step 5 -->
+                    <div class="step-card">
+                        <div class="step-image-placeholder"></div>
+                        <div class="step-content">
+                            <div class="step-number">05</div>
+                            <h3 class="step-name">The Growth Accelerator System</h3>
+                            <p class="step-desc">Lower CAC, raise ROAS with AI-driven testing and automation. AI-generated ad variants for rapid creative and copy testing.</p>
+                            <div class="step-metrics">
+                                <span class="step-metric">CPA</span>
+                                <span class="step-metric">ROAS</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Step 6 -->
+                    <div class="step-card">
+                        <div class="step-image-placeholder"></div>
+                        <div class="step-content">
+                            <div class="step-number">06</div>
+                            <h3 class="step-name">The Influence Grid Method</h3>
+                            <p class="step-desc">Systemize partner discovery, outreach, and co-selling. AI-assisted partner prospecting and ranking with automated outreach cadences.</p>
+                            <div class="step-metrics">
+                                <span class="step-metric">JVS SIGNED</span>
+                                <span class="step-metric">PARTNER REVENUE</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PHASE 3: PROFIT -->
+            <div class="phase-container reveal">
+                <div class="phase-header">
+                    <div class="phase-number">PHASE 3</div>
+                    <div class="phase-title">PROFIT</div>
+                </div>
+                <div class="steps-grid">
+                    <!-- Step 7 -->
+                    <div class="step-card">
+                        <div class="step-image-placeholder"></div>
+                        <div class="step-content">
+                            <div class="step-number">07</div>
+                            <h3 class="step-name">The Conversion Overdrive Protocol</h3>
+                            <p class="step-desc">Tighten funnels and scale closing with AI support. Funnel forensics with AI: rewrite headlines, offers, pages, emails with controlled tests.</p>
+                            <div class="step-metrics">
+                                <span class="step-metric">CVR LIFT %</span>
+                                <span class="step-metric">CLOSE RATE %</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Step 8 -->
+                    <div class="step-card">
+                        <div class="step-image-placeholder"></div>
+                        <div class="step-content">
+                            <div class="step-number">08</div>
+                            <h3 class="step-name">The Expansion Ladder Framework</h3>
+                            <p class="step-desc">Use AI + automation across the 3 LTV levers: buy more, buy more often, pay more. Replenishment automations, cross-sell triggers, price testing.</p>
+                            <div class="step-metrics">
+                                <span class="step-metric">LTV LIFT</span>
+                                <span class="step-metric">CHURN REDUCED</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Step 9 -->
+                    <div class="step-card">
+                        <div class="step-image-placeholder"></div>
+                        <div class="step-content">
+                            <div class="step-number">09</div>
+                            <h3 class="step-name">The Scale Shift System</h3>
+                            <p class="step-desc">Compound growth with automated reporting, hiring, and market expansion. Board-ready KPI dashboards, forecasting, and investor updates—auto-generated.</p>
+                            <div class="step-metrics">
+                                <span class="step-metric">% AUTOMATED</span>
+                                <span class="step-metric">TIME-TO-ONBOARD</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Case Studies Section -->
+    <section class="case-studies" id="case-studies">
+        <div class="container">
+            <div class="section-header reveal">
+                <div class="section-tag yellow">◈ PROVEN RESULTS</div>
+                <h2 class="section-title">Transformation Case Studies</h2>
+                <p class="section-subtitle">
+                    Real businesses, real systems, real results. See how we've helped entrepreneurs install order and scale with confidence.
+                </p>
+            </div>
+            <div class="case-grid">
+                <!-- Case Study 1 -->
+                <div class="case-card reveal">
+                    <div class="case-image">
+                        <span class="case-image-label">CASE STUDY IMAGE</span>
+                    </div>
+                    <div class="case-content">
+                        <span class="case-industry">E-COMMERCE / LIFESTYLE BRAND</span>
+                        <h3 class="case-title">From Fulfillment Chaos to Automated Scale</h3>
+                        <p class="case-excerpt">A $4M lifestyle brand struggling with shrinking margins and fulfillment bottlenecks transformed their operations with our Offer Engine Sprint and end-to-end automation.</p>
+                        <div class="case-results">
+                            <div class="case-stat">
+                                <span class="case-stat-value">340%</span>
+                                <span class="case-stat-label">ROAS INCREASE</span>
+                            </div>
+                            <div class="case-stat">
+                                <span class="case-stat-value">22hrs</span>
+                                <span class="case-stat-label">SAVED/WEEK</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Case Study 2 -->
+                <div class="case-card reveal">
+                    <div class="case-image">
+                        <span class="case-image-label">CASE STUDY IMAGE</span>
+                    </div>
+                    <div class="case-content">
+                        <span class="case-industry">EXECUTIVE COACHING</span>
+                        <h3 class="case-title">Scaling High-Touch Without Sacrificing Quality</h3>
+                        <p class="case-excerpt">An executive coach drowning in admin work discovered how to automate client journeys while maintaining the personal touch that built her reputation.</p>
+                        <div class="case-results">
+                            <div class="case-stat">
+                                <span class="case-stat-value">3x</span>
+                                <span class="case-stat-label">CLIENT CAPACITY</span>
+                            </div>
+                            <div class="case-stat">
+                                <span class="case-stat-value">94%</span>
+                                <span class="case-stat-label">RETENTION RATE</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Case Study 3 -->
+                <div class="case-card reveal">
+                    <div class="case-image">
+                        <span class="case-image-label">CASE STUDY IMAGE</span>
+                    </div>
+                    <div class="case-content">
+                        <span class="case-industry">MULTI-VENTURE PORTFOLIO</span>
+                        <h3 class="case-title">Unified Systems Across Three Businesses</h3>
+                        <p class="case-excerpt">A serial entrepreneur running three ventures in chaos finally achieved cross-business synergy with our Cultural Conversion step and automated KPI dashboards.</p>
+                        <div class="case-results">
+                            <div class="case-stat">
+                                <span class="case-stat-value">$1.2M</span>
+                                <span class="case-stat-label">REVENUE UNLOCKED</span>
+                            </div>
+                            <div class="case-stat">
+                                <span class="case-stat-value">67%</span>
+                                <span class="case-stat-label">LESS MEETINGS</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Authority Section -->
+    <section class="authority" id="about">
+        <div class="container">
+            <div class="authority-grid">
+                <div class="credentials-stack reveal">
+                    <div class="section-header" style="text-align: left !important; margin-bottom: 40px !important;">
+                        <div class="section-tag" style="justify-content: flex-start !important;">
+                            <span style="width: 0 !important;"></span>◇ SYSTEM ARCHITECT
+                        </div>
+                        <h2 class="section-title">Dr. Bradford Carlton</h2>
+                        <p class="section-subtitle" style="margin: 16px 0 0 0 !important;">Built by someone who's been inside the machine.</p>
+                    </div>
+                    <div class="credential-card">
+                        <div class="credential-icon">
+                            <svg viewBox="0 0 24 24" stroke-width="1.5">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                            </svg>
+                        </div>
+                        <div class="credential-content">
+                            <h4>Legal Foundation</h4>
+                            <p>Legal training develops disciplined thinking: identifying variables, mapping dependencies, and stress-testing assumptions. That same rigor informs our automation architecture—designed to be intentional, resilient, and scalable.</p>
+                        </div>
+                    </div>
+                    <div class="credential-card">
+                        <div class="credential-icon">
+                            <svg viewBox="0 0 24 24" stroke-width="1.5">
+                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                                <line x1="8" y1="21" x2="16" y2="21"/>
+                                <line x1="12" y1="17" x2="12" y2="21"/>
+                            </svg>
+                        </div>
+                        <div class="credential-content">
+                            <h4>Enterprise-Level Systems Thinking</h4>
+                            <p>Personally designed and implemented AI-powered workflows across thousands of real-world use cases. I have trained hundreds of professionals to build these systems themselves—refining repeatable frameworks that work across industries and operational models.</p>
+                        </div>
+                    </div>
+                    <div class="credential-card">
+                        <div class="credential-icon">
+                            <svg viewBox="0 0 24 24" stroke-width="1.5">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12 6 12 12 16 14"/>
+                            </svg>
+                        </div>
+                        <div class="credential-content">
+                            <h4>Business Operator</h4>
+                            <p>Experience building and running service businesses shaped how I approach automation: with attention to bottlenecks, workflow friction, and capacity constraints. Every system is engineered to improve throughput without increasing complexity.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="trust-metrics reveal">
+                    <div class="trust-header">VERIFIED METRICS</div>
+                    <div class="trust-grid">
+                        <div class="trust-item">
+                            <div class="trust-value">12000+</div>
+                            <div class="trust-label">BUSINESSES TRAINED</div>
+                        </div>
+                        <div class="trust-item">
+                            <div class="trust-value">13+</div>
+                            <div class="trust-label">AVG. HOURS/WEEK SAVED PER PERSON</div>
+                        </div>
+                        <div class="trust-item">
+                            <div class="trust-value">24+</div>
+                            <div class="trust-label">INDUSTRIES SERVED</div>
+                        </div>
+                        <div class="trust-item">
+                            <div class="trust-value">340+</div>
+                            <div class="trust-label">WORKFLOWS DEVELOPED AND DEPLOYED</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section" id="cta">
+        <div class="container">
+            <div class="cta-container reveal">
+                <div class="cta-corners"></div>
+                <div class="cta-tag">▸ THE INFLECTION POINT</div>
+                <h2 class="cta-title">Let’s Architect the Systems That Scale With You</h2>
+                <p class="cta-subtitle">
+                    We conduct a structured operational review to identify friction points, manual dependencies, and error exposure—then map a practical automation architecture aligned with your growth goals.
+                </p>
+                <div class="cta-actions">
+                    <a href="/audit-request" class="btn-primary">
+                        <span>REQUEST AUDIT</span>
+                    </a>
+                </div>
+                <p class="cta-note">You will gain clarity on where automation can reduce friction in your operation—and whether working together makes strategic sense.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-logo">AUTOMATE BUSINESS AI</div>
+                <div class="footer-links">
+                    <span class="footer-link" data-scroll="systems">THE SYSTEM</span>
+                    <span class="footer-link" data-scroll="case-studies">CASE STUDIES</span>
+                    <span class="footer-link" data-scroll="about">ABOUT</span>
+                    <a href="/audit-request" class="footer-link">CONTACT</a>
+                </div>
+                <div class="footer-copy">© 2026 CARLTON FAMILY COROPORATION. 6655 W. SAHARA AVE., SUITE B200, LAS VEGAS, NV 89146. ALL SYSTEMS OPERATIONAL.</div>
+            </div>
+        </div>
+    </footer>
+</div>
+
+    <script>
+        // ===== TIME DISPLAY =====
+        function updateTime() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('en-US', { hour12: false });
+            const el = document.getElementById('current-time');
+            if (el) el.textContent = time;
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // ===== DIAGNOSTIC STATUS =====
+        const statuses = ['SCANNING...', 'ANALYZING...', 'PROCESSING...', 'COMPLETE'];
+        let statusIndex = 0;
+        
+        function updateDiagnosticStatus() {
+            const el = document.getElementById('diagnostic-status');
+            if (el) {
+                statusIndex = (statusIndex + 1) % statuses.length;
+                el.textContent = statuses[statusIndex];
+            }
+        }
+        
+        setInterval(updateDiagnosticStatus, 2000);
+
+        // ===== SCROLL REVEAL =====
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal').forEach(el => {
+            observer.observe(el);
+        });
+
+        // ===== SMOOTH SCROLL NAVIGATION (SPA STYLE) =====
+        document.querySelectorAll('[data-scroll]').forEach(element => {
+            element.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('data-scroll');
+                const target = document.getElementById(targetId);
+                
+                if (target) {
+                    // Update active nav tab
+                    document.querySelectorAll('.nav-tab').forEach(tab => {
+                        tab.classList.remove('active');
+                    });
+                    if (this.classList.contains('nav-tab')) {
+                        this.classList.add('active');
+                    } else {
+                        // Find and activate the corresponding nav tab
+                        const correspondingTab = document.querySelector(`.nav-tab[data-scroll="${targetId}"]`);
+                        if (correspondingTab) correspondingTab.classList.add('active');
+                    }
+                    
+                    // Smooth scroll to target
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // ===== UPDATE ACTIVE NAV ON SCROLL =====
+        const sections = document.querySelectorAll('section[id]');
+        
+        window.addEventListener('scroll', () => {
+            let current = '';
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+            
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.getAttribute('data-scroll') === current) {
+                    tab.classList.add('active');
+                }
+            });
+        });
+
+        // ===== PARALLAX GRID =====
+        let ticking = false;
+        window.addEventListener('scroll', () => {
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    const scrolled = window.pageYOffset;
+                    const grid = document.querySelector('.grid-overlay');
+                    if (grid) {
+                        grid.style.transform = `translateY(${scrolled * 0.1}px)`;
+                    }
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        });
+    </script>
+</body>
+</html>
