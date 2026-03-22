@@ -2416,12 +2416,17 @@ function applyTheme(config) {
     app.style.setProperty('--deft-surface-el', theme.surfaceEl);
     app.style.setProperty('--deft-surface-hi', theme.surfaceHi);
     app.style.setProperty('--deft-border', theme.border);
-    app.style.setProperty('--deft-success', theme.success);
-    app.style.setProperty('--deft-success-dim', hexToRGBA(theme.success, 0.15));
-    app.style.setProperty('--deft-warning', theme.warning);
-    app.style.setProperty('--deft-warning-dim', hexToRGBA(theme.warning, 0.15));
-    app.style.setProperty('--deft-danger', theme.danger);
-    app.style.setProperty('--deft-danger-dim', hexToRGBA(theme.danger, 0.15));
+    // Status colors: use overrides if set, otherwise theme defaults
+    const so = config.statusOverrides || {};
+    const successColor = so.success || theme.success;
+    const warningColor = so.warning || theme.warning;
+    const dangerColor = so.danger || theme.danger;
+    app.style.setProperty('--deft-success', successColor);
+    app.style.setProperty('--deft-success-dim', hexToRGBA(successColor, 0.15));
+    app.style.setProperty('--deft-warning', warningColor);
+    app.style.setProperty('--deft-warning-dim', hexToRGBA(warningColor, 0.15));
+    app.style.setProperty('--deft-danger', dangerColor);
+    app.style.setProperty('--deft-danger-dim', hexToRGBA(dangerColor, 0.15));
     app.style.setProperty('--deft-txt', theme.txt);
     app.style.setProperty('--deft-txt-2', theme.txt2);
     app.style.setProperty('--deft-txt-3', theme.txt3);

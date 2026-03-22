@@ -813,29 +813,45 @@
                                     </div>
                                     <input type="text" class="hex-input" id="customTxtHex" value="#EAE8E0" oninput="onHexInput('customTxt', this.value)" maxlength="7" spellcheck="false">
                                 </div>
-                                <div style="border-top: 1px solid var(--deft-border); margin: 0.75rem 0 0.5rem; padding-top: 0.75rem;">
-                                    <div style="font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--deft-txt-3); margin-bottom: 0.5rem;">Status Colors</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── 2b. Status Colors (always visible) ── -->
+                    <div class="panel deft-reveal deft-reveal-3">
+                        <div class="panel-header">
+                            <div class="section-header" style="margin-bottom: 0;">
+                                <div class="section-icon" style="background: rgba(107,203,119,0.12);">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="4" cy="8" r="2.5" fill="#6BCB77"/><circle cx="8" cy="8" r="2.5" fill="#F0A830"/><circle cx="12" cy="8" r="2.5" fill="#E85D5D"/></svg>
                                 </div>
+                                <div>
+                                    <div class="section-title">Status Colors</div>
+                                    <div class="section-subtitle">Colors for keto status, limits, and alerts</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="space-y-1">
                                 <div class="color-row">
                                     <label>Success / Keto Good</label>
                                     <div class="color-picker-wrap">
-                                        <input type="color" id="customSuccess" value="#6BCB77" oninput="onCustomColorChange()">
+                                        <input type="color" id="customSuccess" value="#6BCB77" oninput="onStatusColorChange()">
                                     </div>
-                                    <input type="text" class="hex-input" id="customSuccessHex" value="#6BCB77" oninput="onHexInput('customSuccess', this.value)" maxlength="7" spellcheck="false">
+                                    <input type="text" class="hex-input" id="customSuccessHex" value="#6BCB77" oninput="onHexInput('customSuccess', this.value); onStatusColorChange()" maxlength="7" spellcheck="false">
                                 </div>
                                 <div class="color-row">
                                     <label>Warning / Near Limit</label>
                                     <div class="color-picker-wrap">
-                                        <input type="color" id="customWarning" value="#F0A830" oninput="onCustomColorChange()">
+                                        <input type="color" id="customWarning" value="#F0A830" oninput="onStatusColorChange()">
                                     </div>
-                                    <input type="text" class="hex-input" id="customWarningHex" value="#F0A830" oninput="onHexInput('customWarning', this.value)" maxlength="7" spellcheck="false">
+                                    <input type="text" class="hex-input" id="customWarningHex" value="#F0A830" oninput="onHexInput('customWarning', this.value); onStatusColorChange()" maxlength="7" spellcheck="false">
                                 </div>
                                 <div class="color-row">
                                     <label>Danger / Over Limit</label>
                                     <div class="color-picker-wrap">
-                                        <input type="color" id="customDanger" value="#E85D5D" oninput="onCustomColorChange()">
+                                        <input type="color" id="customDanger" value="#E85D5D" oninput="onStatusColorChange()">
                                     </div>
-                                    <input type="text" class="hex-input" id="customDangerHex" value="#E85D5D" oninput="onHexInput('customDanger', this.value)" maxlength="7" spellcheck="false">
+                                    <input type="text" class="hex-input" id="customDangerHex" value="#E85D5D" oninput="onHexInput('customDanger', this.value); onStatusColorChange()" maxlength="7" spellcheck="false">
                                 </div>
                             </div>
                         </div>
@@ -1573,6 +1589,31 @@ function populateCustomColors(theme) {
     document.getElementById('customDangerHex').value = theme.danger || '#E85D5D';
 }
 
+function onStatusColorChange() {
+    // Status colors apply to any theme (preset or custom)
+    const success = document.getElementById('customSuccess').value;
+    const warning = document.getElementById('customWarning').value;
+    const danger = document.getElementById('customDanger').value;
+
+    // Sync hex inputs
+    document.getElementById('customSuccessHex').value = success;
+    document.getElementById('customWarningHex').value = warning;
+    document.getElementById('customDangerHex').value = danger;
+
+    // Store as overrides in config
+    currentConfig.statusOverrides = { success, warning, danger };
+
+    // Apply directly to CSS variables
+    document.documentElement.style.setProperty('--deft-success', success);
+    document.documentElement.style.setProperty('--deft-success-dim', hexToRGBA(success, 0.15));
+    document.documentElement.style.setProperty('--deft-warning', warning);
+    document.documentElement.style.setProperty('--deft-warning-dim', hexToRGBA(warning, 0.15));
+    document.documentElement.style.setProperty('--deft-danger', danger);
+    document.documentElement.style.setProperty('--deft-danger-dim', hexToRGBA(danger, 0.15));
+
+    markDirty();
+}
+
 function onCustomColorChange() {
     if (!customMode) return;
     const baseTheme = currentConfig.custom || THEMES.forest;
@@ -1955,6 +1996,21 @@ function populateSettingsUI(config) {
 
     // Custom colors
     populateCustomColors(theme);
+
+    // Status colors (always visible, independent of custom mode)
+    const so = config.statusOverrides || {};
+    document.getElementById('customSuccess').value = so.success || theme.success || '#6BCB77';
+    document.getElementById('customSuccessHex').value = so.success || theme.success || '#6BCB77';
+    document.getElementById('customWarning').value = so.warning || theme.warning || '#F0A830';
+    document.getElementById('customWarningHex').value = so.warning || theme.warning || '#F0A830';
+    document.getElementById('customDanger').value = so.danger || theme.danger || '#E85D5D';
+    document.getElementById('customDangerHex').value = so.danger || theme.danger || '#E85D5D';
+
+    // Apply status overrides if present
+    if (so.success || so.warning || so.danger) {
+        onStatusColorChange();
+    }
+
     if (config.preset === 'custom') {
         customMode = true;
         updateCustomToggle();
