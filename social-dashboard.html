@@ -672,6 +672,7 @@
                         <span class="task-tab active" style="flex: none; padding: 0.3rem 0.75rem;">Social</span>
                         <a href="/crm?auth=rdgr" class="task-tab" style="flex: none; padding: 0.3rem 0.75rem; text-decoration: none;">CRM</a>
                         <a href="/deft?auth=rdgr" class="task-tab" style="flex: none; padding: 0.3rem 0.75rem; text-decoration: none;">DEFT</a>
+                        <a href="/brain?auth=rdgr" class="task-tab" style="flex:none;padding:0.3rem 0.75rem;text-decoration:none;">BRAIN</a>
                     </div>
                 </div>
                 <div class="flex items-center gap-2 sm:gap-3">
@@ -1169,6 +1170,14 @@
     <div class="toast-container" id="toastContainer"></div>
 
 <script>
+// Migrate old localStorage key
+if (!localStorage.getItem('rdgr-active-profile') && localStorage.getItem('rdgr-active-profile')) {
+    localStorage.setItem('rdgr-active-profile', localStorage.getItem('rdgr-active-profile'));
+    localStorage.removeItem('rdgr-active-profile');
+}
+
+let activeProfileId = null;
+
 // ═══════════════════════════════════════
 // CONFIG
 // ═══════════════════════════════════════
@@ -2343,7 +2352,7 @@ async function triggerDiscovery() {
         await fetch(`${N8N_BASE}/social-orchestrator`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ brand_id: 'carlton', platform }),
+            body: JSON.stringify({ brand_id: 'carlton', platform, user_id: activeProfileId }),
         });
         const label = platform ? PLATFORMS[platform]?.label || platform : 'all platforms';
         showToast(`Discovery started for ${label} (may take 1-10 min)`, 'success');
@@ -2362,7 +2371,7 @@ async function triggerRedditDiscovery(mode) {
         await fetch(`${N8N_BASE}/social-reddit-orch`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ brand_id: 'carlton', mode }),
+            body: JSON.stringify({ brand_id: 'carlton', mode, user_id: activeProfileId }),
         });
         const label = mode === 'wave_catcher' ? 'Wave Catcher' : 'Pain Prospector';
         showToast(`Reddit ${label} started`, 'success');
@@ -3025,7 +3034,7 @@ async function submitRedraft() {
         await fetch(`${N8N_BASE}/social-approved`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'reject', draft_id: parseInt(draftId), feedback, brand_id: 'carlton' }),
+            body: JSON.stringify({ action: 'reject', draft_id: parseInt(draftId), feedback, brand_id: 'carlton', user_id: activeProfileId }),
         });
         socialDrafts = socialDrafts.filter(d => d.id !== parseInt(draftId));
         closeRedraftModal();
@@ -3065,6 +3074,7 @@ async function submitLogReply() {
         author: document.getElementById('logReplyAuthor').value.trim() || 'Unknown',
         platform: document.getElementById('logReplyPlatform').value,
         brand_id: 'carlton',
+        user_id: activeProfileId,
         generate_response: document.getElementById('logReplyAutoDraft').classList.contains('on'),
     };
 
@@ -3627,10 +3637,11 @@ document.querySelectorAll('.modal-backdrop').forEach(el => {
 
 // ── Profile Switcher ──
 (function initProfileSwitcher() {
-    const saved = localStorage.getItem('deft-active-profile');
+    const saved = localStorage.getItem('rdgr-active-profile');
     if (saved) {
         try {
             const p = JSON.parse(saved);
+            activeProfileId = p.id || null;
             const nameEl = document.getElementById('profileName');
             const avatarEl = document.getElementById('profileAvatar');
             if (nameEl) nameEl.textContent = p.name;
@@ -3672,7 +3683,8 @@ function toggleProfileDD() {
 }
 
 function selectProfileGlobal(userId, name) {
-    localStorage.setItem('deft-active-profile', JSON.stringify({ id: userId, name: name }));
+    activeProfileId = userId;
+    localStorage.setItem('rdgr-active-profile', JSON.stringify({ id: userId, name: name }));
     const nameEl = document.getElementById('profileName');
     const avatarEl = document.getElementById('profileAvatar');
     if (nameEl) nameEl.textContent = name;

@@ -1033,6 +1033,7 @@
                     <a href="/social-dashboard?auth=rdgr" class="task-tab" style="flex:none;padding:0.3rem 0.75rem;text-decoration:none;">Social</a>
                     <a href="/crm?auth=rdgr" class="task-tab" style="flex:none;padding:0.3rem 0.75rem;text-decoration:none;">CRM</a>
                     <span class="task-tab active" style="flex:none;padding:0.3rem 0.75rem;">DEFT</span>
+                    <a href="/brain?auth=rdgr" class="task-tab" style="flex:none;padding:0.3rem 0.75rem;text-decoration:none;">BRAIN</a>
                 </div>
             </div>
             <div class="flex items-center gap-2 sm:gap-3">
@@ -1062,6 +1063,7 @@
             <a href="/social-dashboard?auth=rdgr" class="task-tab" style="flex:none;padding:0.25rem 0.6rem;font-size:0.65rem;text-decoration:none;">Social</a>
             <a href="/crm?auth=rdgr" class="task-tab" style="flex:none;padding:0.25rem 0.6rem;font-size:0.65rem;text-decoration:none;">CRM</a>
             <span class="task-tab active" style="flex:none;padding:0.25rem 0.6rem;font-size:0.65rem;">DEFT</span>
+            <a href="/brain?auth=rdgr" class="task-tab" style="flex:none;padding:0.25rem 0.6rem;font-size:0.65rem;text-decoration:none;">BRAIN</a>
         </div>
     </nav>
 
@@ -2321,6 +2323,12 @@
      JAVASCRIPT
      ═══════════════════════════════════════ -->
 <script>
+// Migrate old localStorage key
+if (!localStorage.getItem('rdgr-active-profile') && localStorage.getItem('rdgr-active-profile')) {
+    localStorage.setItem('rdgr-active-profile', localStorage.getItem('rdgr-active-profile'));
+    localStorage.removeItem('rdgr-active-profile');
+}
+
 // ═══════════════════════════════════════
 // CONFIG
 // ═══════════════════════════════════════
@@ -2570,7 +2578,7 @@ async function createNewProfile() {
 function selectProfile(userId, name) {
     activeProfileId = userId;
     activeProfileName = name;
-    localStorage.setItem('deft-active-profile', JSON.stringify({ id: userId, name }));
+    localStorage.setItem('rdgr-active-profile', JSON.stringify({ id: userId, name }));
 
     // Update UI
     document.getElementById('profileName').textContent = name;
@@ -2713,7 +2721,7 @@ if (sessionStorage.getItem('registry-auth') === 'true') {
 // ═══════════════════════════════════════
 async function initDeft() {
     // Load saved profile
-    const savedProfile = localStorage.getItem('deft-active-profile');
+    const savedProfile = localStorage.getItem('rdgr-active-profile');
     if (savedProfile) {
         try {
             const p = JSON.parse(savedProfile);
