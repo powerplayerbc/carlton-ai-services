@@ -1395,6 +1395,7 @@ let dailySummary = null;
 let todayActivities = [];
 let realtimeChannels = [];
 let activityLogDate = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+let webhookAvailable = false; // checked on init
 
 // Category icons fallback
 const CAT_ICONS = {
@@ -1483,6 +1484,28 @@ async function brainApi(operation, data = {}, { silent = false } = {}) {
         if (!silent) toast('Connection error', 'error');
         return null;
     }
+}
+
+// ═══════════════════════════════════════
+// WEBHOOK HEALTH CHECK
+// ═══════════════════════════════════════
+async function checkWebhookHealth() {
+    try {
+        const controller = new AbortController();
+        setTimeout(() => controller.abort(), 5000);
+        const res = await fetch(BRAIN_BRIDGE_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ operation: 'get_settings', user_id: '00000000-0000-0000-0000-000000000001', data: {} }),
+            signal: controller.signal
+        });
+        const json = await res.json();
+        webhookAvailable = json.success === true;
+    } catch {
+        webhookAvailable = false;
+    }
+    console.log('BRAIN webhook available:', webhookAvailable);
+    return webhookAvailable;
 }
 
 // ═══════════════════════════════════════
@@ -1717,6 +1740,8 @@ async function initBrain() {
     }
 
     if (activeProfileId) {
+        // Check webhook health (non-blocking for page load)
+        checkWebhookHealth();
         setupRealtimeSubscriptions();
         await loadDashboardData();
     }
@@ -2093,15 +2118,30 @@ async function confirmStopTimer() {
     const peopleStr = document.getElementById('stopTimerPeople').value.trim();
     const people = peopleStr ? peopleStr.split(',').map(s => s.trim()).filter(Boolean) : [];
 
+    toast('Stopping timer...', 'info');
+
+    // Try webhook first (handles points, achievements, streaks, daily score)
+    if (webhookAvailable) {
+        const result = await brainApi('stop_timer', { notes, people, connections: [] });
+        if (result && result.success !== false) {
+            activeTimer = null;
+            stopStopwatchDisplay();
+            renderTimerState();
+            // Webhook response data:{} is empty — re-read from Supabase
+            await loadDashboardData();
+            toast('Timer stopped — activity logged!', 'success');
+            return;
+        }
+        console.warn('stop_timer webhook failed, using fallback');
+    }
+
+    // Fallback: direct Supabase writes (skips achievement/streak checks)
     const startTime = new Date(activeTimer.started_at).getTime();
     const elapsed = Math.floor((Date.now() - startTime) / 1000);
     const durationMin = Math.max(1, Math.round(elapsed / 60));
     const cat = categories.find(c => c.category_id === activeTimer.category_id);
     const pointsEarned = Math.round(durationMin * (cat?.points_per_minute || 1) * (cat?.bonus_multiplier || 1) * 10) / 10;
 
-    toast('Stopping timer...', 'info');
-
-    // Create the activity record
     const actResult = await supabaseWrite('brain_activities', 'POST', {
         user_id: activeProfileId,
         category_id: activeTimer.category_id,
@@ -2117,18 +2157,15 @@ async function confirmStopTimer() {
     });
 
     if (actResult) {
-        // Delete the timer
         await supabaseWrite('brain_timers', 'DELETE', null, `timer_id=eq.${activeTimer.timer_id}`);
-
-        // Update user's total points
-        const profile = await supabaseSelect('brain_user_profiles', `user_id=eq.${activeProfileId}&select=total_points,xp`);
+        // Update profile totals
+        const profile = await supabaseSelect('brain_user_profiles', `user_id=eq.${activeProfileId}&select=total_points`);
         if (profile && profile[0]) {
-            const newTotal = (profile[0].total_points || 0) + pointsEarned;
             await supabaseWrite('brain_user_profiles', 'PATCH', {
-                total_points: newTotal, xp: newTotal
+                total_points: (profile[0].total_points || 0) + pointsEarned,
+                xp: (profile[0].total_points || 0) + pointsEarned,
             }, `user_id=eq.${activeProfileId}`);
         }
-
         // Update daily score
         const today = new Date().toLocaleDateString('en-CA');
         const existingScore = await supabaseSelect('brain_daily_scores', `user_id=eq.${activeProfileId}&score_date=eq.${today}&select=*`);
@@ -2141,19 +2178,15 @@ async function confirmStopTimer() {
             }, `user_id=eq.${activeProfileId}&score_date=eq.${today}`);
         } else {
             await supabaseWrite('brain_daily_scores', 'POST', {
-                user_id: activeProfileId,
-                score_date: today,
-                total_points: pointsEarned,
-                total_minutes: durationMin,
-                activities_count: 1,
-                daily_goal: dailySummary?.daily_goal || 100,
+                user_id: activeProfileId, score_date: today,
+                total_points: pointsEarned, total_minutes: durationMin,
+                activities_count: 1, daily_goal: dailySummary?.daily_goal || 100,
             });
         }
-
         activeTimer = null;
         stopStopwatchDisplay();
         renderTimerState();
-        toast(`Logged ${durationMin} min \u2014 ${pointsEarned} pts earned!`, 'success');
+        toast(`Logged ${durationMin} min \u2014 ${pointsEarned} pts (fallback mode)`, 'success');
         loadDashboardData();
     } else {
         toast('Failed to save activity', 'error');
@@ -2332,7 +2365,28 @@ async function submitLogActivity() {
     closeModal('logActivityModal');
     toast('Logging activity...', 'info');
 
-    // Find category
+    const resetForm = () => {
+        document.getElementById('logActTitle').value = '';
+        document.getElementById('logActDescription').value = '';
+        document.getElementById('logActPeople').value = '';
+        document.getElementById('logActNotes').value = '';
+    };
+
+    // Try webhook first (handles points, achievements, streaks)
+    if (webhookAvailable) {
+        const result = await brainApi('log_activity', data);
+        if (result && result.success !== false) {
+            // Re-read from Supabase since webhook returns empty data:{}
+            await loadDashboardData();
+            loadActivities();
+            toast('Activity logged!', 'success');
+            resetForm();
+            return;
+        }
+        console.warn('log_activity webhook failed, using fallback');
+    }
+
+    // Fallback: direct Supabase writes
     const cat = categories.find(c => c.slug === catSlug);
     const pointsEarned = Math.round(duration * (cat?.points_per_minute || 1) * (cat?.bonus_multiplier || 1) * 10) / 10;
     const startedAt = started ? new Date(started).toISOString() : new Date(Date.now() - duration * 60000).toISOString();
@@ -2340,20 +2394,15 @@ async function submitLogActivity() {
     const result = await supabaseWrite('brain_activities', 'POST', {
         user_id: activeProfileId,
         category_id: cat?.category_id,
-        title,
-        description: desc || null,
+        title, description: desc || null,
         duration_min: duration,
         started_at: startedAt,
         ended_at: new Date(new Date(startedAt).getTime() + duration * 60000).toISOString(),
-        status: 'completed',
-        points_earned: pointsEarned,
-        people: data.people || null,
-        notes: notes || null,
-        source: 'manual',
+        status: 'completed', points_earned: pointsEarned,
+        people: data.people || null, notes: notes || null, source: 'manual',
     });
 
     if (result) {
-        // Update daily score
         const today = new Date().toLocaleDateString('en-CA');
         const existingScore = await supabaseSelect('brain_daily_scores', `user_id=eq.${activeProfileId}&score_date=eq.${today}&select=*`);
         if (existingScore && existingScore.length > 0) {
@@ -2370,8 +2419,6 @@ async function submitLogActivity() {
                 activities_count: 1, daily_goal: dailySummary?.daily_goal || 100,
             });
         }
-
-        // Update profile total
         const profile = await supabaseSelect('brain_user_profiles', `user_id=eq.${activeProfileId}&select=total_points`);
         if (profile && profile[0]) {
             await supabaseWrite('brain_user_profiles', 'PATCH', {
@@ -2379,14 +2426,10 @@ async function submitLogActivity() {
                 xp: (profile[0].total_points || 0) + pointsEarned,
             }, `user_id=eq.${activeProfileId}`);
         }
-
-        toast(`Logged! ${pointsEarned} pts earned`, 'success');
+        toast(`Logged! ${pointsEarned} pts (fallback mode)`, 'success');
         loadActivities();
         loadDashboardData();
-        document.getElementById('logActTitle').value = '';
-        document.getElementById('logActDescription').value = '';
-        document.getElementById('logActPeople').value = '';
-        document.getElementById('logActNotes').value = '';
+        resetForm();
     } else {
         toast('Failed to log activity', 'error');
     }
@@ -2673,6 +2716,15 @@ async function loadCalendarEvents() {
     const range = getCalWeekRange();
     document.getElementById('calWeekLabel').textContent = range.label;
     document.getElementById('calendarEventList').innerHTML = '<div class="text-center py-12 text-xs" style="color: var(--brain-txt-3);">Loading events...</div>';
+
+    if (!webhookAvailable) {
+        // Re-check in case it came online
+        await checkWebhookHealth();
+    }
+    if (!webhookAvailable) {
+        document.getElementById('calendarEventList').innerHTML = '<div class="text-center py-12"><span class="text-3xl block mb-2">&#128197;</span><p class="text-sm" style="color: var(--brain-txt-2);">Calendar requires the backend service</p><p class="text-xs mt-1" style="color: var(--brain-txt-3);">The BRAIN webhook is currently unavailable. Check n8n.</p></div>';
+        return;
+    }
 
     const result = await brainApi('get_events', { start_date: range.start_date, end_date: range.end_date }, { silent: true });
     const events = result?.data?.events || result?.events || [];
