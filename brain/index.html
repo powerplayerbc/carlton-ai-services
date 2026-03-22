@@ -1363,6 +1363,63 @@
     </div>
 </div>
 
+<!-- Sync Calendar Event Modal -->
+<div class="modal-backdrop" id="syncEventModal" onclick="if(event.target===this)closeModal('syncEventModal')">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="font-heading font-bold text-base">Log Calendar Event as Activity</h3>
+            <button class="btn btn-ghost btn-sm" onclick="closeModal('syncEventModal')">&times;</button>
+        </div>
+        <div class="modal-body space-y-3">
+            <input type="hidden" id="syncEventId">
+            <input type="hidden" id="syncEventStart">
+            <div class="p-3 rounded-lg" style="background: var(--brain-surface-el);">
+                <p class="text-sm font-medium" id="syncEventTitle">Event</p>
+                <p class="text-xs mt-1" style="color: var(--brain-txt-2);" id="syncEventTime">Time</p>
+            </div>
+            <div>
+                <label class="form-label">Category</label>
+                <select class="form-input" id="syncEventCategory"></select>
+            </div>
+            <div>
+                <label class="form-label">Duration (min)</label>
+                <input type="number" class="form-input" id="syncEventDuration" min="1" max="480">
+            </div>
+            <div>
+                <label class="form-label">Notes (optional)</label>
+                <textarea class="form-input" id="syncEventNotes" rows="2" placeholder="Add notes about this event..."></textarea>
+            </div>
+            <div class="flex items-center justify-between p-2 rounded-lg" style="background: var(--brain-accent-dim);">
+                <span class="text-xs font-medium" style="color: var(--brain-accent);">Estimated points</span>
+                <span class="font-mono text-sm font-bold" style="color: var(--brain-accent);" id="syncEventEstPts">0 pts</span>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('syncEventModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="confirmSyncEvent()">Log Activity</button>
+        </div>
+    </div>
+</div>
+
+<!-- Leaderboard User Detail Modal -->
+<div class="modal-backdrop" id="lbDetailModal" onclick="if(event.target===this)closeModal('lbDetailModal')">
+    <div class="modal-content" style="max-width: 520px;">
+        <div class="modal-header">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style="background: var(--brain-accent-dim); color: var(--brain-accent);" id="lbDetailAvatar">?</div>
+                <div>
+                    <h3 class="font-heading font-bold text-base" id="lbDetailName">User</h3>
+                    <p class="text-xs" style="color: var(--brain-txt-3);" id="lbDetailPeriod">This Week</p>
+                </div>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="closeModal('lbDetailModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="lbDetailBody">
+            <div class="text-xs" style="color: var(--brain-txt-3);">Loading...</div>
+        </div>
+    </div>
+</div>
+
 <!-- Toast Container -->
 <div class="toast-container" id="toastContainer"></div>
 
@@ -2763,7 +2820,7 @@ function renderCalendarEvents(events) {
                     </div>
                     <p class="text-xs mt-0.5" style="color: var(--brain-txt-3);">${startTime}${endTime ? ' - ' + endTime : ''} &middot; ${e.duration_min || 0} min</p>
                 </div>
-                ${!synced ? `<button class="btn btn-primary btn-sm" onclick="syncEventToActivity('${e.event_id}', '${(e.title || '').replace(/'/g, "\\'")}', ${e.duration_min || 0}, '${e.start || ''}', '${sugCat}')">Log as Activity</button>` : `<span class="badge badge-accent">${e.points_earned || ''} pts</span>`}
+                ${!synced ? `<button class="btn btn-primary btn-sm" onclick="openSyncEventModal('${e.event_id}', '${(e.title || '').replace(/'/g, "\\'")}', ${e.duration_min || 0}, '${e.start || ''}', '${sugCat}')">Log as Activity</button>` : `<span class="badge badge-accent">${e.points_earned || ''} pts</span>`}
             </div>`;
         }).join('');
         return `<div class="mb-4">
@@ -2773,17 +2830,107 @@ function renderCalendarEvents(events) {
     }).join('');
 }
 
-async function syncEventToActivity(eventId, title, durationMin, start, suggestedCategory) {
-    const catSlug = suggestedCategory || (categories[0]?.slug) || 'general';
-    toast('Syncing event...', 'info');
-    const result = await brainApi('sync_event_to_activity', {
-        event_id: eventId, title, duration_min: durationMin, start, category_slug: catSlug
+function openSyncEventModal(eventId, title, durationMin, start, suggestedCategory) {
+    document.getElementById('syncEventId').value = eventId;
+    document.getElementById('syncEventStart').value = start;
+    document.getElementById('syncEventTitle').textContent = title || 'Untitled Event';
+    const startTime = start ? new Date(start).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
+    document.getElementById('syncEventTime').textContent = `${startTime} \u00b7 ${durationMin} min`;
+    document.getElementById('syncEventDuration').value = durationMin || 30;
+    document.getElementById('syncEventNotes').value = '';
+
+    // Populate category dropdown with suggested pre-selected
+    const sel = document.getElementById('syncEventCategory');
+    sel.innerHTML = categories.filter(c => c.is_active !== false).map(c =>
+        `<option value="${c.slug}" ${c.slug === suggestedCategory ? 'selected' : ''}>${c.name}</option>`
+    ).join('');
+
+    // Calculate estimated points
+    updateSyncEstimate();
+    sel.onchange = updateSyncEstimate;
+    document.getElementById('syncEventDuration').oninput = updateSyncEstimate;
+
+    openModal('syncEventModal');
+}
+
+function updateSyncEstimate() {
+    const catSlug = document.getElementById('syncEventCategory').value;
+    const dur = parseInt(document.getElementById('syncEventDuration').value) || 0;
+    const cat = categories.find(c => c.slug === catSlug);
+    const pts = Math.round(dur * (cat?.points_per_minute || 1) * (cat?.bonus_multiplier || 1) * 10) / 10;
+    document.getElementById('syncEventEstPts').textContent = `${pts} pts`;
+}
+
+async function confirmSyncEvent() {
+    const eventId = document.getElementById('syncEventId').value;
+    const title = document.getElementById('syncEventTitle').textContent;
+    const start = document.getElementById('syncEventStart').value;
+    const durationMin = parseInt(document.getElementById('syncEventDuration').value) || 30;
+    const catSlug = document.getElementById('syncEventCategory').value;
+    const notes = document.getElementById('syncEventNotes').value.trim();
+
+    closeModal('syncEventModal');
+    toast('Logging event...', 'info');
+
+    // Try webhook first
+    if (webhookAvailable) {
+        const result = await brainApi('sync_event_to_activity', {
+            event_id: eventId, title, duration_min: durationMin, start, category_slug: catSlug, notes
+        });
+        if (result && result.success !== false) {
+            await loadDashboardData();
+            loadCalendarEvents();
+            toast('Event logged as activity!', 'success');
+            return;
+        }
+    }
+
+    // Fallback: create activity directly
+    const cat = categories.find(c => c.slug === catSlug);
+    const pointsEarned = Math.round(durationMin * (cat?.points_per_minute || 1) * (cat?.bonus_multiplier || 1) * 10) / 10;
+    const startedAt = start || new Date().toISOString();
+
+    const actResult = await supabaseWrite('brain_activities', 'POST', {
+        user_id: activeProfileId,
+        category_id: cat?.category_id,
+        title, duration_min: durationMin,
+        started_at: startedAt,
+        ended_at: new Date(new Date(startedAt).getTime() + durationMin * 60000).toISOString(),
+        status: 'completed', points_earned: pointsEarned,
+        notes: notes || null, source: 'calendar',
+        calendar_event_id: eventId,
     });
-    if (result) {
-        const rd = result.data || result;
-        toast(`Logged! ${rd.points_earned || 0} pts earned`, 'success');
+
+    if (actResult) {
+        // Update scores
+        const today = new Date().toLocaleDateString('en-CA');
+        const existing = await supabaseSelect('brain_daily_scores', `user_id=eq.${activeProfileId}&score_date=eq.${today}&select=*`);
+        if (existing && existing.length > 0) {
+            const s = existing[0];
+            await supabaseWrite('brain_daily_scores', 'PATCH', {
+                total_points: (s.total_points || 0) + pointsEarned,
+                total_minutes: (s.total_minutes || 0) + durationMin,
+                activities_count: (s.activities_count || 0) + 1,
+            }, `user_id=eq.${activeProfileId}&score_date=eq.${today}`);
+        } else {
+            await supabaseWrite('brain_daily_scores', 'POST', {
+                user_id: activeProfileId, score_date: today,
+                total_points: pointsEarned, total_minutes: durationMin,
+                activities_count: 1, daily_goal: dailySummary?.daily_goal || 100,
+            });
+        }
+        const profile = await supabaseSelect('brain_user_profiles', `user_id=eq.${activeProfileId}&select=total_points`);
+        if (profile && profile[0]) {
+            await supabaseWrite('brain_user_profiles', 'PATCH', {
+                total_points: (profile[0].total_points || 0) + pointsEarned,
+                xp: (profile[0].total_points || 0) + pointsEarned,
+            }, `user_id=eq.${activeProfileId}`);
+        }
+        toast(`Logged! ${pointsEarned} pts earned`, 'success');
         loadCalendarEvents();
         loadDashboardData();
+    } else {
+        toast('Failed to log event', 'error');
     }
 }
 
@@ -2847,7 +2994,7 @@ function renderFullLeaderboard(users) {
         const medal = medals[i] || '';
         const borderColor = i < 3 ? rankColors[i] : 'var(--brain-border)';
 
-        return `<div class="panel brain-reveal" style="${isMe ? 'border-color: var(--brain-accent); background: var(--brain-accent-dim);' : `border-color: ${borderColor}30;`}">
+        return `<div class="panel brain-reveal" style="${isMe ? 'border-color: var(--brain-accent); background: var(--brain-accent-dim);' : `border-color: ${borderColor}30;`} cursor: pointer;" onclick="showLbDetail('${u.user_id}', '${(u.display_name || 'User').replace(/'/g, "\\'")}')">
             <div class="panel-body py-4">
                 <div class="flex items-center gap-4">
                     <div class="text-center" style="min-width: 40px;">
@@ -2866,12 +3013,95 @@ function renderFullLeaderboard(users) {
                     </div>
                     <div class="text-right">
                         <p class="font-mono text-xl font-bold" style="color: var(--brain-accent);">${u.period_points || u.total_points || 0}</p>
-                        <p class="text-xs" style="color: var(--brain-txt-3);">points</p>
+                        <p class="text-xs" style="color: var(--brain-txt-3);">points &rsaquo;</p>
                     </div>
                 </div>
             </div>
         </div>`;
     }).join('');
+}
+
+async function showLbDetail(userId, displayName) {
+    const periodLabels = { day: 'Today', week: 'This Week', month: 'This Month', all: 'All Time' };
+    document.getElementById('lbDetailAvatar').textContent = displayName[0].toUpperCase();
+    document.getElementById('lbDetailName').textContent = displayName;
+    document.getElementById('lbDetailPeriod').textContent = periodLabels[currentLbPeriod] || currentLbPeriod;
+    document.getElementById('lbDetailBody').innerHTML = '<div class="text-center py-4 text-xs" style="color: var(--brain-txt-3);">Loading breakdown...</div>';
+    openModal('lbDetailModal');
+
+    // Fetch activities for this user in the selected period
+    const end = new Date().toLocaleDateString('en-CA');
+    let start = end;
+    if (currentLbPeriod === 'week') { const d = new Date(); d.setDate(d.getDate() - 7); start = d.toLocaleDateString('en-CA'); }
+    else if (currentLbPeriod === 'month') { const d = new Date(); d.setDate(d.getDate() - 30); start = d.toLocaleDateString('en-CA'); }
+    else if (currentLbPeriod === 'all') { start = '2020-01-01'; }
+
+    const activities = await supabaseSelect('brain_activities',
+        `user_id=eq.${userId}&started_at=gte.${start}T00:00:00&started_at=lte.${end}T23:59:59&select=category_id,duration_min,points_earned&order=started_at.desc`);
+
+    const userCats = await supabaseSelect('brain_categories', `user_id=eq.${userId}&select=category_id,name,slug,color,icon`);
+    const catMap = {};
+    (userCats || []).forEach(c => catMap[c.category_id] = c);
+
+    // Aggregate by category
+    const breakdown = {};
+    let totalPts = 0, totalMins = 0, totalCount = 0;
+    (activities || []).forEach(a => {
+        const cat = catMap[a.category_id] || { name: 'Unknown', color: '#6B7280' };
+        if (!breakdown[cat.name]) breakdown[cat.name] = { color: cat.color, icon: cat.icon, points: 0, minutes: 0, count: 0 };
+        breakdown[cat.name].points += (a.points_earned || 0);
+        breakdown[cat.name].minutes += (a.duration_min || 0);
+        breakdown[cat.name].count++;
+        totalPts += (a.points_earned || 0);
+        totalMins += (a.duration_min || 0);
+        totalCount++;
+    });
+
+    const entries = Object.entries(breakdown).sort((a, b) => b[1].points - a[1].points);
+    const body = document.getElementById('lbDetailBody');
+
+    if (!entries.length) {
+        body.innerHTML = '<p class="text-xs text-center py-4" style="color: var(--brain-txt-3);">No activities in this period</p>';
+        return;
+    }
+
+    body.innerHTML = `
+        <div class="flex items-center justify-between mb-4 pb-3" style="border-bottom: 1px solid var(--brain-border);">
+            <div class="text-center flex-1">
+                <p class="font-mono text-lg font-bold" style="color: var(--brain-accent);">${Math.round(totalPts)}</p>
+                <p class="text-xs" style="color: var(--brain-txt-3);">Points</p>
+            </div>
+            <div class="text-center flex-1">
+                <p class="font-mono text-lg font-bold" style="color: var(--brain-accent-2);">${Math.round(totalMins)}</p>
+                <p class="text-xs" style="color: var(--brain-txt-3);">Minutes</p>
+            </div>
+            <div class="text-center flex-1">
+                <p class="font-mono text-lg font-bold">${totalCount}</p>
+                <p class="text-xs" style="color: var(--brain-txt-3);">Activities</p>
+            </div>
+        </div>
+        <div class="space-y-2">
+            ${entries.map(([name, d]) => {
+                const pct = totalPts > 0 ? Math.round(d.points / totalPts * 100) : 0;
+                const icon = getCatIcon({ icon: d.icon, slug: name.toLowerCase() });
+                return `<div class="flex items-center gap-3 py-2" style="border-bottom: 1px solid var(--brain-border);">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: ${d.color}20;">${icon}</div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium">${name}</span>
+                            <span class="font-mono text-sm font-bold" style="color: var(--brain-accent);">${Math.round(d.points)} pts</span>
+                        </div>
+                        <div class="flex items-center gap-2 mt-1">
+                            <div class="flex-1 h-1.5 rounded-full" style="background: var(--brain-border);">
+                                <div class="h-full rounded-full" style="width: ${pct}%; background: ${d.color};"></div>
+                            </div>
+                            <span class="text-xs font-mono" style="color: var(--brain-txt-3);">${d.count} &middot; ${Math.round(d.minutes)}m</span>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('')}
+        </div>
+    `;
 }
 
 // ═══════════════════════════════════════
@@ -2909,7 +3139,7 @@ async function loadAchievements() {
     }
 
     // Stats
-    const earnedXP = earned.reduce((s, a) => s + (a.xp_value || ACHIEVE_XP[a.achievement_key] || 0), 0);
+    const earnedXP = earned.reduce((s, a) => s + (a.xp_awarded || ACHIEVE_XP[a.achievement_key] || 0), 0);
     document.getElementById('achieveEarnedCount').textContent = earned.length;
     document.getElementById('achieveTotalXP').textContent = `${earnedXP} XP`;
     document.getElementById('achieveLockedCount').textContent = available.length;
@@ -2943,7 +3173,7 @@ function renderAchievementGrid(earned, available) {
 function renderAchievementTile(a) {
     const key = a.achievement_key || '';
     const icon = ACHIEVE_ICONS[key] || '\uD83C\uDFC6';
-    const xp = a.xp_value || ACHIEVE_XP[key] || 0;
+    const xp = a.xp_awarded || ACHIEVE_XP[key] || 0;
     const title = a.title || key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     const earnedDate = a.earned_at ? new Date(a.earned_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
     const progress = a.progress || '';
