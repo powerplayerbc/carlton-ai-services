@@ -406,6 +406,62 @@
             transition: width 0.4s ease;
         }
 
+        /* ── Build step timeline ── */
+        .step-timeline { margin: 0; padding: 0; list-style: none; }
+        .step-item {
+            display: flex; gap: 0.75rem; align-items: flex-start;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(30,33,48,0.4);
+            font-size: 0.75rem;
+        }
+        .step-item:last-child { border-bottom: none; }
+        .step-dot {
+            width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.55rem; font-weight: 700; margin-top: 1px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .step-dot.completed { background: rgba(34,197,94,0.15); color: #22C55E; }
+        .step-dot.in_progress { background: rgba(6,214,160,0.15); color: #06D6A0; }
+        .step-dot.ready { background: rgba(76,201,240,0.15); color: #4CC9F0; }
+        .step-dot.pending { background: rgba(82,94,115,0.15); color: #525E73; }
+        .step-dot.failed { background: rgba(255,107,107,0.15); color: #FF6B6B; }
+        .step-human-badge {
+            font-size: 0.55rem; padding: 0.1rem 0.35rem; border-radius: 0.2rem;
+            background: rgba(168,85,247,0.12); color: #A855F7;
+            font-family: 'JetBrains Mono', monospace; text-transform: uppercase;
+        }
+        .artifact-link {
+            display: inline-flex; align-items: center; gap: 0.25rem;
+            font-size: 0.65rem; padding: 0.2rem 0.5rem; border-radius: 0.25rem;
+            background: rgba(76,201,240,0.08); color: #4CC9F0;
+            border: 1px solid rgba(76,201,240,0.15);
+            text-decoration: none; transition: background 0.2s;
+        }
+        .artifact-link:hover { background: rgba(76,201,240,0.15); }
+
+        /* ── Expandable offer detail ── */
+        .offer-detail { display: none; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(30,33,48,0.5); }
+        .offer-detail.open { display: block; }
+        .offer-card.expanded { border-color: rgba(6,214,160,0.3); }
+        .offer-card { cursor: pointer; }
+
+        /* ── Proposal card ── */
+        .proposal-card {
+            background: #11131A;
+            border: 1px solid #1E2130;
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            transition: border-color 0.2s;
+        }
+        .proposal-card:hover { border-color: #2A2E3D; }
+        .proposal-detail { display: none; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(30,33,48,0.5); }
+        .proposal-detail.open { display: block; }
+        .insight-card {
+            padding: 0.75rem; border-radius: 0.5rem;
+            background: rgba(0,0,0,0.2); border: 1px solid #1E2130;
+        }
+
         /* ── Responsive ── */
         @media (max-width: 767px) {
             .comparison-view { grid-template-columns: 1fr; }
@@ -543,7 +599,10 @@
 
                 <!-- Offer Pipeline -->
                 <div>
-                    <h2 class="font-heading font-semibold text-sm tracking-wide text-txt-2 mb-3 uppercase">Offer Pipeline</h2>
+                    <div class="flex items-baseline justify-between mb-3">
+                        <h2 class="font-heading font-semibold text-sm tracking-wide text-txt-2 uppercase">Offer Pipeline</h2>
+                        <span class="text-xs text-txt-3">Click any offer to see build steps</span>
+                    </div>
                     <div id="offerPipeline" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div class="skeleton h-40 rounded-xl"></div>
                         <div class="skeleton h-40 rounded-xl"></div>
@@ -554,7 +613,10 @@
                 <!-- Pending Tasks -->
                 <div class="panel">
                     <div class="panel-header">
-                        <span class="font-heading font-semibold text-sm tracking-wide">Pending Tasks</span>
+                        <div>
+                            <span class="font-heading font-semibold text-sm tracking-wide">Tasks Needing Your Review</span>
+                            <p class="text-xs text-txt-3 mt-0.5 font-body font-normal" style="letter-spacing:0;">Approve, edit, or request changes on AI-generated offer content</p>
+                        </div>
                         <span class="badge badge-pending" id="taskCount" style="display:none;">0</span>
                     </div>
                     <div class="panel-body" id="taskList">
@@ -565,7 +627,10 @@
                 <!-- Proposals -->
                 <div class="panel">
                     <div class="panel-header">
-                        <span class="font-heading font-semibold text-sm tracking-wide">AI Proposals</span>
+                        <div>
+                            <span class="font-heading font-semibold text-sm tracking-wide">AI Proposals</span>
+                            <p class="text-xs text-txt-3 mt-0.5 font-body font-normal" style="letter-spacing:0;">When you submit an offer idea, AI researches the market and proposes an offer with pricing, rationale, and confidence scoring</p>
+                        </div>
                     </div>
                     <div class="panel-body" id="proposalList">
                         <div class="empty-state">Loading proposals...</div>
@@ -940,20 +1005,22 @@
     // ═══════════════════════════════════════
     // RENDER: OFFER PIPELINE
     // ═══════════════════════════════════════
+    let buildStepsCache = {};
+
     function renderOfferPipeline() {
         const container = document.getElementById('offerPipeline');
         if (offersData.length === 0) {
             container.innerHTML = '<div class="empty-state col-span-full">No offers yet. Create your first offer idea above.</div>';
             return;
         }
-        container.innerHTML = offersData.map(o => {
+        container.innerHTML = offersData.map((o, idx) => {
             const pct = o.steps_total > 0 ? Math.round((o.steps_completed / o.steps_total) * 100) : 0;
             const priceLabel = o.price_type === 'subscription' ? '/mo' : o.price_type === 'per_seat' ? '/seat' : '';
             const links = [];
-            if (o.landing_page_url) links.push(`<a href="${escHtml(o.landing_page_url)}" target="_blank" class="text-info text-xs hover:underline">Landing Page ↗</a>`);
-            if (o.stripe_payment_link) links.push(`<a href="${escHtml(o.stripe_payment_link)}" target="_blank" class="text-accent text-xs hover:underline">Payment ↗</a>`);
+            if (o.landing_page_url) links.push(`<a href="${escHtml(o.landing_page_url)}" target="_blank" onclick="event.stopPropagation();" class="text-info text-xs hover:underline">Landing Page ↗</a>`);
+            if (o.stripe_payment_link) links.push(`<a href="${escHtml(o.stripe_payment_link)}" target="_blank" onclick="event.stopPropagation();" class="text-accent text-xs hover:underline">Payment ↗</a>`);
 
-            return `<div class="offer-card">
+            return `<div class="offer-card" id="offer-card-${idx}" onclick="toggleOfferDetail('${escHtml(o.offer_id)}', ${idx})">
                 <div class="flex items-start justify-between mb-2">
                     <div>
                         <h3 class="font-heading font-bold text-sm leading-tight">${escHtml(o.title)}</h3>
@@ -961,6 +1028,7 @@
                     </div>
                     <span class="badge badge-${o.status}">${o.status}</span>
                 </div>
+                <p class="text-xs text-txt-2 mb-2 leading-relaxed">${escHtml(truncate(o.target_audience, 120))}</p>
                 <div class="mb-2">
                     <div class="flex items-center justify-between text-xs text-txt-2 mb-1">
                         <span>${o.steps_completed}/${o.steps_total} steps</span>
@@ -974,8 +1042,71 @@
                     <span class="text-xs text-txt-3">${formatPacific(o.created_at)}</span>
                 </div>
                 ${links.length ? `<div class="flex gap-3 mt-2">${links.join('')}</div>` : ''}
+                <div class="offer-detail" id="offer-detail-${idx}">
+                    <div class="text-xs text-txt-3 mb-2">Loading build steps...</div>
+                </div>
+                <div class="text-center mt-2">
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" style="opacity:0.3;transition:transform 0.2s;" id="offer-chevron-${idx}"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                </div>
             </div>`;
         }).join('');
+    }
+
+    async function toggleOfferDetail(offerId, idx) {
+        const detail = document.getElementById(`offer-detail-${idx}`);
+        const card = document.getElementById(`offer-card-${idx}`);
+        const chevron = document.getElementById(`offer-chevron-${idx}`);
+        if (!detail) return;
+
+        if (detail.classList.contains('open')) {
+            detail.classList.remove('open');
+            card.classList.remove('expanded');
+            if (chevron) chevron.style.transform = '';
+            return;
+        }
+
+        detail.classList.add('open');
+        card.classList.add('expanded');
+        if (chevron) chevron.style.transform = 'rotate(180deg)';
+
+        // Fetch build steps if not cached
+        if (!buildStepsCache[offerId]) {
+            detail.innerHTML = '<div class="text-xs text-txt-3">Loading build steps...</div>';
+            const steps = await supabaseSelect('offer_build_steps', `offer_id=eq.${offerId}&select=*&order=step_sequence`);
+            buildStepsCache[offerId] = steps || [];
+        }
+
+        const steps = buildStepsCache[offerId];
+        if (steps.length === 0) {
+            detail.innerHTML = '<div class="text-xs text-txt-3">No build steps defined.</div>';
+            return;
+        }
+
+        const statusIcon = { completed: '✓', in_progress: '⟳', ready: '●', pending: '○', failed: '✕' };
+
+        detail.innerHTML = `<div class="text-xs font-heading font-semibold text-txt-2 uppercase tracking-wide mb-2">Build Steps</div>
+            <ul class="step-timeline">${steps.map(s => {
+                const icon = statusIcon[s.status] || '○';
+                const humanBadge = s.requires_human ? '<span class="step-human-badge ml-1">Human</span>' : '';
+                const resultSummary = s.result ? `<div class="text-xs text-txt-3 mt-1">${escHtml(typeof s.result === 'string' ? s.result : (s.result.summary || JSON.stringify(s.result)).substring(0, 150))}</div>` : '';
+                const artifacts = (s.artifacts || []).map(a => {
+                    if (a.url) return `<a href="${escHtml(a.url)}" target="_blank" onclick="event.stopPropagation();" class="artifact-link">${escHtml(a.label || a.type || 'View')} ↗</a>`;
+                    return '';
+                }).filter(Boolean).join(' ');
+                return `<li class="step-item">
+                    <div class="step-dot ${s.status}">${icon}</div>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-medium text-txt">${escHtml(s.title)}</span>
+                            ${humanBadge}
+                            <span class="badge badge-${s.status} ml-auto">${s.status}</span>
+                        </div>
+                        ${resultSummary}
+                        ${artifacts ? `<div class="flex gap-2 mt-1.5 flex-wrap">${artifacts}</div>` : ''}
+                        ${s.completed_at ? `<div class="text-xs text-txt-3 mt-1">${formatPacific(s.completed_at)}</div>` : ''}
+                    </div>
+                </li>`;
+            }).join('')}</ul>`;
     }
 
     // ═══════════════════════════════════════
@@ -1121,30 +1252,85 @@
     function renderProposals() {
         const container = document.getElementById('proposalList');
         if (proposalsData.length === 0) {
-            container.innerHTML = '<div class="empty-state">No proposals yet.</div>';
+            container.innerHTML = '<div class="empty-state">No proposals yet. Submit an offer idea to generate one.</div>';
             return;
         }
-        container.innerHTML = `<div class="overflow-x-auto"><table class="data-table">
-            <thead><tr>
-                <th>ID</th><th>Title</th><th>Niche</th><th>Confidence</th><th>Price</th><th>Status</th><th>Created</th>
-            </tr></thead>
-            <tbody>${proposalsData.map(p => {
-                const conf = p.confidence_score != null ? Math.round(p.confidence_score * 100) : null;
-                const confColor = conf >= 70 ? '#06D6A0' : conf >= 40 ? '#FFD93D' : '#FF6B6B';
-                return `<tr>
-                    <td class="font-mono text-txt-3 text-xs">${escHtml(p.proposal_id)}</td>
-                    <td class="font-medium">${escHtml(p.proposed_title)}</td>
-                    <td class="text-txt-2">${escHtml(p.proposed_niche)}</td>
-                    <td>${conf != null ? `<div class="confidence-bar">
-                        <div class="confidence-track"><div class="confidence-fill" style="width:${conf}%;background:${confColor};"></div></div>
-                        <span style="color:${confColor};">${conf}%</span>
-                    </div>` : '—'}</td>
-                    <td class="font-mono">${formatCurrency(p.proposed_price_cents)}</td>
-                    <td><span class="badge badge-${p.status || 'pending'}">${p.status || 'pending'}</span></td>
-                    <td class="text-txt-3 text-xs">${formatPacific(p.created_at)}</td>
-                </tr>`;
-            }).join('')}</tbody>
-        </table></div>`;
+        container.innerHTML = `<div class="space-y-4">${proposalsData.map((p, idx) => {
+            const conf = p.confidence_score != null ? Math.round(p.confidence_score * 100) : null;
+            const confColor = conf >= 70 ? '#06D6A0' : conf >= 40 ? '#FFD93D' : '#FF6B6B';
+            const sd = p.supporting_data || {};
+            const hasDetail = p.rationale || Object.keys(sd).length > 0;
+
+            return `<div class="proposal-card">
+                <div class="flex items-start justify-between mb-2 cursor-pointer" onclick="toggleProposal(${idx})">
+                    <div class="flex-1 mr-3">
+                        <h3 class="font-heading font-bold text-sm leading-tight">${escHtml(p.proposed_title)}</h3>
+                        <span class="text-xs text-txt-3 font-mono">${escHtml(p.proposed_niche)}</span>
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        ${conf != null ? `<div class="confidence-bar">
+                            <div class="confidence-track"><div class="confidence-fill" style="width:${conf}%;background:${confColor};"></div></div>
+                            <span style="color:${confColor};">${conf}%</span>
+                        </div>` : ''}
+                        <span class="font-heading font-bold text-sm" style="color:#06D6A0;">${formatCurrency(p.proposed_price_cents)}</span>
+                        <span class="badge badge-${p.status || 'pending'}">${p.status || 'pending'}</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 text-xs text-txt-3">
+                    <span>Audience: ${escHtml(truncate(p.proposed_audience, 80))}</span>
+                    <span class="ml-auto">${formatPacific(p.created_at)}</span>
+                </div>
+                ${hasDetail ? `<div class="proposal-detail" id="proposal-detail-${idx}">
+                    ${p.rationale ? `<div class="mb-3">
+                        <div class="text-xs font-heading font-semibold text-txt-2 uppercase tracking-wide mb-1">AI Rationale</div>
+                        <p class="text-sm text-txt leading-relaxed">${escHtml(p.rationale)}</p>
+                    </div>` : ''}
+                    ${Object.keys(sd).length > 0 ? `<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                        ${sd.market_size ? `<div class="insight-card">
+                            <div class="text-xs font-heading font-semibold text-info uppercase tracking-wide mb-1">Market Size</div>
+                            <p class="text-xs text-txt-2 leading-relaxed">${escHtml(sd.market_size)}</p>
+                        </div>` : ''}
+                        ${sd.competition_level ? `<div class="insight-card">
+                            <div class="text-xs font-heading font-semibold text-warn uppercase tracking-wide mb-1">Competition</div>
+                            <p class="text-xs text-txt-2 leading-relaxed">${escHtml(sd.competition_level)}</p>
+                        </div>` : ''}
+                        ${sd.audience_readiness ? `<div class="insight-card">
+                            <div class="text-xs font-heading font-semibold text-accent uppercase tracking-wide mb-1">Audience Readiness</div>
+                            <p class="text-xs text-txt-2 leading-relaxed">${escHtml(sd.audience_readiness)}</p>
+                        </div>` : ''}
+                    </div>` : ''}
+                    ${p.status === 'pending' ? `<div class="flex gap-2">
+                        <button class="btn btn-approve text-xs py-1.5 px-3" onclick="handleProposalAction('${escHtml(p.proposal_id)}', 'approve')">✓ Approve Proposal</button>
+                        <button class="btn btn-deny text-xs py-1.5 px-3" onclick="handleProposalAction('${escHtml(p.proposal_id)}', 'reject')">✕ Reject</button>
+                    </div>` : ''}
+                </div>
+                <div class="text-center mt-2 cursor-pointer" onclick="toggleProposal(${idx})">
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" style="opacity:0.3;transition:transform 0.2s;" id="proposal-chevron-${idx}"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                </div>` : ''}
+            </div>`;
+        }).join('')}</div>`;
+    }
+
+    function toggleProposal(idx) {
+        const detail = document.getElementById(`proposal-detail-${idx}`);
+        const chevron = document.getElementById(`proposal-chevron-${idx}`);
+        if (!detail) return;
+        detail.classList.toggle('open');
+        if (chevron) chevron.style.transform = detail.classList.contains('open') ? 'rotate(180deg)' : '';
+    }
+
+    async function handleProposalAction(proposalId, action) {
+        const result = await fetchJSON(`${WEBHOOK_BASE}/human-action`, {
+            task_id: proposalId,
+            action: action,
+            acted_by: 'bradford'
+        });
+        if (result?.success) {
+            toast(`Proposal ${action === 'approve' ? 'approved' : 'rejected'}.`, 'success');
+            await fetchProposals();
+        } else {
+            toast(result?.message || `Failed to ${action} proposal.`, 'error');
+        }
     }
 
     // ═══════════════════════════════════════
