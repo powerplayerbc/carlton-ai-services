@@ -1529,6 +1529,36 @@
                 <div id="foodDbResults">
                     <div class="text-center text-xs py-4" style="color: var(--deft-txt-3);">Type at least 2 characters to search</div>
                 </div>
+                <!-- Selected food quick-log form -->
+                <div id="quickLogForm" style="display:none; border: 1px solid var(--deft-border);" class="mt-3 p-3 rounded-lg">
+                    <div class="flex items-center justify-between mb-2">
+                        <span id="quickLogFoodName" class="font-medium text-sm" style="color: var(--deft-txt);"></span>
+                        <button onclick="clearQuickLogSelection()" class="text-xs" style="color: var(--deft-txt-3); cursor: pointer; background: none; border: none;">&times; Clear</button>
+                    </div>
+                    <div id="quickLogNutrition" class="flex gap-3 text-xs font-mono mb-3" style="color: var(--deft-txt-2);"></div>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div class="form-group">
+                            <label class="form-label" for="quickLogServings">Servings</label>
+                            <input type="number" id="quickLogServings" class="form-input" value="1" min="0.25" step="0.25" oninput="updateQuickLogPreview()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Meal Type</label>
+                            <div class="flex gap-1 flex-wrap">
+                                <button class="meal-type-pill quick-log-meal-pill active" data-type="snack" onclick="selectQuickLogMealType('snack')">Snack</button>
+                                <button class="meal-type-pill quick-log-meal-pill" data-type="breakfast" onclick="selectQuickLogMealType('breakfast')">Breakfast</button>
+                                <button class="meal-type-pill quick-log-meal-pill" data-type="lunch" onclick="selectQuickLogMealType('lunch')">Lunch</button>
+                                <button class="meal-type-pill quick-log-meal-pill" data-type="dinner" onclick="selectQuickLogMealType('dinner')">Dinner</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="quickLogPreview" class="flex gap-3 text-xs font-mono mb-3 p-2 rounded" style="background: var(--deft-surface-2); color: var(--deft-txt);"></div>
+                    <button id="quickLogBtn" onclick="logQuickFood()" class="btn-primary w-full text-sm" style="padding: 0.5rem;">
+                        <span class="flex items-center justify-center gap-2">
+                            <svg width="14" height="14" viewBox="0 0 12 12" fill="none"><path d="M6 2.5v7M2.5 6h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                            Quick Log
+                        </span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -4320,8 +4350,12 @@ function toggleQuickLog() {
     chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
 }
 
-// ── Food Database search ──
+// ── Food Database search (Quick Log) ──
 let foodDbTimeout = null;
+let quickLogFoodCache = [];
+let selectedQuickFood = null;
+let quickLogMealType = 'snack';
+
 async function searchFoodDb(query) {
     if (!query || query.length < 2) {
         document.getElementById('foodDbResults').innerHTML = '<div class="text-center text-xs py-4" style="color: var(--deft-txt-3);">Type at least 2 characters to search</div>';
@@ -4331,30 +4365,147 @@ async function searchFoodDb(query) {
     clearTimeout(foodDbTimeout);
     foodDbTimeout = setTimeout(async () => {
         const results = await supabaseSelect('deft_food_database',
-            `name=ilike.*${encodeURIComponent(query)}*&select=id,name,serving_size,serving_unit,calories,total_fat_g,protein_g,net_carbs_g&limit=10&order=name`
+            `name=ilike.*${encodeURIComponent(query)}*&select=food_id,name,serving_size,nutrition_per_serving&limit=10&order=name`
         );
 
+        quickLogFoodCache = results || [];
         const container = document.getElementById('foodDbResults');
         if (!results || results.length === 0) {
             container.innerHTML = '<div class="text-center text-xs py-4" style="color: var(--deft-txt-3);">No foods found</div>';
             return;
         }
 
-        container.innerHTML = results.map(f => `
-            <div class="meal-card">
+        container.innerHTML = results.map(f => {
+            const n = f.nutrition_per_serving || {};
+            return `
+            <div class="meal-card" style="cursor: pointer; transition: background 0.15s;" onclick="selectFoodForQuickLog('${f.food_id}')" onmouseenter="this.style.background='rgba(255,255,255,0.04)'" onmouseleave="this.style.background=''">
                 <div class="flex items-center justify-between mb-1">
                     <span class="font-medium text-sm">${f.name}</span>
-                    <span class="text-xs font-mono" style="color: var(--deft-txt-3);">${f.serving_size || ''} ${f.serving_unit || ''}</span>
+                    <span class="text-xs font-mono" style="color: var(--deft-txt-3);">${f.serving_size || ''}</span>
                 </div>
                 <div class="flex gap-3 text-xs font-mono" style="color: var(--deft-txt-2);">
-                    <span>${Math.round(f.calories || 0)} cal</span>
-                    <span>${(f.total_fat_g || 0).toFixed(1)}g F</span>
-                    <span>${(f.protein_g || 0).toFixed(1)}g P</span>
-                    <span>${(f.net_carbs_g || 0).toFixed(1)}g C</span>
+                    <span>${Math.round(n.calories || 0)} cal</span>
+                    <span>${(n.total_fat_g || 0).toFixed(1)}g F</span>
+                    <span>${(n.protein_g || 0).toFixed(1)}g P</span>
+                    <span>${(n.net_carbs_g || 0).toFixed(1)}g C</span>
                 </div>
-            </div>
-        `).join('');
+            </div>`;
+        }).join('');
     }, 250);
+}
+
+function selectFoodForQuickLog(foodId) {
+    selectedQuickFood = quickLogFoodCache.find(f => f.food_id === foodId);
+    if (!selectedQuickFood) return;
+
+    const n = selectedQuickFood.nutrition_per_serving || {};
+    document.getElementById('quickLogFoodName').textContent = `${selectedQuickFood.name} (${selectedQuickFood.serving_size || '1 serving'})`;
+    document.getElementById('quickLogNutrition').innerHTML =
+        `<span>${Math.round(n.calories || 0)} cal</span>` +
+        `<span>${(n.total_fat_g || 0).toFixed(1)}g F</span>` +
+        `<span>${(n.protein_g || 0).toFixed(1)}g P</span>` +
+        `<span>${(n.net_carbs_g || 0).toFixed(1)}g C</span>` +
+        `<span style="color: var(--deft-txt-3);">per serving</span>`;
+    document.getElementById('quickLogServings').value = '1';
+    document.getElementById('quickLogForm').style.display = '';
+    updateQuickLogPreview();
+}
+
+function clearQuickLogSelection() {
+    selectedQuickFood = null;
+    document.getElementById('quickLogForm').style.display = 'none';
+}
+
+function selectQuickLogMealType(type) {
+    quickLogMealType = type;
+    document.querySelectorAll('.quick-log-meal-pill').forEach(p => {
+        p.classList.toggle('active', p.dataset.type === type);
+    });
+}
+
+function updateQuickLogPreview() {
+    if (!selectedQuickFood) return;
+    const servings = parseFloat(document.getElementById('quickLogServings').value) || 0;
+    const n = selectedQuickFood.nutrition_per_serving || {};
+    document.getElementById('quickLogPreview').innerHTML =
+        `<strong>Total:</strong> ` +
+        `<span>${Math.round((n.calories || 0) * servings)} cal</span>` +
+        `<span>${((n.total_fat_g || 0) * servings).toFixed(1)}g F</span>` +
+        `<span>${((n.protein_g || 0) * servings).toFixed(1)}g P</span>` +
+        `<span>${((n.net_carbs_g || 0) * servings).toFixed(1)}g C</span>`;
+}
+
+async function logQuickFood() {
+    if (!selectedQuickFood) { toast('Select a food first', 'error'); return; }
+    if (!activeProfileId) { toast('Please select a profile first', 'error'); return; }
+
+    const servings = parseFloat(document.getElementById('quickLogServings').value);
+    if (!servings || servings <= 0) { toast('Enter a valid serving amount', 'error'); return; }
+
+    // Ensure daily log exists
+    if (!dailyLog || !dailyLog.log_id) {
+        toast('Please start your day first (daily log required)', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('quickLogBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="flex items-center justify-center gap-2">Logging...</span>';
+
+    const n = selectedQuickFood.nutrition_per_serving || {};
+    const nutrition = {
+        calories: Math.round((n.calories || 0) * servings),
+        total_fat_g: parseFloat(((n.total_fat_g || 0) * servings).toFixed(2)),
+        protein_g: parseFloat(((n.protein_g || 0) * servings).toFixed(2)),
+        net_carbs_g: parseFloat(((n.net_carbs_g || 0) * servings).toFixed(2)),
+        fiber_g: parseFloat(((n.fiber_g || 0) * servings).toFixed(2)),
+        total_carbs_g: parseFloat(((n.total_carbs_g || 0) * servings).toFixed(2)),
+        sugar_g: parseFloat(((n.sugar_g || 0) * servings).toFixed(2))
+    };
+
+    // Insert meal entry
+    const mealEntry = {
+        log_id: dailyLog.log_id,
+        user_id: activeProfileId,
+        meal_type: quickLogMealType,
+        meal_number: todayMeals.length + 1,
+        recipe_name: selectedQuickFood.name,
+        servings_consumed: servings,
+        portion_multiplier: 1,
+        nutrition_consumed: nutrition,
+        notes: `Quick log from food database (${selectedQuickFood.serving_size || '1 serving'} × ${servings})`
+    };
+
+    const result = await supabaseWrite('deft_meal_entries', 'POST', mealEntry);
+
+    if (result) {
+        // Update daily log consumed totals
+        const prev = dailyLog.consumed_totals || { calories: 0, fat_g: 0, protein_g: 0, net_carbs_g: 0, fiber_g: 0, sugar_g: 0 };
+        const updated = {
+            calories: (prev.calories || 0) + nutrition.calories,
+            fat_g: (prev.fat_g || 0) + nutrition.total_fat_g,
+            protein_g: (prev.protein_g || 0) + nutrition.protein_g,
+            net_carbs_g: (prev.net_carbs_g || 0) + nutrition.net_carbs_g,
+            fiber_g: (prev.fiber_g || 0) + nutrition.fiber_g,
+            sugar_g: (prev.sugar_g || 0) + nutrition.sugar_g
+        };
+
+        await supabaseWrite('deft_daily_logs', 'PATCH',
+            { consumed_totals: updated, meals_logged: (dailyLog.meals_logged || 0) + 1 },
+            `log_id=eq.${dailyLog.log_id}`
+        );
+
+        toast(`${selectedQuickFood.name} logged!`, 'success');
+        clearQuickLogSelection();
+        document.getElementById('foodDbSearch').value = '';
+        document.getElementById('foodDbResults').innerHTML = '<div class="text-center text-xs py-4" style="color: var(--deft-txt-3);">Type at least 2 characters to search</div>';
+        refreshToday();
+    } else {
+        toast('Failed to log food', 'error');
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<span class="flex items-center justify-center gap-2"><svg width="14" height="14" viewBox="0 0 12 12" fill="none"><path d="M6 2.5v7M2.5 6h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Quick Log</span>';
 }
 
 // Close recipe search dropdown on outside click
