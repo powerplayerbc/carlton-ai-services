@@ -4442,15 +4442,39 @@ async function logQuickFood() {
     const servings = parseFloat(document.getElementById('quickLogServings').value);
     if (!servings || servings <= 0) { toast('Enter a valid serving amount', 'error'); return; }
 
-    // Ensure daily log exists
-    if (!dailyLog || !dailyLog.log_id) {
-        toast('Please start your day first (daily log required)', 'error');
-        return;
-    }
-
     const btn = document.getElementById('quickLogBtn');
     btn.disabled = true;
     btn.innerHTML = '<span class="flex items-center justify-center gap-2">Logging...</span>';
+
+    // Auto-create daily log if it doesn't exist
+    if (!dailyLog || !dailyLog.log_id) {
+        const today = new Date().toLocaleDateString('en-CA');
+        // Get user profile for macro targets
+        const profiles = await supabaseSelect('deft_user_profiles', `user_id=eq.${activeProfileId}&select=macro_targets,meal_count_default`);
+        const profile = profiles && profiles.length > 0 ? profiles[0] : {};
+        const mt = profile.macro_targets || { calories: 2000, fat_g: 155, protein_g: 130, net_carbs_g: 20 };
+
+        const newLog = {
+            user_id: activeProfileId,
+            log_date: today,
+            target_calories: mt.calories || 2000,
+            target_macros: mt,
+            consumed_totals: { calories: 0, fat_g: 0, protein_g: 0, net_carbs_g: 0, fiber_g: 0, sugar_g: 0 },
+            meal_count_planned: profile.meal_count_default || 3,
+            meals_logged: 0,
+            water_oz: 0
+        };
+
+        const created = await supabaseWrite('deft_daily_logs', 'POST', newLog);
+        if (created && created.length > 0) {
+            dailyLog = created[0];
+        } else {
+            toast('Failed to create daily log', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<span class="flex items-center justify-center gap-2"><svg width="14" height="14" viewBox="0 0 12 12" fill="none"><path d="M6 2.5v7M2.5 6h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Quick Log</span>';
+            return;
+        }
+    }
 
     const n = selectedQuickFood.nutrition_per_serving || {};
     const nutrition = {
