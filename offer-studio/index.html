@@ -496,6 +496,42 @@
         .advanced-body { display: none; margin-top: 0.5rem; }
         .advanced-body.open { display: block; }
 
+        /* ── Page type pills ── */
+        .page-type-pill {
+            display: inline-block; font-size: 0.6rem; padding: 0.15rem 0.4rem; border-radius: 0.2rem;
+            font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.03em;
+        }
+        .page-type-pill.landing { background: rgba(6,214,160,0.12); color: #06D6A0; }
+        .page-type-pill.blog { background: rgba(168,85,247,0.12); color: #A855F7; }
+        .page-type-pill.checkout { background: rgba(255,217,61,0.12); color: #FFD93D; }
+        .page-type-pill.confirmation { background: rgba(34,197,94,0.12); color: #22C55E; }
+        .page-type-pill.scheduling { background: rgba(76,201,240,0.12); color: #4CC9F0; }
+        .page-type-pill.upsell { background: rgba(251,146,60,0.12); color: #FB923C; }
+        .page-type-pill.downsell { background: rgba(148,163,184,0.12); color: #94A3B8; }
+        .page-type-pill.info { background: rgba(96,165,250,0.12); color: #60A5FA; }
+
+        /* ── Filter bar ── */
+        .filter-pill {
+            font-size: 0.7rem; padding: 0.3rem 0.65rem; border-radius: 9999px;
+            border: 1px solid #2A2E3D; background: transparent; color: #8A95A9;
+            cursor: pointer; transition: all 0.15s ease;
+            font-family: 'IBM Plex Sans', system-ui; white-space: nowrap;
+        }
+        .filter-pill:hover { border-color: #525E73; color: #E8ECF1; }
+        .filter-pill.active { background: rgba(6,214,160,0.12); border-color: rgba(6,214,160,0.3); color: #06D6A0; }
+
+        /* ── Promo cards ── */
+        .promo-card {
+            background: #11131A; border: 1px solid #1E2130; border-radius: 0.75rem;
+            padding: 1rem 1.25rem; transition: border-color 0.2s ease;
+        }
+        .promo-card:hover { border-color: #2A2E3D; }
+        .placement-pill {
+            display: inline-block; font-size: 0.6rem; padding: 0.15rem 0.4rem; border-radius: 0.2rem;
+            font-family: 'JetBrains Mono', monospace; text-transform: uppercase;
+            background: rgba(76,201,240,0.1); color: #4CC9F0;
+        }
+
         /* ── Responsive ── */
         @media (max-width: 767px) {
             .comparison-view { grid-template-columns: 1fr; }
@@ -587,6 +623,7 @@
                 <button class="studio-tab" id="tab-landing-pages" onclick="switchView('landing-pages')" role="tab" aria-selected="false" aria-controls="view-landing-pages">Landing Pages</button>
                 <button class="studio-tab" id="tab-revenue" onclick="switchView('revenue')" role="tab" aria-selected="false" aria-controls="view-revenue">Revenue</button>
                 <button class="studio-tab" id="tab-email-sequences" onclick="switchView('email-sequences')" role="tab" aria-selected="false" aria-controls="view-email-sequences">Email Sequences</button>
+                <button class="studio-tab" id="tab-promotions" onclick="switchView('promotions')" role="tab" aria-selected="false" aria-controls="view-promotions">Promotions</button>
             </div>
         </div>
 
@@ -786,12 +823,117 @@
         <div id="view-landing-pages" role="tabpanel" style="display:none;">
             <div class="max-w-[1600px] mx-auto px-4 sm:px-6 pb-8 space-y-6">
 
+                <!-- Create Page Form -->
+                <div class="panel">
+                    <div class="panel-header form-toggle" onclick="toggleForm('pageCreateForm')">
+                        <span class="font-heading font-semibold text-sm tracking-wide">Create New Page</span>
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="#8A95A9" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="panel-body form-body" id="pageCreateFormBody">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Page Title *</label>
+                                <input type="text" id="pageTitle" class="form-input" placeholder="e.g. AI Scorecard for Realtors">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Page Type *</label>
+                                <select id="pageType" class="form-input" onchange="updatePageFormFields()">
+                                    <option value="landing">Landing Page</option>
+                                    <option value="blog">Blog Post</option>
+                                    <option value="checkout">Checkout</option>
+                                    <option value="confirmation">Confirmation</option>
+                                    <option value="scheduling">Scheduling</option>
+                                    <option value="upsell">Upsell</option>
+                                    <option value="downsell">Downsell</option>
+                                    <option value="info">Info Page</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Template Type</label>
+                                <select id="pageTemplateType" class="form-input">
+                                    <option value="generic">Generic</option>
+                                    <option value="scorecard">Scorecard</option>
+                                    <option value="workshop">Workshop</option>
+                                    <option value="live_session">Live Session</option>
+                                    <option value="blog">Blog</option>
+                                    <option value="checkout">Checkout</option>
+                                    <option value="confirmation">Confirmation</option>
+                                    <option value="scheduling">Scheduling</option>
+                                    <option value="upsell">Upsell</option>
+                                    <option value="downsell">Downsell</option>
+                                    <option value="info">Info</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Headline</label>
+                                <input type="text" id="pageHeadline" class="form-input" placeholder="Main headline for the page">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Slug</label>
+                                <input type="text" id="pageSlug" class="form-input" placeholder="auto-generated-from-title">
+                            </div>
+                        </div>
+                        <!-- Blog-specific fields (hidden by default) -->
+                        <div id="blogFields" style="display:none;" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Author</label>
+                                <input type="text" id="pageAuthor" class="form-input" placeholder="Bradford Carlton" value="Bradford Carlton">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Category</label>
+                                <input type="text" id="pageCategory" class="form-input" placeholder="e.g. AI, Marketing, Strategy">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Canonical URL</label>
+                                <input type="text" id="pageCanonical" class="form-input" placeholder="https://...">
+                            </div>
+                        </div>
+                        <!-- Checkout/upsell fields (hidden by default) -->
+                        <div id="checkoutFields" style="display:none;" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Linked Offer ID</label>
+                                <input type="text" id="pageOfferId" class="form-input" placeholder="e.g. O_260322080344">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Fold Index</label>
+                                <input type="number" id="pageFoldIndex" class="form-input" value="3" min="1" max="20">
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Description / Context</label>
+                            <textarea id="pageDescription" class="form-input" style="min-height: 60px;" placeholder="Brief description or AI generation context"></textarea>
+                        </div>
+                        <div class="flex justify-end">
+                            <button onclick="submitCreatePage()" id="pageCreateBtn" class="btn btn-primary flex items-center gap-2">
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                Create Page
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Page Type Filter -->
+                <div class="flex items-center gap-2 flex-wrap" id="pageTypeFilters">
+                    <span class="text-xs text-txt-3 font-medium uppercase tracking-wide mr-1">Filter:</span>
+                    <button class="filter-pill active" onclick="filterPages('all')">All</button>
+                    <button class="filter-pill" onclick="filterPages('landing')">Landing</button>
+                    <button class="filter-pill" onclick="filterPages('blog')">Blog</button>
+                    <button class="filter-pill" onclick="filterPages('checkout')">Checkout</button>
+                    <button class="filter-pill" onclick="filterPages('scheduling')">Scheduling</button>
+                    <button class="filter-pill" onclick="filterPages('upsell')">Upsell</button>
+                    <button class="filter-pill" onclick="filterPages('info')">Info</button>
+                </div>
+
+                <!-- Pages Table -->
                 <div class="panel">
                     <div class="panel-header">
-                        <span class="font-heading font-semibold text-sm tracking-wide">Landing Pages</span>
+                        <span class="font-heading font-semibold text-sm tracking-wide">Pages</span>
+                        <span class="text-xs text-txt-3 font-mono" id="pageCount"></span>
                     </div>
                     <div class="panel-body overflow-x-auto" id="lpTableContainer">
-                        <div class="empty-state">Loading landing pages...</div>
+                        <div class="empty-state">Loading pages...</div>
                     </div>
                 </div>
 
@@ -868,6 +1010,119 @@
             </div>
         </div>
 
+        <!-- ═══════════════════════════════════ -->
+        <!-- VIEW: PROMOTIONS                    -->
+        <!-- ═══════════════════════════════════ -->
+        <div id="view-promotions" role="tabpanel" style="display:none;">
+            <div class="max-w-[1600px] mx-auto px-4 sm:px-6 pb-8 space-y-6">
+
+                <!-- Create Promotion Form -->
+                <div class="panel">
+                    <div class="panel-header form-toggle" onclick="toggleForm('promoForm')">
+                        <span class="font-heading font-semibold text-sm tracking-wide">Create Promotion</span>
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="#8A95A9" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="panel-body form-body" id="promoFormBody">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Title *</label>
+                                <input type="text" id="promoTitle" class="form-input" placeholder="e.g. Spring Sale Banner">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Placement *</label>
+                                <select id="promoPlacement" class="form-input">
+                                    <option value="banner_top">Banner Top</option>
+                                    <option value="interstitial">Interstitial (Between Sections)</option>
+                                    <option value="post_content">Post Content (Before Footer)</option>
+                                    <option value="banner_bottom">Sticky Bottom Bar</option>
+                                    <option value="exit_intent">Exit Intent Popup</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Style Variant</label>
+                                <select id="promoStyle" class="form-input">
+                                    <option value="default">Default</option>
+                                    <option value="urgent">Urgent (Red)</option>
+                                    <option value="success">Success (Green)</option>
+                                    <option value="info">Info (Blue)</option>
+                                    <option value="premium">Premium (Gold)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Body Text *</label>
+                                <input type="text" id="promoBody" class="form-input" placeholder="e.g. 20% off all scorecards this week">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">CTA Text</label>
+                                    <input type="text" id="promoCta" class="form-input" placeholder="e.g. Shop Now">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">CTA URL</label>
+                                    <input type="text" id="promoCtaUrl" class="form-input" placeholder="/offers">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Priority</label>
+                                <input type="number" id="promoPriority" class="form-input" value="1" min="1" max="10">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Target Page Type</label>
+                                <select id="promoTargetType" class="form-input">
+                                    <option value="">All Pages</option>
+                                    <option value="landing">Landing Pages</option>
+                                    <option value="blog">Blog Posts</option>
+                                    <option value="checkout">Checkout</option>
+                                    <option value="info">Info Pages</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Start Date</label>
+                                <input type="date" id="promoStart" class="form-input">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">End Date</label>
+                                <input type="date" id="promoEnd" class="form-input">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Background Color</label>
+                                <input type="text" id="promoBgColor" class="form-input" placeholder="#dc2626">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Text Color</label>
+                                <input type="text" id="promoTextColor" class="form-input" placeholder="#ffffff">
+                            </div>
+                        </div>
+                        <div class="flex justify-end">
+                            <button onclick="submitPromo()" id="promoCreateBtn" class="btn btn-primary flex items-center gap-2">
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                Create Promotion
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Promotions -->
+                <div>
+                    <div class="flex items-baseline justify-between mb-3">
+                        <h2 class="font-heading font-semibold text-sm tracking-wide text-txt-2 uppercase">Active Promotions</h2>
+                        <span class="text-xs text-txt-3 font-mono" id="promoCount"></span>
+                    </div>
+                    <div id="promoGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="skeleton h-32 rounded-xl"></div>
+                        <div class="skeleton h-32 rounded-xl"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
     </div><!-- /mainContent -->
 
     <!-- Toast Container -->
@@ -899,6 +1154,7 @@
     let productPerformanceData = [];
     let emailSequencesData = [];
     let sequenceStepsCache = {};
+    let promotionsData = [];
 
     // ═══════════════════════════════════════
     // UTILITIES
@@ -1032,6 +1288,7 @@
             fetchPurchases(),
             fetchProductPerformance(),
             fetchEmailSequences(),
+            fetchPromotions(),
         ]);
 
         if (el) el.textContent = new Date().toLocaleTimeString();
@@ -1041,7 +1298,7 @@
     // ═══════════════════════════════════════
     // SUB-TAB SWITCHING
     // ═══════════════════════════════════════
-    const VIEWS = ['offers', 'testimonials', 'landing-pages', 'revenue', 'email-sequences'];
+    const VIEWS = ['offers', 'testimonials', 'landing-pages', 'revenue', 'email-sequences', 'promotions'];
 
     function switchView(view) {
         currentView = view;
@@ -1509,18 +1766,100 @@
     // ═══════════════════════════════════════
     // RENDER: LANDING PAGES
     // ═══════════════════════════════════════
+    let activePageFilter = 'all';
+
+    function filterPages(type) {
+        activePageFilter = type;
+        document.querySelectorAll('.filter-pill').forEach(p => p.classList.toggle('active', p.textContent.toLowerCase() === type || (type === 'all' && p.textContent === 'All')));
+        renderLandingPages();
+    }
+
+    function updatePageFormFields() {
+        const type = document.getElementById('pageType').value;
+        const blogFields = document.getElementById('blogFields');
+        const checkoutFields = document.getElementById('checkoutFields');
+        blogFields.style.display = ['blog', 'info'].includes(type) ? '' : 'none';
+        checkoutFields.style.display = ['checkout', 'upsell', 'downsell', 'confirmation'].includes(type) ? '' : 'none';
+    }
+
+    async function submitCreatePage() {
+        const title = document.getElementById('pageTitle').value.trim();
+        const pageType = document.getElementById('pageType').value;
+        const templateType = document.getElementById('pageTemplateType').value;
+        const headline = document.getElementById('pageHeadline').value.trim();
+        const slug = document.getElementById('pageSlug').value.trim();
+        const description = document.getElementById('pageDescription').value.trim();
+
+        if (!title) { toast('Page title is required.', 'error'); return; }
+
+        const payload = {
+            brand_id: 'carlton',
+            title,
+            page_type: pageType,
+            template_type: templateType,
+            headline: headline || undefined,
+            slug: slug || undefined,
+            description: description || undefined,
+        };
+
+        // Add type-specific fields
+        if (['blog', 'info'].includes(pageType)) {
+            const author = document.getElementById('pageAuthor').value.trim();
+            const category = document.getElementById('pageCategory').value.trim();
+            const canonical = document.getElementById('pageCanonical').value.trim();
+            if (author) payload.author = author;
+            if (category) payload.category = category;
+            if (canonical) payload.canonical_url = canonical;
+        }
+        if (['checkout', 'upsell', 'downsell', 'confirmation'].includes(pageType)) {
+            const offerId = document.getElementById('pageOfferId').value.trim();
+            const foldIndex = parseInt(document.getElementById('pageFoldIndex').value);
+            if (offerId) payload.offer_id = offerId;
+            if (foldIndex) payload.fold_index = foldIndex;
+        }
+
+        const btn = document.getElementById('pageCreateBtn');
+        btn.disabled = true;
+        btn.textContent = 'Creating...';
+
+        const result = await fetchJSON(`${WEBHOOK_BASE}/page-create`, payload);
+
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Create Page';
+
+        if (result?.success || result?.page_id) {
+            toast(`Page "${title}" created successfully.`, 'success');
+            document.getElementById('pageTitle').value = '';
+            document.getElementById('pageHeadline').value = '';
+            document.getElementById('pageSlug').value = '';
+            document.getElementById('pageDescription').value = '';
+            toggleForm('pageCreateForm');
+            await fetchLandingPages();
+        } else {
+            toast(result?.message || 'Failed to create page.', 'error');
+        }
+    }
+
     function renderLandingPages() {
         const container = document.getElementById('lpTableContainer');
-        if (landingPagesData.length === 0) {
-            container.innerHTML = '<div class="empty-state">No landing pages yet.</div>';
+        const countEl = document.getElementById('pageCount');
+        const filtered = activePageFilter === 'all'
+            ? landingPagesData
+            : landingPagesData.filter(lp => (lp.page_type || 'landing') === activePageFilter);
+
+        if (countEl) countEl.textContent = `${filtered.length} of ${landingPagesData.length}`;
+
+        if (filtered.length === 0) {
+            container.innerHTML = `<div class="empty-state">${landingPagesData.length === 0 ? 'No pages yet. Create your first page above.' : 'No pages match this filter.'}</div>`;
             return;
         }
         container.innerHTML = `<table class="data-table">
             <thead><tr>
-                <th>Title</th><th>Status</th><th>Views</th><th>Conv.</th><th>Rate</th><th>7d Views</th><th>Downloads</th><th>Purchases</th><th>Revenue</th><th>Actions</th>
+                <th>Title</th><th>Type</th><th>Status</th><th>Views</th><th>Conv.</th><th>Rate</th><th>7d Views</th><th>Downloads</th><th>Purchases</th><th>Revenue</th><th>Actions</th>
             </tr></thead>
-            <tbody>${landingPagesData.map(lp => {
+            <tbody>${filtered.map(lp => {
                 const rate = lp.conversion_rate != null ? (lp.conversion_rate * 100).toFixed(1) + '%' : '—';
+                const pt = lp.page_type || 'landing';
                 const actions = [];
                 if (lp.preview_url) actions.push(`<a href="${escHtml(lp.preview_url)}" target="_blank" class="btn btn-ghost text-xs py-1 px-2">Preview</a>`);
                 if (['approved', 'draft'].includes(lp.status)) {
@@ -1534,7 +1873,10 @@
                     <td>
                         <div class="font-medium">${escHtml(lp.title)}</div>
                         ${lp.headline ? `<div class="text-xs text-txt-3">${escHtml(truncate(lp.headline, 60))}</div>` : ''}
+                        ${lp.author ? `<div class="text-xs text-txt-3 italic">by ${escHtml(lp.author)}</div>` : ''}
+                        ${lp.category ? `<div class="text-xs text-txt-3 font-mono">${escHtml(lp.category)}</div>` : ''}
                     </td>
+                    <td><span class="page-type-pill ${pt}">${pt}</span></td>
                     <td><span class="badge badge-${lp.status}">${(lp.status || '').replace('_', ' ')}</span></td>
                     <td class="font-mono text-center">${lp.page_views || 0}</td>
                     <td class="font-mono text-center">${lp.conversions || 0}</td>
@@ -1888,6 +2230,139 @@
     }
 
     // ═══════════════════════════════════════
+    // RENDER: PROMOTIONS
+    // ═══════════════════════════════════════
+    async function fetchPromotions() {
+        // Try the RPC first, fall back to direct table query
+        let data = await supabaseRPC('get_active_promotions', { p_brand_id: 'carlton', p_page_id: null, p_template_type: null });
+        if (!Array.isArray(data)) {
+            data = await supabaseSelect('page_promotions',
+                'brand_id=eq.carlton&select=promotion_id,title,body_text,cta_text,cta_url,placement,style_variant,priority,bg_color,text_color,target_page_type,starts_at,expires_at,status,created_at&order=priority,created_at.desc');
+        }
+        promotionsData = Array.isArray(data) ? data : [];
+        renderPromotions();
+    }
+
+    function renderPromotions() {
+        const grid = document.getElementById('promoGrid');
+        const countEl = document.getElementById('promoCount');
+        if (countEl) countEl.textContent = `${promotionsData.length} promotion${promotionsData.length !== 1 ? 's' : ''}`;
+
+        if (promotionsData.length === 0) {
+            grid.innerHTML = '<div class="empty-state col-span-full">No promotions yet. Create your first promotion above.</div>';
+            return;
+        }
+
+        grid.innerHTML = promotionsData.map(p => {
+            const isExpired = p.expires_at && new Date(p.expires_at) < new Date();
+            const statusBadge = isExpired
+                ? '<span class="badge badge-retired">Expired</span>'
+                : (p.status === 'active' ? '<span class="badge badge-live">Active</span>'
+                    : p.status === 'paused' ? '<span class="badge badge-paused">Paused</span>'
+                    : '<span class="badge badge-ideation">Draft</span>');
+
+            const previewStyle = p.bg_color
+                ? `background:${escHtml(p.bg_color)};color:${escHtml(p.text_color || '#fff')};`
+                : 'background:rgba(220,38,38,0.15);color:#fca5a5;';
+
+            return `<div class="promo-card">
+                <div class="flex items-start justify-between mb-2">
+                    <div>
+                        <h3 class="font-heading font-bold text-sm leading-tight">${escHtml(p.title)}</h3>
+                        <span class="placement-pill mt-1">${escHtml((p.placement || '').replace('_', ' '))}</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        ${statusBadge}
+                        <span class="text-xs text-txt-3 font-mono">P${p.priority || 1}</span>
+                    </div>
+                </div>
+                <div class="rounded-md px-3 py-2 mt-2 mb-2 text-xs font-medium" style="${previewStyle}">
+                    ${escHtml(p.body_text || '')}
+                    ${p.cta_text ? `<span class="ml-2 underline">${escHtml(p.cta_text)}</span>` : ''}
+                </div>
+                <div class="flex items-center justify-between text-xs text-txt-3">
+                    <div class="flex items-center gap-2">
+                        ${p.target_page_type ? `<span>Target: <span class="page-type-pill ${p.target_page_type}">${p.target_page_type}</span></span>` : '<span>All pages</span>'}
+                        ${p.cta_url ? `<span class="text-info">→ ${escHtml(p.cta_url)}</span>` : ''}
+                    </div>
+                    <div class="flex items-center gap-2">
+                        ${p.starts_at ? `<span>From: ${formatPacific(p.starts_at)}</span>` : ''}
+                        ${p.expires_at ? `<span>Until: ${formatPacific(p.expires_at)}</span>` : ''}
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-3">
+                    ${!isExpired && p.status === 'active' ? `<button class="btn btn-warn text-xs py-1 px-2" onclick="promoAction('${escHtml(p.promotion_id)}','pause')">Pause</button>` : ''}
+                    ${!isExpired && p.status !== 'active' ? `<button class="btn btn-approve text-xs py-1 px-2" onclick="promoAction('${escHtml(p.promotion_id)}','activate')">Activate</button>` : ''}
+                    <button class="btn btn-deny text-xs py-1 px-2" onclick="promoAction('${escHtml(p.promotion_id)}','delete')">Delete</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    async function submitPromo() {
+        const title = document.getElementById('promoTitle').value.trim();
+        const bodyText = document.getElementById('promoBody').value.trim();
+        const placement = document.getElementById('promoPlacement').value;
+
+        if (!title || !bodyText) { toast('Title and body text are required.', 'error'); return; }
+
+        const payload = {
+            action: 'create',
+            brand_id: 'carlton',
+            title,
+            body_text: bodyText,
+            placement,
+            style_variant: document.getElementById('promoStyle').value,
+            cta_text: document.getElementById('promoCta').value.trim() || undefined,
+            cta_url: document.getElementById('promoCtaUrl').value.trim() || undefined,
+            priority: parseInt(document.getElementById('promoPriority').value) || 1,
+            target_page_type: document.getElementById('promoTargetType').value || undefined,
+            bg_color: document.getElementById('promoBgColor').value.trim() || undefined,
+            text_color: document.getElementById('promoTextColor').value.trim() || undefined,
+        };
+
+        const startDate = document.getElementById('promoStart').value;
+        const endDate = document.getElementById('promoEnd').value;
+        if (startDate) payload.starts_at = new Date(startDate).toISOString();
+        if (endDate) payload.expires_at = new Date(endDate + 'T23:59:59').toISOString();
+
+        const btn = document.getElementById('promoCreateBtn');
+        btn.disabled = true;
+        btn.textContent = 'Creating...';
+
+        const result = await fetchJSON(`${WEBHOOK_BASE}/promo-manage`, payload);
+
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Create Promotion';
+
+        if (result?.success || result?.promotion_id) {
+            toast('Promotion created.', 'success');
+            document.getElementById('promoTitle').value = '';
+            document.getElementById('promoBody').value = '';
+            document.getElementById('promoCta').value = '';
+            document.getElementById('promoCtaUrl').value = '';
+            toggleForm('promoForm');
+            await fetchPromotions();
+        } else {
+            toast(result?.message || 'Failed to create promotion.', 'error');
+        }
+    }
+
+    async function promoAction(promoId, action) {
+        const result = await fetchJSON(`${WEBHOOK_BASE}/promo-manage`, {
+            action,
+            promotion_id: promoId,
+            brand_id: 'carlton'
+        });
+        if (result?.success) {
+            toast(`Promotion ${action === 'delete' ? 'deleted' : action === 'pause' ? 'paused' : 'activated'}.`, 'success');
+            await fetchPromotions();
+        } else {
+            toast(result?.message || `Failed to ${action} promotion.`, 'error');
+        }
+    }
+
+    // ═══════════════════════════════════════
     // ACTION HANDLERS
     // ═══════════════════════════════════════
     async function submitOfferIdea() {
@@ -2017,6 +2492,11 @@
             .on('postgres_changes', { event: '*', schema: 'public', table: 'crm_email_sequences' }, () => fetchEmailSequences())
             .subscribe();
         realtimeChannels.push(seqCh);
+
+        const promoCh = supabaseClient.channel('offer-studio-promos')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'page_promotions' }, () => fetchPromotions())
+            .subscribe();
+        realtimeChannels.push(promoCh);
     }
 
     // ═══════════════════════════════════════
