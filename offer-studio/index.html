@@ -496,6 +496,34 @@
         .advanced-body { display: none; margin-top: 0.5rem; }
         .advanced-body.open { display: block; }
 
+        /* ── Template picker ── */
+        .template-picker {
+            position: relative; margin-top: 0.375rem; padding: 0.75rem;
+            background: #11131A; border: 1px solid #2A2E3D; border-radius: 0.5rem;
+            max-height: 320px; overflow-y: auto; z-index: 20;
+        }
+        .template-picker-grid { display: grid; grid-template-columns: 1fr; gap: 0.25rem; }
+        .template-group-label {
+            font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+            color: #525E73; padding: 0.5rem 0 0.25rem 0.25rem;
+            font-family: 'Chakra Petch', system-ui;
+        }
+        .template-option {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.4rem 0.5rem; border-radius: 0.375rem; cursor: pointer;
+            transition: background 0.12s; font-size: 0.8rem; color: #E8ECF1;
+        }
+        .template-option:hover { background: rgba(255,255,255,0.05); }
+        .template-option.selected { background: rgba(6,214,160,0.1); border-left: 2px solid #06D6A0; }
+        .template-option.ai-special {
+            background: linear-gradient(135deg, rgba(168,85,247,0.1), rgba(76,201,240,0.1));
+            border: 1px solid rgba(168,85,247,0.25); margin-bottom: 0.5rem;
+        }
+        .template-option.ai-special:hover { background: linear-gradient(135deg, rgba(168,85,247,0.18), rgba(76,201,240,0.18)); }
+        .template-icon { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; flex-shrink: 0; }
+        .template-name { font-weight: 500; }
+        .template-desc { font-size: 0.65rem; color: #8A95A9; margin-left: auto; white-space: nowrap; }
+
         /* ── Page type pills ── */
         .page-type-pill {
             display: inline-block; font-size: 0.6rem; padding: 0.15rem 0.4rem; border-radius: 0.2rem;
@@ -647,49 +675,17 @@
                             </div>
                             <div>
                                 <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Template Type</label>
-                                <select id="offerTemplate" class="form-input">
-                                    <optgroup label="Lead Magnets">
-                                        <option value="scorecard">Scorecard</option>
-                                        <option value="checklist">Checklist</option>
-                                        <option value="template">Template / Worksheet</option>
-                                        <option value="calculator">Calculator / ROI Tool</option>
-                                        <option value="quiz">Quiz / Assessment</option>
-                                        <option value="guide">Guide / How-To</option>
-                                        <option value="toolkit">Toolkit / Resource Bundle</option>
-                                        <option value="swipe_file">Swipe File</option>
-                                        <option value="cheat_sheet">Cheat Sheet</option>
-                                        <option value="resource_library">Resource Library</option>
-                                    </optgroup>
-                                    <optgroup label="Digital Products">
-                                        <option value="course">Online Course</option>
-                                        <option value="workshop">Workshop / Intensive</option>
-                                        <option value="ebook">eBook / Whitepaper</option>
-                                        <option value="webinar">Webinar</option>
-                                        <option value="masterclass">Masterclass</option>
-                                    </optgroup>
-                                    <optgroup label="Services">
-                                        <option value="consulting">Consulting Session</option>
-                                        <option value="audit">Audit / Review</option>
-                                        <option value="coaching">Coaching Program</option>
-                                        <option value="done_for_you">Done-for-You Service</option>
-                                    </optgroup>
-                                    <optgroup label="Access & Trials">
-                                        <option value="free_trial">Free Trial / Demo</option>
-                                        <option value="community">Community Access</option>
-                                        <option value="membership">Membership / Subscription</option>
-                                    </optgroup>
-                                    <optgroup label="Events & Programs">
-                                        <option value="challenge">Challenge / Bootcamp</option>
-                                        <option value="summit">Virtual Summit / Conference</option>
-                                    </optgroup>
-                                    <optgroup label="Reports & Tools">
-                                        <option value="report">Report / Industry Analysis</option>
-                                        <option value="software_tool">Software Tool / SaaS</option>
-                                    </optgroup>
-                                    <optgroup label="AI-Powered">
-                                        <option value="ai_propose">AI Propose Ideas</option>
-                                    </optgroup>
-                                </select>
+                                <input type="hidden" id="offerTemplate" value="scorecard">
+                                <div class="template-selected form-input flex items-center justify-between cursor-pointer" onclick="toggleTemplatePicker()">
+                                    <span id="templateSelectedLabel">Scorecard</span>
+                                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" style="opacity:0.4;"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                                </div>
+                                <div id="templatePicker" style="display:none;" class="template-picker">
+                                    <div class="template-picker-search mb-2">
+                                        <input type="text" class="form-input" placeholder="Search templates..." id="templateSearch" oninput="filterTemplatePicker(this.value)" style="font-size:0.8rem;padding:0.4rem 0.6rem;">
+                                    </div>
+                                    <div class="template-picker-grid" id="templatePickerGrid"></div>
+                                </div>
                             </div>
                         </div>
                         <div class="mb-4">
@@ -985,6 +981,64 @@
         <!-- ═══════════════════════════════════ -->
         <div id="view-email-sequences" role="tabpanel" style="display:none;">
             <div class="max-w-[1600px] mx-auto px-4 sm:px-6 pb-8 space-y-6">
+
+                <!-- Create Sequence Form -->
+                <div class="panel">
+                    <div class="panel-header form-toggle" onclick="toggleForm('seqCreateForm')">
+                        <span class="font-heading font-semibold text-sm tracking-wide">Create New Sequence</span>
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="#8A95A9" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="panel-body form-body" id="seqCreateFormBody">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Sequence Name *</label>
+                                <input type="text" id="seqName" class="form-input" placeholder="e.g. Warm Nurture v2">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Trigger Event</label>
+                                <select id="seqTrigger" class="form-input">
+                                    <option value="lead_magnet_download">Lead Magnet Download</option>
+                                    <option value="tag_added">Tag Added</option>
+                                    <option value="form_submit">Form Submission</option>
+                                    <option value="purchase">Post-Purchase</option>
+                                    <option value="manual">Manual Enrollment</option>
+                                    <option value="webinar_register">Webinar Registration</option>
+                                    <option value="trial_start">Free Trial Start</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Status</label>
+                                <select id="seqStatus" class="form-input">
+                                    <option value="draft">Draft</option>
+                                    <option value="active">Active</option>
+                                    <option value="paused">Paused</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Assigned Tags</label>
+                                <input type="text" id="seqTags" class="form-input" placeholder="e.g. scorecard, real-estate, hot-lead (comma separated)">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Linked Offer / Lead Magnet</label>
+                                <select id="seqOfferId" class="form-input">
+                                    <option value="">None (general sequence)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-xs text-txt-2 mb-1.5 font-medium uppercase tracking-wide">Description</label>
+                            <textarea id="seqDescription" class="form-input" style="min-height:50px;" placeholder="Brief description of the sequence purpose"></textarea>
+                        </div>
+                        <div class="flex justify-end">
+                            <button onclick="submitCreateSequence()" id="seqCreateBtn" class="btn btn-primary flex items-center gap-2">
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                Create Sequence
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Sequence Metrics -->
                 <div class="grid grid-cols-2 lg:grid-cols-5 gap-4" id="sequenceMetrics">
@@ -1330,6 +1384,7 @@
         const data = await supabaseRPC('get_dashboard_offers', { p_brand_id: 'carlton' });
         offersData = data || [];
         renderOfferPipeline();
+        populateSeqOfferDropdown();
     }
 
     async function fetchTasks() {
@@ -1344,15 +1399,120 @@
         renderProposals();
     }
 
+    // Master template catalog — AI Propose always first, then grouped categories
+    const TEMPLATE_CATALOG = [
+        { key: 'ai_propose', name: 'AI Propose Ideas', icon: '🤖', group: '_ai', desc: 'Let AI analyze your market' },
+        { key: 'scorecard', name: 'Scorecard', icon: '📊', group: 'Lead Magnets', desc: 'Assessment tool' },
+        { key: 'checklist', name: 'Checklist', icon: '✅', group: 'Lead Magnets', desc: 'Step-by-step list' },
+        { key: 'template', name: 'Template / Worksheet', icon: '📝', group: 'Lead Magnets', desc: 'Fillable template' },
+        { key: 'calculator', name: 'Calculator / ROI Tool', icon: '🔢', group: 'Lead Magnets', desc: 'Interactive calculator' },
+        { key: 'quiz', name: 'Quiz / Assessment', icon: '❓', group: 'Lead Magnets', desc: 'Scored quiz' },
+        { key: 'guide', name: 'Guide / How-To', icon: '📖', group: 'Lead Magnets', desc: 'Multi-section guide' },
+        { key: 'toolkit', name: 'Toolkit / Resource Bundle', icon: '🧰', group: 'Lead Magnets', desc: 'Resource collection' },
+        { key: 'swipe_file', name: 'Swipe File', icon: '📋', group: 'Lead Magnets', desc: 'Copy examples' },
+        { key: 'cheat_sheet', name: 'Cheat Sheet', icon: '📄', group: 'Lead Magnets', desc: 'Quick reference' },
+        { key: 'resource_library', name: 'Resource Library', icon: '📚', group: 'Lead Magnets', desc: 'Curated links' },
+        { key: 'course', name: 'Online Course', icon: '🎓', group: 'Digital Products', desc: 'Multi-module course' },
+        { key: 'workshop', name: 'Workshop / Intensive', icon: '🔨', group: 'Digital Products', desc: 'Hands-on session' },
+        { key: 'ebook', name: 'eBook / Whitepaper', icon: '📕', group: 'Digital Products', desc: 'Long-form content' },
+        { key: 'webinar', name: 'Webinar', icon: '🎥', group: 'Digital Products', desc: 'Live presentation' },
+        { key: 'masterclass', name: 'Masterclass', icon: '🏆', group: 'Digital Products', desc: 'Expert curriculum' },
+        { key: 'consulting', name: 'Consulting Session', icon: '💼', group: 'Services', desc: '1:1 advisory' },
+        { key: 'audit', name: 'Audit / Review', icon: '🔍', group: 'Services', desc: 'Analysis & scoring' },
+        { key: 'coaching', name: 'Coaching Program', icon: '🎯', group: 'Services', desc: 'Multi-session coaching' },
+        { key: 'done_for_you', name: 'Done-for-You Service', icon: '⚡', group: 'Services', desc: 'Full service delivery' },
+        { key: 'free_trial', name: 'Free Trial / Demo', icon: '🆓', group: 'Access & Trials', desc: 'Try before buying' },
+        { key: 'community', name: 'Community Access', icon: '👥', group: 'Access & Trials', desc: 'Group membership' },
+        { key: 'membership', name: 'Membership / Subscription', icon: '🔑', group: 'Access & Trials', desc: 'Recurring access' },
+        { key: 'challenge', name: 'Challenge / Bootcamp', icon: '🏋️', group: 'Events & Programs', desc: 'Time-bound program' },
+        { key: 'summit', name: 'Virtual Summit', icon: '🎤', group: 'Events & Programs', desc: 'Multi-speaker event' },
+        { key: 'report', name: 'Report / Industry Analysis', icon: '📈', group: 'Reports & Tools', desc: 'Research & data' },
+        { key: 'software_tool', name: 'Software Tool / SaaS', icon: '🛠️', group: 'Reports & Tools', desc: 'Digital tool' },
+    ];
+
+    let selectedTemplate = 'scorecard';
+
     async function fetchTemplates() {
         const data = await supabaseSelect('offer_templates', 'brand_id=eq.carlton&status=eq.active&select=template_key,display_name,description,default_price_cents');
         templatesData = data || [];
-        const sel = document.getElementById('offerTemplate');
-        if (sel && templatesData.length > 0) {
-            sel.innerHTML = templatesData.map(t =>
-                `<option value="${escHtml(t.template_key)}">${escHtml(t.display_name || t.template_key)}</option>`
-            ).join('');
+        // Merge DB templates into catalog (add any that aren't already there)
+        templatesData.forEach(t => {
+            if (!TEMPLATE_CATALOG.find(c => c.key === t.template_key)) {
+                TEMPLATE_CATALOG.push({ key: t.template_key, name: t.display_name || t.template_key, icon: '📦', group: 'Custom', desc: t.description || '' });
+            }
+        });
+        renderTemplatePicker();
+    }
+
+    function renderTemplatePicker() {
+        const grid = document.getElementById('templatePickerGrid');
+        if (!grid) return;
+        const groups = {};
+        TEMPLATE_CATALOG.forEach(t => {
+            if (!groups[t.group]) groups[t.group] = [];
+            groups[t.group].push(t);
+        });
+        let html = '';
+        // AI Propose always first, styled special
+        const ai = TEMPLATE_CATALOG.find(t => t.key === 'ai_propose');
+        if (ai) {
+            html += `<div class="template-option ai-special ${selectedTemplate === 'ai_propose' ? 'selected' : ''}" data-key="ai_propose" onclick="selectTemplate('ai_propose')">
+                <span class="template-icon">${ai.icon}</span>
+                <span class="template-name">${escHtml(ai.name)}</span>
+                <span class="template-desc">${escHtml(ai.desc)}</span>
+            </div>`;
         }
+        // Then each group
+        Object.entries(groups).forEach(([group, items]) => {
+            if (group === '_ai') return;
+            html += `<div class="template-group-label">${escHtml(group)}</div>`;
+            items.forEach(t => {
+                html += `<div class="template-option ${selectedTemplate === t.key ? 'selected' : ''}" data-key="${escHtml(t.key)}" onclick="selectTemplate('${escHtml(t.key)}')">
+                    <span class="template-icon">${t.icon}</span>
+                    <span class="template-name">${escHtml(t.name)}</span>
+                    <span class="template-desc">${escHtml(t.desc)}</span>
+                </div>`;
+            });
+        });
+        grid.innerHTML = html;
+    }
+
+    function selectTemplate(key) {
+        selectedTemplate = key;
+        document.getElementById('offerTemplate').value = key;
+        const t = TEMPLATE_CATALOG.find(c => c.key === key);
+        document.getElementById('templateSelectedLabel').textContent = t ? `${t.icon} ${t.name}` : key;
+        document.getElementById('templatePicker').style.display = 'none';
+        renderTemplatePicker();
+    }
+
+    function toggleTemplatePicker() {
+        const picker = document.getElementById('templatePicker');
+        const isOpen = picker.style.display !== 'none';
+        picker.style.display = isOpen ? 'none' : '';
+        if (!isOpen) {
+            document.getElementById('templateSearch').value = '';
+            filterTemplatePicker('');
+            document.getElementById('templateSearch').focus();
+        }
+    }
+
+    function filterTemplatePicker(query) {
+        const q = query.toLowerCase();
+        document.querySelectorAll('.template-option').forEach(el => {
+            const name = el.querySelector('.template-name')?.textContent.toLowerCase() || '';
+            const desc = el.querySelector('.template-desc')?.textContent.toLowerCase() || '';
+            el.style.display = (!q || name.includes(q) || desc.includes(q)) ? '' : 'none';
+        });
+        document.querySelectorAll('.template-group-label').forEach(el => {
+            const next = [];
+            let sib = el.nextElementSibling;
+            while (sib && !sib.classList.contains('template-group-label')) {
+                if (sib.classList.contains('template-option')) next.push(sib);
+                sib = sib.nextElementSibling;
+            }
+            el.style.display = next.some(n => n.style.display !== 'none') ? '' : 'none';
+        });
     }
 
     async function fetchTestimonials() {
@@ -2140,27 +2300,46 @@
 
         const steps = sequenceStepsCache[seqId];
         if (steps.length === 0) {
-            detail.innerHTML = '<div class="text-xs text-txt-3">No email steps defined for this sequence.</div>';
+            detail.innerHTML = `<div class="flex items-center justify-between mb-2">
+                <span class="text-xs text-txt-3">No emails yet.</span>
+                <button class="btn btn-primary text-xs py-1 px-2" onclick="event.stopPropagation(); addEmailToSequence('${escHtml(seqId)}', ${idx})">+ Add First Email</button>
+            </div>`;
             return;
         }
 
-        renderSequenceSteps(detail, steps, seqId);
+        renderSequenceSteps(detail, steps, seqId, idx);
     }
 
-    function renderSequenceSteps(container, steps, seqId) {
-        container.innerHTML = `<div class="text-xs font-heading font-semibold text-txt-2 uppercase tracking-wide mb-3">Emails in Sequence</div>
+    function renderSequenceSteps(container, steps, seqId, idx) {
+        const totalSteps = steps.length;
+        container.innerHTML = `<div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-heading font-semibold text-txt-2 uppercase tracking-wide">Emails in Sequence (${totalSteps})</span>
+                <button class="btn btn-primary text-xs py-1 px-2" onclick="event.stopPropagation(); addEmailToSequence('${escHtml(seqId)}', ${idx})">+ Add Email</button>
+            </div>
             ${steps.map((step, i) => {
                 const openPct = ((step.open_rate || 0) * 100).toFixed(1);
                 const clickPct = ((step.click_rate || 0) * 100).toFixed(1);
                 const stepId = step.step_id || step.id || '';
                 return `<div class="email-step-editor" id="step-editor-${escHtml(stepId)}">
                     <div class="flex items-center justify-between mb-2">
-                        <span class="font-heading font-semibold text-xs text-txt-2 uppercase tracking-wide">Email ${i + 1}</span>
+                        <div class="flex items-center gap-2">
+                            <div class="flex flex-col gap-0.5" onclick="event.stopPropagation();">
+                                <button class="text-txt-3 hover:text-txt ${i === 0 ? 'opacity-20 pointer-events-none' : ''}" style="font-size:0.6rem;line-height:1;" onclick="moveEmailStep('${escHtml(seqId)}','${escHtml(stepId)}','up',${idx})" title="Move up">▲</button>
+                                <button class="text-txt-3 hover:text-txt ${i === totalSteps - 1 ? 'opacity-20 pointer-events-none' : ''}" style="font-size:0.6rem;line-height:1;" onclick="moveEmailStep('${escHtml(seqId)}','${escHtml(stepId)}','down',${idx})" title="Move down">▼</button>
+                            </div>
+                            <span class="font-heading font-semibold text-xs text-txt-2 uppercase tracking-wide">Email ${i + 1}</span>
+                            <div onclick="event.stopPropagation();" class="flex items-center gap-1">
+                                <label class="text-xs text-txt-3">Delay:</label>
+                                <input type="number" class="form-input" style="width:50px;font-size:0.7rem;padding:0.2rem 0.3rem;" value="${step.delay_hours || 0}" min="0"
+                                    onchange="saveSequenceStep('${escHtml(stepId)}','delay_hours',parseInt(this.value))" onclick="event.stopPropagation();">
+                                <span class="text-xs text-txt-3">hrs</span>
+                            </div>
+                        </div>
                         <div class="flex items-center gap-3 text-xs text-txt-3">
                             <span>Sent: ${step.send_count || 0}</span>
                             <span>Open: ${openPct}%</span>
                             <span>Click: ${clickPct}%</span>
-                            ${step.delay_hours ? `<span>Delay: ${step.delay_hours}h</span>` : ''}
+                            <button class="text-alert hover:text-red-400" style="font-size:0.65rem;" onclick="event.stopPropagation(); if(confirm('Delete Email ${i+1}?')) deleteEmailStep('${escHtml(seqId)}','${escHtml(stepId)}',${idx})" title="Delete email">✕</button>
                         </div>
                     </div>
                     <div class="space-y-2">
@@ -2227,6 +2406,144 @@
         } catch (e) {
             toast('Network error saving step.', 'error');
         }
+    }
+
+    // ═══════════════════════════════════════
+    // EMAIL SEQUENCE: CREATE + EMAIL MANAGEMENT
+    // ═══════════════════════════════════════
+    function populateSeqOfferDropdown() {
+        const sel = document.getElementById('seqOfferId');
+        if (!sel) return;
+        const current = sel.value;
+        sel.innerHTML = '<option value="">None (general sequence)</option>' +
+            offersData.map(o => `<option value="${escHtml(o.offer_id)}">${escHtml(o.title)}</option>`).join('');
+        sel.value = current;
+    }
+
+    async function submitCreateSequence() {
+        const name = document.getElementById('seqName').value.trim();
+        if (!name) { toast('Sequence name is required.', 'error'); return; }
+
+        const payload = {
+            brand_id: 'carlton',
+            name,
+            trigger_event: document.getElementById('seqTrigger').value,
+            status: document.getElementById('seqStatus').value,
+            tags: document.getElementById('seqTags').value.split(',').map(t => t.trim()).filter(Boolean),
+            offer_id: document.getElementById('seqOfferId').value || undefined,
+            description: document.getElementById('seqDescription').value.trim() || undefined,
+        };
+
+        const btn = document.getElementById('seqCreateBtn');
+        btn.disabled = true;
+        btn.textContent = 'Creating...';
+
+        // Try webhook first, fall back to direct Supabase insert
+        let result = await fetchJSON(`${WEBHOOK_BASE}/sequence-create`, payload);
+        if (!result) {
+            // Fallback: direct insert
+            try {
+                const seqId = 'SEQ_' + new Date().toISOString().replace(/[-:T]/g, '').slice(2, 14);
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/crm_email_sequences`, {
+                    method: 'POST',
+                    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+                    body: JSON.stringify({ sequence_id: seqId, name: payload.name, status: payload.status, brand_id: 'carlton' })
+                });
+                if (res.ok) result = { success: true };
+            } catch(e) {}
+        }
+
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Create Sequence';
+
+        if (result?.success || result?.sequence_id) {
+            toast('Sequence created.', 'success');
+            document.getElementById('seqName').value = '';
+            document.getElementById('seqDescription').value = '';
+            document.getElementById('seqTags').value = '';
+            toggleForm('seqCreateForm');
+            await fetchEmailSequences();
+        } else {
+            toast(result?.message || 'Failed to create sequence.', 'error');
+        }
+    }
+
+    async function addEmailToSequence(seqId, idx) {
+        const steps = sequenceStepsCache[seqId] || [];
+        const newOrder = steps.length + 1;
+        const stepId = 'STEP_' + new Date().toISOString().replace(/[-:T]/g, '').slice(2, 14) + '_' + newOrder;
+
+        try {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/crm_sequence_steps`, {
+                method: 'POST',
+                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                body: JSON.stringify({ step_id: stepId, sequence_id: seqId, step_order: newOrder, subject: `Email ${newOrder}`, body_text: '', delay_hours: newOrder === 1 ? 0 : 24 })
+            });
+            if (res.ok) {
+                toast(`Email ${newOrder} added.`, 'success');
+                delete sequenceStepsCache[seqId];
+                // Re-expand to show new email
+                const detail = document.getElementById(`seq-detail-${idx}`);
+                if (detail && detail.classList.contains('open')) {
+                    const steps = await supabaseSelect('crm_sequence_steps', `sequence_id=eq.${seqId}&select=*&order=step_order`);
+                    sequenceStepsCache[seqId] = steps || [];
+                    renderSequenceSteps(detail, sequenceStepsCache[seqId], seqId, idx);
+                }
+            } else {
+                toast('Failed to add email step.', 'error');
+            }
+        } catch(e) {
+            toast('Network error adding email.', 'error');
+        }
+    }
+
+    async function moveEmailStep(seqId, stepId, direction, idx) {
+        const steps = sequenceStepsCache[seqId] || [];
+        const i = steps.findIndex(s => (s.step_id || s.id) === stepId);
+        if (i < 0) return;
+        const j = direction === 'up' ? i - 1 : i + 1;
+        if (j < 0 || j >= steps.length) return;
+
+        // Swap step_orders
+        const orderA = steps[i].step_order;
+        const orderB = steps[j].step_order;
+
+        try {
+            await Promise.all([
+                fetch(`${SUPABASE_URL}/rest/v1/crm_sequence_steps?step_id=eq.${steps[i].step_id || steps[i].id}`, {
+                    method: 'PATCH', headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                    body: JSON.stringify({ step_order: orderB })
+                }),
+                fetch(`${SUPABASE_URL}/rest/v1/crm_sequence_steps?step_id=eq.${steps[j].step_id || steps[j].id}`, {
+                    method: 'PATCH', headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                    body: JSON.stringify({ step_order: orderA })
+                })
+            ]);
+            toast('Email order updated.', 'success');
+            delete sequenceStepsCache[seqId];
+            const newSteps = await supabaseSelect('crm_sequence_steps', `sequence_id=eq.${seqId}&select=*&order=step_order`);
+            sequenceStepsCache[seqId] = newSteps || [];
+            const detail = document.getElementById(`seq-detail-${idx}`);
+            if (detail) renderSequenceSteps(detail, sequenceStepsCache[seqId], seqId, idx);
+        } catch(e) {
+            toast('Failed to reorder.', 'error');
+        }
+    }
+
+    async function deleteEmailStep(seqId, stepId, idx) {
+        try {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/crm_sequence_steps?step_id=eq.${stepId}`, {
+                method: 'DELETE', headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Prefer': 'return=minimal' }
+            });
+            if (res.ok) {
+                toast('Email removed.', 'success');
+                delete sequenceStepsCache[seqId];
+                const newSteps = await supabaseSelect('crm_sequence_steps', `sequence_id=eq.${seqId}&select=*&order=step_order`);
+                sequenceStepsCache[seqId] = newSteps || [];
+                const detail = document.getElementById(`seq-detail-${idx}`);
+                if (detail) renderSequenceSteps(detail, sequenceStepsCache[seqId], seqId, idx);
+            } else { toast('Failed to delete email.', 'error'); }
+        } catch(e) { toast('Network error.', 'error'); }
     }
 
     // ═══════════════════════════════════════
