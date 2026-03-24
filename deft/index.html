@@ -2806,8 +2806,10 @@ async function refreshToday() {
     const logs = await supabaseSelect('deft_daily_logs', `user_id=eq.${activeProfileId}&log_date=eq.${today}&select=*`);
     dailyLog = logs && logs.length > 0 ? logs[0] : null;
 
-    // Fetch today's meals
-    const meals = await supabaseSelect('deft_meal_entries', `user_id=eq.${activeProfileId}&logged_at=gte.${today}T00:00:00&logged_at=lt.${today}T23:59:59&order=logged_at.asc&select=*`);
+    // Fetch today's meals (use UTC-converted local day boundaries for correct timezone handling)
+    const startOfDay = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
+    const endOfDay = new Date(new Date().setHours(23, 59, 59, 999)).toISOString();
+    const meals = await supabaseSelect('deft_meal_entries', `user_id=eq.${activeProfileId}&logged_at=gte.${startOfDay}&logged_at=lt.${endOfDay}&order=logged_at.asc&select=*`);
     todayMeals = meals || [];
 
     renderToday();
