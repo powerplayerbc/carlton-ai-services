@@ -2947,13 +2947,24 @@ async function addWater(oz) {
     } else {
         // Fallback: write directly to Supabase
         const today = new Date().toLocaleDateString('en-CA');
-        const existing = await supabaseSelect('deft_daily_logs', `user_id=eq.${activeProfileId}&log_date=eq.${today}&select=id,water_oz`);
+        const existing = await supabaseSelect('deft_daily_logs', `user_id=eq.${activeProfileId}&log_date=eq.${today}&select=log_id,water_oz`);
         if (existing && existing.length > 0) {
             const newOz = (existing[0].water_oz || 0) + oz;
-            const wr = await supabaseWrite('deft_daily_logs', 'PATCH', { water_oz: newOz }, `id=eq.${existing[0].id}`);
+            const wr = await supabaseWrite('deft_daily_logs', 'PATCH', { water_oz: newOz }, `log_id=eq.${existing[0].log_id}`);
             if (wr) saved = true;
         } else {
-            const wr = await supabaseWrite('deft_daily_logs', 'POST', { user_id: activeProfileId, log_date: today, water_oz: oz }, '');
+            // Daily log doesn't exist yet — need profile's macro targets for required columns
+            const profile = await supabaseSelect('deft_user_profiles', `user_id=eq.${activeProfileId}&select=macro_targets,meal_count_default`);
+            const mt = profile?.[0]?.macro_targets || { calories: 2000, fat_g: 155, protein_g: 130, net_carbs_g: 20 };
+            const wr = await supabaseWrite('deft_daily_logs', 'POST', {
+                user_id: activeProfileId,
+                log_date: today,
+                water_oz: oz,
+                target_calories: mt.calories || 2000,
+                target_macros: mt,
+                consumed_totals: { calories: 0, fat_g: 0, protein_g: 0, net_carbs_g: 0, fiber_g: 0, sugar_g: 0 },
+                meal_count_planned: profile?.[0]?.meal_count_default || 3,
+            }, '');
             if (wr) saved = true;
         }
     }

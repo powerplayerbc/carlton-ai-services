@@ -2635,9 +2635,25 @@ async function deleteCategory(catId, name) {
 }
 
 async function loadDirectivePointsSettings() {
+    const defaults = { approve: 5, deny: 10, edit: 15, review_social: 3, review_email: 5, review_crm: 5 };
+    let dp = null;
+
+    // Try webhook first
     const result = await brainApi('get_settings', {}, { silent: true });
-    const settings = result?.data || result || {};
-    const dp = settings.directive_points || { approve: 5, deny: 10, edit: 15, review_social: 3, review_email: 5, review_crm: 5 };
+    if (result?.data?.directive_points || result?.directive_points) {
+        dp = result?.data?.directive_points || result.directive_points;
+    }
+
+    // Fallback: read from deft_user_profiles.preferences
+    if (!dp && activeProfileId) {
+        const rows = await supabaseSelect('deft_user_profiles', `user_id=eq.${activeProfileId}&select=preferences`);
+        if (rows?.[0]?.preferences?.directive_points) {
+            dp = rows[0].preferences.directive_points;
+        }
+    }
+
+    dp = dp || defaults;
+
     const container = document.getElementById('settDirectivePoints');
     container.innerHTML = Object.entries(dp).map(([key, val]) => `
         <div class="setting-row">
@@ -2652,8 +2668,23 @@ async function saveDirectivePoints() {
     const values = {};
     inputs.forEach(input => { values[input.dataset.dpKey] = parseInt(input.value) || 0; });
     toast('Saving...', 'info');
+
+    // Try webhook first
     const result = await brainApi('update_settings', { setting_key: 'directive_points', setting_value: values });
-    if (result) toast('Directive points saved', 'success');
+    if (result) {
+        toast('Directive points saved', 'success');
+    } else {
+        // Fallback: save to deft_user_profiles.preferences
+        const rows = await supabaseSelect('deft_user_profiles', `user_id=eq.${activeProfileId}&select=preferences`);
+        const prefs = rows?.[0]?.preferences || {};
+        prefs.directive_points = values;
+        const wr = await supabaseWrite('deft_user_profiles', 'PATCH', { preferences: prefs }, `user_id=eq.${activeProfileId}`);
+        if (wr) {
+            toast('Directive points saved', 'success');
+        } else {
+            toast('Failed to save directive points', 'error');
+        }
+    }
 }
 
 async function testCalendarConnection() {
