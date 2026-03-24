@@ -1455,6 +1455,7 @@ let todayActivities = [];
 let realtimeChannels = [];
 let activityLogDate = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
 let webhookAvailable = false; // checked on init
+let settingsLoaded = false;
 
 // Category icons fallback
 const CAT_ICONS = {
@@ -1674,6 +1675,7 @@ function selectProfile(userId, name) {
     // Tear down and rebuild real-time
     setupRealtimeSubscriptions();
     // Reload all data
+    settingsLoaded = false;
     loadProfiles();
     loadDashboardData();
 }
@@ -1909,7 +1911,7 @@ function switchView(view) {
     // Lazy-load
     if (view === 'dashboard') loadDashboardData();
     if (view === 'activities') loadActivities();
-    if (view === 'settings') loadSettings();
+    if (view === 'settings' && !settingsLoaded) loadSettings();
     if (view === 'calendar') loadCalendarEvents();
     if (view === 'leaderboard') loadLeaderboard('week');
     if (view === 'achievements') loadAchievements();
@@ -2551,6 +2553,7 @@ async function submitLogChain() {
 async function loadSettings() {
     renderSettingsCategories();
     loadDirectivePointsSettings();
+    settingsLoaded = true;
 }
 
 async function saveProfileSettings() {
@@ -2562,7 +2565,17 @@ async function saveProfileSettings() {
     };
     toast('Saving...', 'info');
     const result = await brainApi('update_profile', data);
-    if (result) toast('Profile settings saved', 'success');
+    if (result) {
+        toast('Profile settings saved', 'success');
+    } else {
+        // Fallback: write directly to Supabase
+        const sbResult = await supabaseWrite('brain_user_profiles', 'PATCH', data, `user_id=eq.${activeProfileId}`);
+        if (sbResult) {
+            toast('Profile settings saved', 'success');
+        } else {
+            toast('Failed to save settings', 'error');
+        }
+    }
 }
 
 function renderSettingsCategories() {
