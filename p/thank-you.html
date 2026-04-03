@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thank You | Carlton AI Services</title>
-    <meta name="description" content="Your website build package order has been confirmed.">
+    <meta name="description" content="Your order has been confirmed.">
     <meta name="robots" content="noindex, nofollow">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -159,6 +159,18 @@
 
         /* Engagement steps */
         .step-line { position: absolute; left: 1.25rem; top: 2.5rem; bottom: 0; width: 2px; background: linear-gradient(180deg, #D4915C, transparent); }
+
+        /* Loading pulse for dynamic content */
+        @keyframes subtlePulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.7; }
+        }
+        .loading-placeholder {
+            animation: subtlePulse 1.5s ease-in-out infinite;
+            background: rgba(148,163,184,0.12);
+            border-radius: 0.375rem;
+            display: inline-block;
+        }
     </style>
 </head>
 
@@ -193,8 +205,8 @@
                 <h1 class="hero-a2 font-heading font-extrabold text-4xl sm:text-5xl md:text-6xl text-text-primary leading-[0.95] tracking-[-0.03em] mb-4 md:mb-6">
                     Thank You for<br>Your Purchase!
                 </h1>
-                <p class="hero-a3 font-body text-base sm:text-lg md:text-xl text-text-secondary max-w-2xl mx-auto leading-[1.8]">
-                    Your website build package is now in motion. Here's what happens next.
+                <p id="heroSubtitle" class="hero-a3 font-body text-base sm:text-lg md:text-xl text-text-secondary max-w-2xl mx-auto leading-[1.8]">
+                    <span class="loading-placeholder" style="width:24rem;height:1.5rem;">&nbsp;</span>
                 </p>
             </div>
         </section>
@@ -317,6 +329,62 @@
             entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); } });
         }, { threshold: 0.18, rootMargin: '-60px 0px' });
         document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+        // --- Dynamic offer loading from Supabase ---
+        (async function loadOffer() {
+            const SUPABASE_URL = 'https://yrwrswyjawmgtxrgbnim.supabase.co/rest/v1';
+            const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlyd3Jzd3lqYXdtZ3R4cmdibmltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzYzODY2MzMsImV4cCI6MjA1MTk2MjYzM30.CjKVHdkFnxFDyZSN4_5nTeX6K7SEu-DjvBH2lzfVrX8';
+
+            const subtitleEl = document.getElementById('heroSubtitle');
+            const params = new URLSearchParams(window.location.search);
+            const slug = params.get('slug');
+
+            // Fallback content used when no slug or fetch fails
+            var fallbackSubtitle = 'Your order is now in motion. Here\u2019s what happens next.';
+
+            if (!slug) {
+                subtitleEl.textContent = fallbackSubtitle;
+                return;
+            }
+
+            try {
+                var endpoint = SUPABASE_URL + '/offers?metadata->>slug=eq.' + encodeURIComponent(slug) + '&brand_id=eq.carlton&select=title,metadata';
+                var res = await fetch(endpoint, {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': 'Bearer ' + SUPABASE_KEY
+                    }
+                });
+
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+
+                var data = await res.json();
+
+                if (data && data.length > 0) {
+                    var offer = data[0];
+                    var offerTitle = offer.title || '';
+
+                    // Update page title
+                    document.title = 'Thank You | ' + offerTitle;
+
+                    // Update meta description
+                    var metaDesc = document.querySelector('meta[name="description"]');
+                    if (metaDesc) {
+                        metaDesc.setAttribute('content', 'Your ' + offerTitle.toLowerCase() + ' order has been confirmed.');
+                    }
+
+                    // Update subtitle with offer name
+                    subtitleEl.textContent = 'Your ' + offerTitle.toLowerCase() + ' is now in motion. Here\u2019s what happens next.';
+                } else {
+                    // Slug not found in database -- show generic content
+                    subtitleEl.textContent = fallbackSubtitle;
+                }
+            } catch (err) {
+                // Network/parse error -- graceful fallback
+                console.warn('Could not load offer data:', err);
+                subtitleEl.textContent = fallbackSubtitle;
+            }
+        })();
     </script>
 
 </body>

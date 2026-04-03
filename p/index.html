@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Custom Website Package | Carlton AI Services</title>
-    <meta name="description" content="Custom 5-page website build package with 2 years of hosting included.">
+    <title>Loading... | Carlton AI Services</title>
+    <meta name="description" content="Exclusive offer from Carlton AI Services.">
     <meta name="robots" content="noindex, nofollow">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -252,6 +252,19 @@
 
         /* Engagement steps */
         .step-line { position: absolute; left: 1.25rem; top: 2.5rem; bottom: 0; width: 2px; background: linear-gradient(180deg, #D4915C, transparent); }
+
+        /* Loading state */
+        @keyframes loadSpin {
+            to { transform: rotate(360deg); }
+        }
+        .load-spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(212,145,92,0.15);
+            border-top-color: #D4915C;
+            border-radius: 50%;
+            animation: loadSpin 0.8s linear infinite;
+        }
     </style>
 </head>
 
@@ -270,21 +283,35 @@
         </div>
     </nav>
 
-    <main>
+    <!-- LOADING STATE -->
+    <div id="loadingState" class="min-h-screen flex flex-col items-center justify-center pt-20">
+        <div class="load-spinner mb-6"></div>
+        <p class="font-body text-text-secondary text-base">Loading offer details...</p>
+    </div>
+
+    <!-- ERROR STATE (hidden by default) -->
+    <div id="errorState" class="min-h-screen flex flex-col items-center justify-center pt-20 hidden">
+        <div class="text-center max-w-md mx-auto px-5">
+            <svg class="w-16 h-16 text-text-secondary mx-auto mb-6 opacity-40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+            <h1 class="font-heading font-bold text-2xl md:text-3xl text-text-primary mb-3">This offer is not available.</h1>
+            <p class="font-body text-text-secondary text-base mb-8">The page you're looking for doesn't exist or has been removed.</p>
+            <a href="https://bradfordcarlton.com" class="btn-premium inline-flex items-center gap-2 px-6 py-3 rounded-full text-base font-body font-semibold">
+                Back to Home
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </a>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT (hidden until data loads) -->
+    <main id="mainContent" class="hidden">
 
         <!-- HERO -->
         <section class="section-dark min-h-[70vh] flex flex-col items-center justify-center pt-28 pb-12 md:pt-32 md:pb-16">
             <div class="max-w-4xl mx-auto px-5 sm:px-6 text-center">
-                <p class="hero-a1 section-label">Custom Website Package</p>
-                <h1 class="hero-a2 font-heading font-extrabold text-4xl sm:text-5xl md:text-6xl lg:text-[5rem] text-text-primary leading-[0.95] tracking-[-0.03em] mb-4 md:mb-6">
-                    Your Business,<br>Online & Working
-                </h1>
-                <p class="hero-a3 font-heading font-bold text-lg sm:text-xl md:text-2xl lg:text-3xl text-text-secondary leading-tight tracking-[-0.02em] mb-6 md:mb-8">
-                    A Complete 5-Page Website Built For You
-                </p>
-                <p class="hero-a4 font-body text-base sm:text-lg text-text-secondary max-w-2xl mx-auto leading-[1.8]">
-                    A professionally designed and built website tailored to your business, delivered turnkey with <span class="highlight">2 years of hosting included</span> so you can focus on what you do best.
-                </p>
+                <p class="hero-a1 section-label" id="heroLabel"></p>
+                <h1 id="heroHeadline" class="hero-a2 font-heading font-extrabold text-4xl sm:text-5xl md:text-6xl lg:text-[5rem] text-text-primary leading-[0.95] tracking-[-0.03em] mb-4 md:mb-6"></h1>
+                <p id="heroSubheadline" class="hero-a3 font-heading font-bold text-lg sm:text-xl md:text-2xl lg:text-3xl text-text-secondary leading-tight tracking-[-0.02em] mb-6 md:mb-8"></p>
+                <p id="heroDescription" class="hero-a4 font-body text-base sm:text-lg text-text-secondary max-w-2xl mx-auto leading-[1.8]"></p>
             </div>
         </section>
 
@@ -301,7 +328,7 @@
                         <div class="dash-card-lead dash-card mb-8 reveal">
                             <div class="text-center">
                                 <p class="section-label mb-3">Investment</p>
-                                <p class="font-heading font-extrabold text-5xl md:text-6xl stat-warm mb-2">$800</p>
+                                <p id="priceDisplay" class="font-heading font-extrabold text-5xl md:text-6xl stat-warm mb-2"></p>
                                 <p class="font-body text-text-secondary text-base">One-time payment &middot; Everything included</p>
                             </div>
                         </div>
@@ -309,64 +336,11 @@
                         <!-- Deliverables -->
                         <div class="dash-card mb-8 reveal">
                             <p class="section-label mb-5">What You Get</p>
-                            <div class="space-y-4">
-                                <div class="flex items-start gap-3">
-                                    <svg class="w-5 h-5 text-accent mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    <div>
-                                        <p class="font-body text-text-primary font-medium">Home Page</p>
-                                        <p class="font-body text-sm text-text-secondary">Your main storefront — first impressions that convert</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start gap-3">
-                                    <svg class="w-5 h-5 text-accent mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    <div>
-                                        <p class="font-body text-text-primary font-medium">Landing Page</p>
-                                        <p class="font-body text-sm text-text-secondary">A focused page to capture leads and drive action</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start gap-3">
-                                    <svg class="w-5 h-5 text-accent mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    <div>
-                                        <p class="font-body text-text-primary font-medium">Landing Page Confirmation</p>
-                                        <p class="font-body text-sm text-text-secondary">Thank-you page after visitors submit info</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start gap-3">
-                                    <svg class="w-5 h-5 text-accent mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    <div>
-                                        <p class="font-body text-text-primary font-medium">Purchase Page</p>
-                                        <p class="font-body text-sm text-text-secondary">Dedicated page for selling your product or service</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start gap-3">
-                                    <svg class="w-5 h-5 text-accent mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    <div>
-                                        <p class="font-body text-text-primary font-medium">Purchase Confirmation</p>
-                                        <p class="font-body text-sm text-text-secondary">Post-purchase page with order details and next steps</p>
-                                    </div>
-                                </div>
-
-                                <div class="pt-3 mt-3 border-t border-white/5">
-                                    <div class="flex items-start gap-3">
-                                        <svg class="w-5 h-5 text-warm mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                        <div>
-                                            <p class="font-body text-text-primary font-medium">2 Years of Domain Hosting</p>
-                                            <p class="font-body text-sm text-text-secondary">Your site stays live — hosting covered for 2 years</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <div id="deliverablesContainer" class="space-y-4"></div>
                         </div>
 
                         <!-- Terms callouts -->
-                        <div class="callout reveal">
-                            <p class="font-body text-text-primary font-medium text-sm">Client supplies their own domain name.</p>
-                            <p class="font-body text-text-secondary text-sm">You'll need your domain ready (e.g., yourbusiness.com). We'll handle pointing it to your new site.</p>
-                        </div>
-                        <div class="callout reveal" style="margin-top: 1rem;">
-                            <p class="font-body text-text-primary font-medium text-sm">Additions and changes after delivery are billed separately.</p>
-                            <p class="font-body text-text-secondary text-sm">Once delivered and accepted, additional pages, features, or design changes will be quoted separately.</p>
-                        </div>
+                        <div id="termsContainer"></div>
                     </div>
 
                     <!-- RIGHT: Form -->
@@ -374,30 +348,26 @@
                         <div class="dash-card reveal">
                             <div class="mb-6">
                                 <p class="section-label">Get Started</p>
-                                <h2 class="font-heading font-bold text-2xl md:text-3xl text-text-primary tracking-[-0.02em] mb-2">
-                                    Ready to Build Your Website?
-                                </h2>
-                                <p class="font-body text-text-secondary text-sm">
-                                    Fill in your details below and proceed to secure checkout.
-                                </p>
+                                <h2 id="formHeading" class="font-heading font-bold text-2xl md:text-3xl text-text-primary tracking-[-0.02em] mb-2"></h2>
+                                <p id="formSubheading" class="font-body text-text-secondary text-sm"></p>
                             </div>
 
                             <form id="checkoutForm" class="space-y-4" novalidate>
                                 <div class="grid grid-cols-2 gap-3">
                                     <div>
                                         <label for="firstName" class="form-label">First Name <span class="text-warm">*</span></label>
-                                        <input type="text" id="firstName" name="firstName" class="form-input" placeholder="Chris" required autocomplete="given-name">
+                                        <input type="text" id="firstName" name="firstName" class="form-input" placeholder="First" required autocomplete="given-name">
                                         <p class="form-error" id="firstNameError">Required.</p>
                                     </div>
                                     <div>
                                         <label for="lastName" class="form-label">Last Name <span class="text-warm">*</span></label>
-                                        <input type="text" id="lastName" name="lastName" class="form-input" placeholder="Lee" required autocomplete="family-name">
+                                        <input type="text" id="lastName" name="lastName" class="form-input" placeholder="Last" required autocomplete="family-name">
                                         <p class="form-error" id="lastNameError">Required.</p>
                                     </div>
                                 </div>
                                 <div>
                                     <label for="email" class="form-label">Email Address <span class="text-warm">*</span></label>
-                                    <input type="email" id="email" name="email" class="form-input" placeholder="chris@example.com" required autocomplete="email">
+                                    <input type="email" id="email" name="email" class="form-input" placeholder="you@example.com" required autocomplete="email">
                                     <p class="form-error" id="emailError">Please enter a valid email address.</p>
                                 </div>
                                 <div>
@@ -407,7 +377,7 @@
 
                                 <div class="pt-2">
                                     <button type="submit" id="submitBtn" class="btn-premium w-full inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-full text-base md:text-lg font-body font-semibold">
-                                        <span id="btnText">Proceed to Checkout &mdash; $800</span>
+                                        <span id="btnText">Proceed to Checkout</span>
                                         <svg id="btnArrow" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                                         <svg id="btnSpinner" class="w-5 h-5 animate-spin hidden" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                     </button>
@@ -446,36 +416,211 @@
     </footer>
 
     <script>
-        // Nav glass on scroll
+        // ── Config ──
+        const SUPABASE_URL = 'https://yrwrswyjawmgtxrgbnim.supabase.co/rest/v1';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlyd3Jzd3lqYXdtZ3R4cmdibmltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzYzODY2MzMsImV4cCI6MjA1MTk2MjYzM30.CjKVHdkFnxFDyZSN4_5nTeX6K7SEu-DjvBH2lzfVrX8';
+        const WEBHOOK_URL = 'https://n8n.carltonaiservices.com/webhook/stripe-manage';
+
+        // ── Extract slug from URL ──
+        const pathSegments = window.location.pathname.replace(/\/+$/, '').split('/');
+        const slug = pathSegments[pathSegments.length - 1];
+
+        // ── Refs ──
+        const loadingState = document.getElementById('loadingState');
+        const errorState = document.getElementById('errorState');
+        const mainContent = document.getElementById('mainContent');
+
+        // ── Offer data (populated after fetch) ──
+        let offerData = null;
+
+        // ── Format price ──
+        function formatPrice(cents) {
+            const dollars = Math.round(cents / 100);
+            return '$' + dollars.toLocaleString('en-US');
+        }
+
+        // ── Checkmark SVG (accent color — matches chris-lee.html) ──
+        function checkSvg(color) {
+            const cls = color === 'warm' ? 'text-warm' : 'text-accent';
+            return '<svg class="w-5 h-5 ' + cls + ' mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+        }
+
+        // ── Build deliverable row ──
+        function deliverableRow(item, color) {
+            return '<div class="flex items-start gap-3">' +
+                checkSvg(color) +
+                '<div>' +
+                '<p class="font-body text-text-primary font-medium">' + escHtml(item.title) + '</p>' +
+                '<p class="font-body text-sm text-text-secondary">' + escHtml(item.description) + '</p>' +
+                '</div>' +
+                '</div>';
+        }
+
+        // ── Build term callout ──
+        function termCallout(item, isFirst) {
+            return '<div class="callout reveal"' + (isFirst ? '' : ' style="margin-top: 1rem;"') + '>' +
+                '<p class="font-body text-text-primary font-medium text-sm">' + escHtml(item.title) + '</p>' +
+                '<p class="font-body text-text-secondary text-sm">' + escHtml(item.description) + '</p>' +
+                '</div>';
+        }
+
+        // ── HTML escape ──
+        function escHtml(str) {
+            if (!str) return '';
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        // ── Populate page ──
+        function populatePage(offer) {
+            const meta = offer.metadata || {};
+            const priceCents = offer.price_cents || 0;
+            const priceFormatted = formatPrice(priceCents);
+
+            // Page title
+            document.title = (offer.title || 'Offer') + ' | Carlton AI Services';
+
+            // Hero
+            document.getElementById('heroLabel').textContent = meta.section_label || '';
+            document.getElementById('heroHeadline').innerHTML = escHtml(meta.headline || offer.title || '');
+            document.getElementById('heroSubheadline').textContent = meta.subheadline || '';
+            document.getElementById('heroDescription').innerHTML = meta.description || '';
+
+            // Price
+            document.getElementById('priceDisplay').textContent = priceFormatted;
+
+            // Deliverables
+            const container = document.getElementById('deliverablesContainer');
+            let html = '';
+
+            // Main deliverables
+            if (meta.deliverables && meta.deliverables.length) {
+                meta.deliverables.forEach(function(item) {
+                    html += deliverableRow(item, 'accent');
+                });
+            }
+
+            // Bonus deliverables (warm accent, with divider)
+            if (meta.deliverables_bonus && meta.deliverables_bonus.length) {
+                html += '<div class="pt-3 mt-3 border-t border-white/5">';
+                meta.deliverables_bonus.forEach(function(item) {
+                    html += deliverableRow(item, 'warm');
+                });
+                html += '</div>';
+            }
+
+            container.innerHTML = html;
+
+            // Terms
+            const termsContainer = document.getElementById('termsContainer');
+            let termsHtml = '';
+            if (meta.terms && meta.terms.length) {
+                meta.terms.forEach(function(item, i) {
+                    termsHtml += termCallout(item, i === 0);
+                });
+            }
+            termsContainer.innerHTML = termsHtml;
+
+            // Form heading
+            document.getElementById('formHeading').textContent = meta.form_heading || 'Ready to Get Started?';
+            document.getElementById('formSubheading').textContent = meta.form_subheading || 'Fill in your details below and proceed to secure checkout.';
+
+            // Button text
+            document.getElementById('btnText').textContent = 'Proceed to Checkout \u2014 ' + priceFormatted;
+
+            // Show content, hide loading
+            loadingState.classList.add('hidden');
+            mainContent.classList.remove('hidden');
+
+            // Initialize scroll reveal for dynamically added .reveal elements
+            initReveal();
+        }
+
+        // ── Show error ──
+        function showError() {
+            loadingState.classList.add('hidden');
+            errorState.classList.remove('hidden');
+        }
+
+        // ── Fetch offer ──
+        async function fetchOffer() {
+            if (!slug || slug === 'p' || slug === 'index.html') {
+                showError();
+                return;
+            }
+
+            try {
+                const url = SUPABASE_URL + '/offers?slug=eq.' + encodeURIComponent(slug) + '&status=eq.ready&brand_id=eq.carlton&select=*&limit=1';
+                const res = await fetch(url, {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': 'Bearer ' + SUPABASE_KEY
+                    }
+                });
+
+                if (!res.ok) {
+                    showError();
+                    return;
+                }
+
+                const data = await res.json();
+
+                if (!data || !data.length) {
+                    showError();
+                    return;
+                }
+
+                offerData = data[0];
+                populatePage(offerData);
+
+            } catch (err) {
+                console.error('Failed to load offer:', err);
+                showError();
+            }
+        }
+
+        // ── Nav glass on scroll ──
         const nav = document.getElementById('mainNav');
-        window.addEventListener('scroll', () => {
+        window.addEventListener('scroll', function() {
             nav.classList.toggle('nav-glass', window.scrollY > 20);
         }, { passive: true });
 
-        // Scroll reveal
-        const revealObs = new IntersectionObserver((entries) => {
-            entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); } });
-        }, { threshold: 0.18, rootMargin: '-60px 0px' });
-        document.querySelectorAll('.reveal, .reveal-punch').forEach(el => revealObs.observe(el));
+        // ── Scroll reveal ──
+        function initReveal() {
+            var revealObs = new IntersectionObserver(function(entries) {
+                entries.forEach(function(e) {
+                    if (e.isIntersecting) {
+                        e.target.classList.add('visible');
+                        revealObs.unobserve(e.target);
+                    }
+                });
+            }, { threshold: 0.18, rootMargin: '-60px 0px' });
+            document.querySelectorAll('.reveal, .reveal-punch').forEach(function(el) {
+                if (!el.classList.contains('visible')) {
+                    revealObs.observe(el);
+                }
+            });
+        }
 
-        // Form handling
-        const WEBHOOK_URL = 'https://n8n.carltonaiservices.com/webhook/stripe-manage';
-
-        document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
+        // ── Form handling ──
+        document.getElementById('checkoutForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
+            if (!offerData) return;
+
             // Reset errors
-            document.querySelectorAll('.form-input').forEach(el => el.classList.remove('error'));
-            document.querySelectorAll('.form-error').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.form-input').forEach(function(el) { el.classList.remove('error'); });
+            document.querySelectorAll('.form-error').forEach(function(el) { el.style.display = 'none'; });
             document.getElementById('formMessage').classList.add('hidden');
 
-            const firstName = document.getElementById('firstName').value.trim();
-            const lastName = document.getElementById('lastName').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const phone = document.getElementById('phone').value.trim();
+            var firstName = document.getElementById('firstName').value.trim();
+            var lastName = document.getElementById('lastName').value.trim();
+            var email = document.getElementById('email').value.trim();
+            var phone = document.getElementById('phone').value.trim();
 
             // Validate
-            let valid = true;
+            var valid = true;
             if (!firstName) {
                 document.getElementById('firstName').classList.add('error');
                 document.getElementById('firstNameError').style.display = 'block';
@@ -493,48 +638,55 @@
             }
             if (!valid) return;
 
+            var meta = offerData.metadata || {};
+            var priceCents = offerData.price_cents || 0;
+            var priceFormatted = formatPrice(priceCents);
+            var offerType = meta.offer_type || 'general';
+            var successSlug = meta.success_slug || 'thank-you';
+
             // Loading state
-            const btn = document.getElementById('submitBtn');
-            const btnText = document.getElementById('btnText');
-            const btnArrow = document.getElementById('btnArrow');
-            const btnSpinner = document.getElementById('btnSpinner');
+            var btn = document.getElementById('submitBtn');
+            var btnText = document.getElementById('btnText');
+            var btnArrow = document.getElementById('btnArrow');
+            var btnSpinner = document.getElementById('btnSpinner');
             btn.disabled = true;
             btnText.textContent = 'Creating checkout session...';
             btnArrow.classList.add('hidden');
             btnSpinner.classList.remove('hidden');
 
             try {
-                const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 15000);
+                var controller = new AbortController();
+                var timeout = setTimeout(function() { controller.abort(); }, 15000);
 
-                const res = await fetch(WEBHOOK_URL, {
+                var res = await fetch(WEBHOOK_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         operation: 'create_checkout_session',
-                        product_name: 'Website Build Package',
-                        amount: 80000,
+                        product_name: offerData.title || 'Offer',
+                        amount: priceCents,
                         currency: 'usd',
                         customer_email: email,
                         customer_name: firstName + ' ' + lastName,
                         first_name: firstName,
                         last_name: lastName,
                         customer_phone: phone,
-                        offer_type: 'website-build',
-                        offer_name: 'Website Build Package - 5 Pages + 2yr Hosting',
-                        success_url: 'https://bradfordcarlton.com/chris-lee-thank-you',
-                        cancel_url: 'https://bradfordcarlton.com/chris-lee',
+                        offer_type: offerType,
+                        offer_name: offerData.title || 'Offer',
+                        offer_id: offerData.offer_id || '',
+                        success_url: 'https://bradfordcarlton.com/p/' + encodeURIComponent(successSlug) + '?slug=' + encodeURIComponent(slug),
+                        cancel_url: 'https://bradfordcarlton.com/p/' + encodeURIComponent(slug),
                         metadata: {
-                            package: 'website-build-5page',
-                            client: 'chris-lee',
-                            offer_type: 'website-build'
+                            package: offerType,
+                            offer_type: offerType,
+                            offer_id: offerData.offer_id || ''
                         }
                     }),
                     signal: controller.signal
                 });
 
                 clearTimeout(timeout);
-                const data = await res.json();
+                var data = await res.json();
 
                 if (data.checkout_url) {
                     btnText.textContent = 'Redirecting to Stripe...';
@@ -544,11 +696,11 @@
                 }
             } catch (err) {
                 btn.disabled = false;
-                btnText.textContent = 'Proceed to Checkout \u2014 $800';
+                btnText.textContent = 'Proceed to Checkout \u2014 ' + priceFormatted;
                 btnArrow.classList.remove('hidden');
                 btnSpinner.classList.add('hidden');
 
-                const msg = document.getElementById('formMessage');
+                var msg = document.getElementById('formMessage');
                 msg.textContent = err.name === 'AbortError'
                     ? 'Request timed out. Please try again.'
                     : 'Something went wrong. Please try again or contact us directly.';
@@ -556,6 +708,9 @@
                 msg.classList.remove('hidden');
             }
         });
+
+        // ── Boot ──
+        fetchOffer();
     </script>
 
 </body>
