@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You | Carlton AI Services</title>
+    <meta name="description" content="Your website build package order has been confirmed.">
+    <meta name="robots" content="noindex, nofollow">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400;1,700&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        foundation: '#0A0A0A',
+                        surface: '#141414',
+                        'surface-elevated': '#1c1c1c',
+                        accent: '#0EA5E9',
+                        'accent-glow': '#38BDF8',
+                        warm: '#D4915C',
+                        'warm-glow': '#E8B080',
+                        'text-primary': '#F8FAFC',
+                        'text-secondary': '#94A3B8',
+                        'text-dark': '#1E293B',
+                        'text-dark-secondary': '#475569',
+                    },
+                    fontFamily: {
+                        heading: ['"Playfair Display"', 'Georgia', 'serif'],
+                        body: ['"Outfit"', 'system-ui', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style>
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Outfit', system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background: #0A0A0A;
+            color: #F8FAFC;
+        }
+
+        /* Grain texture */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9998;
+            opacity: 0.06;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            background-repeat: repeat;
+            background-size: 256px 256px;
+        }
+
+        /* Nav */
+        .nav-glass {
+            background: rgba(10, 10, 10, 0.88);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid rgba(212, 145, 92, 0.08);
+        }
+
+        /* Hero animations */
+        @keyframes heroSlide {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes heroScale {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes checkDraw {
+            from { stroke-dashoffset: 100; opacity: 0; }
+            to { stroke-dashoffset: 0; opacity: 1; }
+        }
+        .hero-a1 { animation: heroSlide 1s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both; }
+        .hero-a2 { animation: heroSlide 1s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both; }
+        .hero-a3 { animation: heroSlide 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.55s both; }
+        .hero-a4 { animation: heroScale 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.8s both; }
+        .check-icon {
+            animation: heroScale 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+        }
+        .check-icon path {
+            stroke-dasharray: 100;
+            animation: checkDraw 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
+        }
+
+        /* Sections */
+        .section-dark {
+            background:
+                radial-gradient(ellipse 50% 40% at 10% 80%, rgba(212,145,92,0.03) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 30% at 90% 20%, rgba(14,165,233,0.03) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 50% at 50% 0%, rgba(14,165,233,0.04) 0%, transparent 70%),
+                #0A0A0A;
+            position: relative;
+        }
+        .cta-gradient {
+            background:
+                radial-gradient(ellipse 60% 50% at 30% 60%, rgba(14,165,233,0.10) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 40% at 70% 30%, rgba(212,145,92,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse 80% 60% at 50% 80%, rgba(14,165,233,0.05) 0%, transparent 70%),
+                #0A0A0A;
+        }
+
+        /* Section labels */
+        .section-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: #D4915C;
+            margin-bottom: 1rem;
+        }
+
+        /* Highlights */
+        .highlight { color: #0EA5E9; font-weight: 600; }
+
+        /* Section break */
+        .section-break {
+            height: 2px;
+            max-width: 16rem;
+            margin: 0 auto;
+            background: linear-gradient(90deg, transparent, rgba(212,145,92,0.35), rgba(14,165,233,0.25), transparent);
+        }
+
+        /* Animations */
+        .reveal {
+            opacity: 0; transform: translateY(36px);
+            transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+
+        /* Buttons */
+        .btn-outline {
+            background: transparent; color: #F8FAFC;
+            border: 1px solid rgba(148,163,184,0.25);
+            transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+        }
+        .btn-outline:hover {
+            background: rgba(212,145,92,0.08);
+            border-color: rgba(212,145,92,0.35);
+            transform: translateY(-2px) scale(1.02);
+        }
+        .btn-outline:active { transform: translateY(0) scale(1); }
+        .btn-outline:focus-visible { outline: 2px solid #D4915C; outline-offset: 2px; }
+
+        /* Engagement steps */
+        .step-line { position: absolute; left: 1.25rem; top: 2.5rem; bottom: 0; width: 2px; background: linear-gradient(180deg, #D4915C, transparent); }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAV -->
+    <nav id="mainNav" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="https://bradfordcarlton.com" class="font-heading font-bold text-lg md:text-xl text-text-primary tracking-tight">Carlton AI Services</a>
+                <a href="https://bradfordcarlton.com" class="btn-outline inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-sm font-body font-medium">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    Back to Home
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+
+        <!-- HERO -->
+        <section class="section-dark min-h-[60vh] flex flex-col items-center justify-center pt-28 pb-12 md:pt-32 md:pb-16">
+            <div class="max-w-3xl mx-auto px-5 sm:px-6 text-center">
+                <!-- Checkmark -->
+                <div class="check-icon mb-6 inline-flex items-center justify-center w-20 h-20 rounded-full border-2 border-accent/30 bg-accent/5">
+                    <svg class="w-10 h-10 text-accent" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                    </svg>
+                </div>
+
+                <p class="hero-a1 section-label">Order Confirmed</p>
+                <h1 class="hero-a2 font-heading font-extrabold text-4xl sm:text-5xl md:text-6xl text-text-primary leading-[0.95] tracking-[-0.03em] mb-4 md:mb-6">
+                    Thank You for<br>Your Purchase!
+                </h1>
+                <p class="hero-a3 font-body text-base sm:text-lg md:text-xl text-text-secondary max-w-2xl mx-auto leading-[1.8]">
+                    Your website build package is now in motion. Here's what happens next.
+                </p>
+            </div>
+        </section>
+
+        <div class="section-break"></div>
+
+        <!-- NEXT STEPS -->
+        <section class="cta-gradient py-16 md:py-24">
+            <div class="max-w-2xl mx-auto px-5 sm:px-6">
+
+                <div class="text-center mb-12 reveal">
+                    <p class="section-label">What Happens Next</p>
+                    <h2 class="font-heading font-bold text-2xl md:text-3xl text-text-primary tracking-[-0.02em]">
+                        Your Roadmap to Launch
+                    </h2>
+                </div>
+
+                <!-- Timeline -->
+                <div class="space-y-8">
+
+                    <!-- Step 1 -->
+                    <div class="relative pl-14 reveal">
+                        <div class="step-line"></div>
+                        <div class="absolute left-0 top-0 w-10 h-10 rounded-full bg-warm/10 border border-warm/30 flex items-center justify-center">
+                            <span class="font-mono text-sm font-medium text-warm">01</span>
+                        </div>
+                        <div>
+                            <h3 class="font-heading font-bold text-lg text-text-primary mb-1">Confirmation Email</h3>
+                            <p class="font-body text-text-secondary text-sm leading-relaxed">You'll receive a payment receipt from Stripe and a welcome email from our team within the hour.</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="relative pl-14 reveal">
+                        <div class="step-line"></div>
+                        <div class="absolute left-0 top-0 w-10 h-10 rounded-full bg-warm/10 border border-warm/30 flex items-center justify-center">
+                            <span class="font-mono text-sm font-medium text-warm">02</span>
+                        </div>
+                        <div>
+                            <h3 class="font-heading font-bold text-lg text-text-primary mb-1">Discovery Call</h3>
+                            <p class="font-body text-text-secondary text-sm leading-relaxed">We'll reach out within 1 business day to schedule a kickoff call and gather your requirements, brand preferences, and content.</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="relative pl-14 reveal">
+                        <div class="step-line"></div>
+                        <div class="absolute left-0 top-0 w-10 h-10 rounded-full bg-warm/10 border border-warm/30 flex items-center justify-center">
+                            <span class="font-mono text-sm font-medium text-warm">03</span>
+                        </div>
+                        <div>
+                            <h3 class="font-heading font-bold text-lg text-text-primary mb-1">Design & Build</h3>
+                            <p class="font-body text-text-secondary text-sm leading-relaxed">Your 5-page website will be designed and developed according to the agreed specifications. You'll receive progress updates along the way.</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="relative pl-14 reveal">
+                        <div class="absolute left-0 top-0 w-10 h-10 rounded-full bg-accent/10 border border-accent/30 flex items-center justify-center">
+                            <span class="font-mono text-sm font-medium text-accent">04</span>
+                        </div>
+                        <div>
+                            <h3 class="font-heading font-bold text-lg text-text-primary mb-1">Review & Launch</h3>
+                            <p class="font-body text-text-secondary text-sm leading-relaxed">You'll review the finished site, request any adjustments, and once you're happy, we'll connect your domain and launch it live.</p>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+
+        <div class="section-break"></div>
+
+        <!-- CONTACT -->
+        <section class="section-dark py-16 md:py-20">
+            <div class="max-w-xl mx-auto px-5 sm:px-6 text-center reveal">
+                <p class="section-label">Questions?</p>
+                <h2 class="font-heading font-bold text-xl md:text-2xl text-text-primary tracking-[-0.02em] mb-6">
+                    Reach Out Anytime
+                </h2>
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+                    <a href="tel:+18446976169" class="btn-outline w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full text-sm font-body font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg>
+                        +1 844-697-6169
+                    </a>
+                    <a href="mailto:assistant@carltonaiservices.com" class="btn-outline w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full text-sm font-body font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
+                        Email Us
+                    </a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-white/5 py-10">
+        <div class="max-w-7xl mx-auto px-5 sm:px-6 text-center">
+            <p class="font-heading font-bold text-lg text-text-primary mb-1">Carlton AI Services</p>
+            <p class="font-body text-xs text-text-secondary mb-3">A Carlton Family Corporation Brand</p>
+            <p class="font-body text-xs text-text-secondary">6655 W. Sahara Ave., Suite B200, Las Vegas, NV 89146</p>
+            <p class="font-body text-xs text-text-secondary mt-1">
+                <a href="tel:+18446976169" class="hover:text-text-primary transition-colors">+1 844-697-6169</a>
+                &middot;
+                <a href="mailto:assistant@carltonaiservices.com" class="hover:text-text-primary transition-colors">assistant@carltonaiservices.com</a>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Nav glass on scroll
+        const nav = document.getElementById('mainNav');
+        window.addEventListener('scroll', () => {
+            nav.classList.toggle('nav-glass', window.scrollY > 20);
+        }, { passive: true });
+
+        // Scroll reveal
+        const revealObs = new IntersectionObserver((entries) => {
+            entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); } });
+        }, { threshold: 0.18, rootMargin: '-60px 0px' });
+        document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+    </script>
+
+</body>
+</html>
