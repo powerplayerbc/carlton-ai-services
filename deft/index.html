@@ -796,8 +796,6 @@
            ═══════════════════════════════════════ */
         #profileDropdown {
             box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.03);
-            max-height: 70vh;
-            overflow-y: auto;
         }
 
         /* ═══════════════════════════════════════
@@ -1228,8 +1226,8 @@
                 <!-- PROFILE SWITCHER -->
                 <div class="relative" id="profileSwitcher">
                     <button onclick="toggleProfileDropdown()" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg transition-colors" style="background: rgba(255,255,255,0.04);" id="profileBtn" aria-label="Switch profile" aria-expanded="false" aria-haspopup="true">
-                        <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style="background: rgba(6,214,160,0.15); color: #06D6A0;" id="profileAvatar">?</div>
-                        <span class="text-xs font-medium hidden sm:block" id="profileName">Profile</span>
+                        <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style="background: rgba(6,214,160,0.15); color: #06D6A0;" id="profileAvatar">B</div>
+                        <span class="text-xs font-medium hidden sm:block" id="profileName">Bradford</span>
                         <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2.5 4L5 6.5L7.5 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
                     </button>
                     <div class="absolute right-0 top-full mt-1 py-1 rounded-lg border hidden" style="background: #1A1D28; border-color: #2A2E3D; min-width: 180px; z-index: 10000;" id="profileDropdown" role="menu">
@@ -2634,6 +2632,12 @@
      JAVASCRIPT
      ═══════════════════════════════════════ -->
 <script>
+// Migrate old localStorage key
+if (!localStorage.getItem('rdgr-active-profile') && localStorage.getItem('rdgr-active-profile')) {
+    localStorage.setItem('rdgr-active-profile', localStorage.getItem('rdgr-active-profile'));
+    localStorage.removeItem('rdgr-active-profile');
+}
+
 // ═══════════════════════════════════════
 // CONFIG
 // ═══════════════════════════════════════
@@ -2696,7 +2700,7 @@ const THEMES = {
 };
 
 let activeProfileId = null;
-let activeProfileName = '';
+let activeProfileName = 'Bradford';
 let currentView = 'today';
 let dailyLog = null;
 let todayMeals = [];
@@ -2796,17 +2800,7 @@ async function syncThemeToSupabase(config) {
 // PROFILE SWITCHER
 // ═══════════════════════════════════════
 async function loadProfiles() {
-    let profiles = await supabaseSelect('deft_user_profiles', 'select=user_id,display_name,email&order=display_name');
-
-    // Fallback to cached profiles if Supabase fails
-    if (!profiles) {
-        try {
-            const cached = JSON.parse(localStorage.getItem('rdgr-profiles-cache') || '{}');
-            if (cached.profiles && Array.isArray(cached.profiles)) {
-                profiles = cached.profiles;
-            }
-        } catch(e) {}
-    }
+    const profiles = await supabaseSelect('deft_user_profiles', 'select=user_id,display_name,email&order=display_name');
 
     const dropdown = document.getElementById('profileDropdown');
     dropdown.innerHTML = '';
@@ -2833,12 +2827,6 @@ async function loadProfiles() {
             btn.onclick = () => selectProfile(p.user_id, p.display_name || p.email);
             dropdown.appendChild(btn);
         });
-    } else {
-        const errDiv = document.createElement('div');
-        errDiv.className = 'px-3 py-2 text-xs';
-        errDiv.style.color = '#E85D5D';
-        errDiv.textContent = 'Could not load profiles. Check your connection.';
-        dropdown.appendChild(errDiv);
     }
 
     // Divider + "New Profile" button
@@ -2931,11 +2919,6 @@ function closeProfileDropdown(e) {
     if (!document.getElementById('profileSwitcher').contains(e.target)) {
         dd.classList.add('hidden');
         document.getElementById('profileBtn').setAttribute('aria-expanded', 'false');
-    } else {
-        // Click was inside the switcher -- re-register so outside clicks still close it
-        setTimeout(() => {
-            document.addEventListener('click', closeProfileDropdown, { once: true });
-        }, 0);
     }
 }
 
@@ -3123,17 +3106,11 @@ async function initDeft() {
     if (savedProfile) {
         try {
             const p = JSON.parse(savedProfile);
-            if (p && p.id) {
-                activeProfileId = p.id;
-                activeProfileName = p.name || 'Unknown';
-                document.getElementById('profileName').textContent = activeProfileName;
-                document.getElementById('profileAvatar').textContent = activeProfileName[0].toUpperCase();
-            } else {
-                localStorage.removeItem('rdgr-active-profile');
-            }
-        } catch(e) {
-            localStorage.removeItem('rdgr-active-profile');
-        }
+            activeProfileId = p.id;
+            activeProfileName = p.name;
+            document.getElementById('profileName').textContent = p.name;
+            document.getElementById('profileAvatar').textContent = p.name[0].toUpperCase();
+        } catch(e) {}
     }
 
     // Apply theme
@@ -3143,19 +3120,19 @@ async function initDeft() {
     // Load profiles for switcher
     await loadProfiles();
 
-    // If no profile selected, prompt the user to choose one
+    // Auto-select first profile if none saved
     if (!activeProfileId) {
-        toast('Please select a profile to continue', 'warning');
-        const dd = document.getElementById('profileDropdown');
-        if (dd && dd.children.length > 1) {
-            dd.classList.remove('hidden');
-            document.getElementById('profileBtn').setAttribute('aria-expanded', 'true');
+        const profiles = await supabaseSelect('deft_user_profiles', 'select=user_id,display_name,email&order=display_name&limit=1');
+        if (profiles && profiles.length > 0) {
+            const p = profiles[0];
+            selectProfile(p.user_id, p.display_name || p.email);
         }
-        return;
     }
 
     // Load today's data
-    await refreshToday();
+    if (activeProfileId) {
+        await refreshToday();
+    }
 }
 
 // ═══════════════════════════════════════
