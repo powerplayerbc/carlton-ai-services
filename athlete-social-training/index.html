@@ -330,7 +330,7 @@
                     Build a Personal Brand That Gets You Noticed
                 </p>
                 <p class="hero-a4 font-body text-base sm:text-lg text-text-secondary max-w-2xl mx-auto leading-[1.8] mb-8 md:mb-10">
-                    A focused 4-week program for high school &amp; college athletes who want to <span class="highlight">stand out, grow a real following, and build a personal brand</span> that opens doors &mdash; on the field and off.
+                    A focused 4-week program for high school &amp; college athletes &mdash; and the coaches who lead them &mdash; who want to <span class="highlight">stand out, grow a real following, and build a personal brand</span> that opens doors &mdash; on the field and off.
                 </p>
                 <a href="#enroll" class="hero-a4 btn-premium inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full text-base md:text-lg font-body font-semibold">
                     Enroll Now &mdash; $499
@@ -423,8 +423,14 @@
                     </div>
                 </div>
 
-                <div class="narrative reveal">
-                    <p>Dr. Bradford Carlton has spent <span class="highlight">over 10 years teaching social media</span> to professionals, organizations, and individuals &mdash; building an audience of <span class="highlight-warm">140,000+ Facebook followers</span>, <span class="highlight-warm">12,000+ YouTube subscribers</span>, and <span class="highlight-warm">10M+ views</span> across platforms along the way. He's also trained 12,000+ businesses and built 340+ systems across 24 industries. Now he's bringing that same playbook to student athletes ready to take their presence seriously.</p>
+                <div class="reveal flex flex-col md:flex-row items-center gap-8 md:gap-10">
+                    <img src="/brand_assets/optimized/Brad_Staring_Transparent-560h.webp"
+                         alt="Dr. Bradford Carlton"
+                         class="w-40 sm:w-48 md:w-56 shrink-0 h-auto object-contain drop-shadow-2xl"
+                         loading="lazy" decoding="async">
+                    <div class="narrative" style="margin:0;">
+                        <p>Dr. Bradford Carlton has spent <span class="highlight">over 10 years teaching social media</span> to professionals, organizations, and individuals &mdash; building an audience of <span class="highlight-warm">140,000+ Facebook followers</span>, <span class="highlight-warm">12,000+ YouTube subscribers</span>, and <span class="highlight-warm">10M+ views</span> across platforms along the way. Bradford has worked with athletes such as Antonio Tarver Jr., Kelly Pavlik, and been interviewed by such luminaries as Dr. Bhrett McCabe to teach PGA Golfers how to improve their social media presence. He's also trained 12,000+ businesses in the usage of AI tools for marketing and business growth, and has built over 340+ AI systems for over 24 industry groups. Now he's bringing that same playbook to student athletes and coaches ready to take their presence seriously.</p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -527,7 +533,7 @@
 
                         <!-- Terms callouts -->
                         <div class="callout reveal">
-                            <p class="font-body text-text-primary font-medium text-sm">For high school &amp; college student athletes.</p>
+                            <p class="font-body text-text-primary font-medium text-sm">For high school &amp; college student athletes and coaches.</p>
                             <p class="font-body text-text-secondary text-sm">No prior experience needed &mdash; just a willingness to show up and put the work in.</p>
                         </div>
                     </div>
@@ -548,12 +554,12 @@
                             <form id="checkoutForm" class="space-y-4" novalidate>
                                 <div class="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label for="firstName" class="form-label">Student First Name <span class="text-warm">*</span></label>
+                                        <label for="firstName" class="form-label">Enrollee First Name <span class="text-warm">*</span></label>
                                         <input type="text" id="firstName" name="firstName" class="form-input" placeholder="First" required autocomplete="given-name">
                                         <p class="form-error" id="firstNameError">Required.</p>
                                     </div>
                                     <div>
-                                        <label for="lastName" class="form-label">Student Last Name <span class="text-warm">*</span></label>
+                                        <label for="lastName" class="form-label">Enrollee Last Name <span class="text-warm">*</span></label>
                                         <input type="text" id="lastName" name="lastName" class="form-input" placeholder="Last" required autocomplete="family-name">
                                         <p class="form-error" id="lastNameError">Required.</p>
                                     </div>
@@ -613,7 +619,7 @@
                             <span class="font-heading font-bold text-lg text-text-primary">Who is this program for?</span>
                             <svg class="faq-chevron w-5 h-5 text-warm shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                         </summary>
-                        <p class="font-body text-text-secondary text-sm leading-relaxed mt-3">High school and college student athletes who want to grow their following and build a personal brand. No prior social media experience is required.</p>
+                        <p class="font-body text-text-secondary text-sm leading-relaxed mt-3">High school and college student athletes &mdash; and coaches &mdash; who want to grow their following and build a personal brand. No prior social media experience is required.</p>
                     </details>
                     <details class="faq-item py-5">
                         <summary class="faq-q flex items-center justify-between gap-4">
@@ -756,8 +762,8 @@
                         offer_name: 'Social Media Training for Student Athletes',
                         offer_id: OFFER_ID,
                         referral_code: referralCode,
-                        success_url: 'https://bradfordcarlton.com/student-athletes/thank-you?session_id={CHECKOUT_SESSION_ID}',
-                        cancel_url: 'https://bradfordcarlton.com/student-athletes',
+                        success_url: 'https://bradfordcarlton.com/athlete-social-training/thank-you?session_id={CHECKOUT_SESSION_ID}',
+                        cancel_url: 'https://bradfordcarlton.com/athlete-social-training',
                         metadata: {
                             offer_id: OFFER_ID,
                             offer_type: 'student-athlete-training',
