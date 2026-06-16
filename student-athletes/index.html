@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en" data-design="carlton-dark-premium">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media Training for Student Athletes | Dr. Bradford Carlton</title>
+    <meta name="description" content="A 4-week program teaching high school and college student athletes how to manage their social media, grow a following, and build a personal brand that stands out. $499.">
+    <meta name="robots" content="noindex, nofollow">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Social Media Training for Student Athletes">
+    <meta property="og:description" content="Own your name. Grow your game. Learn to build a personal brand that gets you noticed — from a coach with 140K+ followers and 10M+ views.">
+    <meta property="og:type" content="website">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400;1,700&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        foundation: '#0A0A0A',
+                        surface: '#141414',
+                        'surface-elevated': '#1c1c1c',
+                        accent: '#0EA5E9',
+                        'accent-glow': '#38BDF8',
+                        warm: '#D4915C',
+                        'warm-glow': '#E8B080',
+                        'text-primary': '#F8FAFC',
+                        'text-secondary': '#94A3B8',
+                        'text-dark': '#1E293B',
+                        'text-dark-secondary': '#475569',
+                    },
+                    fontFamily: {
+                        heading: ['"Playfair Display"', 'Georgia', 'serif'],
+                        body: ['"Outfit"', 'system-ui', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Design: carlton-dark-premium */
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Outfit', system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background: #0A0A0A;
+            color: #F8FAFC;
+        }
+
+        /* Grain texture */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9998;
+            opacity: 0.06;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            background-repeat: repeat;
+            background-size: 256px 256px;
+        }
+
+        /* Nav */
+        .nav-glass {
+            background: rgba(10, 10, 10, 0.88);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid rgba(212, 145, 92, 0.08);
+        }
+
+        /* Hero animations */
+        @keyframes heroSlide {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes heroScale {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .hero-a1 { animation: heroSlide 1s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both; }
+        .hero-a2 { animation: heroSlide 1s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both; }
+        .hero-a3 { animation: heroSlide 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.55s both; }
+        .hero-a4 { animation: heroScale 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.8s both; }
+
+        /* Hero image */
+        .hero-img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.28;
+            z-index: 0;
+        }
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            background:
+                radial-gradient(ellipse 70% 60% at 50% 40%, rgba(10,10,10,0.5) 0%, rgba(10,10,10,0.85) 70%, #0A0A0A 100%),
+                linear-gradient(180deg, rgba(10,10,10,0.6) 0%, transparent 30%, transparent 70%, #0A0A0A 100%);
+        }
+
+        /* Sections */
+        .section-dark {
+            background:
+                radial-gradient(ellipse 50% 40% at 10% 80%, rgba(212,145,92,0.03) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 30% at 90% 20%, rgba(14,165,233,0.03) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 50% at 50% 0%, rgba(14,165,233,0.04) 0%, transparent 70%),
+                #0A0A0A;
+            position: relative;
+        }
+        .cta-gradient {
+            background:
+                radial-gradient(ellipse 60% 50% at 30% 60%, rgba(14,165,233,0.10) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 40% at 70% 30%, rgba(212,145,92,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse 80% 60% at 50% 80%, rgba(14,165,233,0.05) 0%, transparent 70%),
+                #0A0A0A;
+        }
+
+        /* Narrative */
+        .narrative { max-width: 56rem; margin: 0 auto; }
+        .narrative p { font-size: 1.125rem; line-height: 1.85; margin-bottom: 1.5rem; }
+        .narrative p:last-child { margin-bottom: 0; }
+        @media (min-width: 768px) { .narrative p { font-size: 1.25rem; } }
+
+        /* Section labels */
+        .section-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: #D4915C;
+            margin-bottom: 1rem;
+        }
+
+        /* Highlights */
+        .highlight { color: #0EA5E9; font-weight: 600; }
+        .highlight-warm { color: #D4915C; font-weight: 600; }
+
+        /* Callout */
+        .callout { border-left: 3px solid #D4915C; background: rgba(212,145,92,0.06); padding: 1.5rem 1.75rem; border-radius: 0 0.75rem 0.75rem 0; margin: 2rem 0; }
+        .callout p { margin-bottom: 0.5rem; }
+        .callout p:last-child { margin-bottom: 0; }
+
+        /* Stats */
+        .stat-inline { background: linear-gradient(135deg, #0EA5E9, #38BDF8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .stat-warm { background: linear-gradient(135deg, #D4915C, #E8B080); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+        /* Dashboard card */
+        @keyframes accentPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        .dash-card {
+            background: rgba(14,165,233,0.03);
+            border: 1px solid rgba(14,165,233,0.1);
+            border-radius: 1rem;
+            padding: 2rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+        }
+        .dash-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #0EA5E9, #D4915C, transparent);
+            animation: accentPulse 3s ease-in-out infinite;
+        }
+        .dash-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 32px rgba(14,165,233,0.12);
+        }
+        .dash-card-lead {
+            background: rgba(212,145,92,0.04);
+            border-color: rgba(212,145,92,0.12);
+        }
+        .dash-card-lead::before {
+            background: linear-gradient(90deg, transparent, #D4915C, #E8B080, transparent);
+        }
+
+        /* Pillar card */
+        .pillar-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #D4915C;
+            letter-spacing: 0.1em;
+        }
+
+        /* Logo marquee */
+        @keyframes marqueeScroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .marquee-track { animation: marqueeScroll 25s linear infinite; }
+
+        /* Animations */
+        .reveal {
+            opacity: 0; transform: translateY(36px);
+            transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+
+        .reveal-punch {
+            opacity: 0; transform: scale(0.94);
+            transition: opacity 1.1s ease, transform 1.1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal-punch.visible { opacity: 1; transform: scale(1); }
+
+        /* Buttons */
+        .btn-premium {
+            background: #0EA5E9; color: white;
+            transition: background 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+        }
+        .btn-premium:hover {
+            background: #38BDF8;
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 4px 20px rgba(14,165,233,0.35), 0 8px 40px rgba(14,165,233,0.15);
+        }
+        .btn-premium:active { transform: translateY(0) scale(1); }
+        .btn-premium:focus-visible { outline: 2px solid #38BDF8; outline-offset: 2px; }
+
+        .btn-outline {
+            background: transparent; color: #F8FAFC;
+            border: 1px solid rgba(148,163,184,0.25);
+            transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+        }
+        .btn-outline:hover {
+            background: rgba(212,145,92,0.08);
+            border-color: rgba(212,145,92,0.35);
+            transform: translateY(-2px) scale(1.02);
+        }
+        .btn-outline:active { transform: translateY(0) scale(1); }
+        .btn-outline:focus-visible { outline: 2px solid #D4915C; outline-offset: 2px; }
+
+        /* Section break */
+        .section-break {
+            height: 2px;
+            max-width: 16rem;
+            margin: 0 auto;
+            background: linear-gradient(90deg, transparent, rgba(212,145,92,0.35), rgba(14,165,233,0.25), transparent);
+        }
+
+        /* Form inputs */
+        .form-input {
+            background: rgba(20,20,20,0.8);
+            border: 1px solid rgba(148,163,184,0.15);
+            border-radius: 0.75rem;
+            padding: 0.875rem 1rem;
+            font-family: 'Outfit', system-ui, sans-serif;
+            font-size: 1rem;
+            color: #F8FAFC;
+            width: 100%;
+            outline: none;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+        .form-input::placeholder { color: rgba(148,163,184,0.5); }
+        .form-input:focus {
+            border-color: rgba(212,145,92,0.5);
+            box-shadow: 0 0 0 3px rgba(212,145,92,0.08);
+        }
+        .form-input.error {
+            border-color: rgba(248,113,113,0.6);
+            box-shadow: 0 0 0 3px rgba(248,113,113,0.08);
+        }
+        .form-label {
+            font-family: 'Outfit', system-ui, sans-serif;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #94A3B8;
+            margin-bottom: 0.375rem;
+            display: block;
+        }
+        .form-error {
+            font-size: 0.8rem;
+            color: #F87171;
+            margin-top: 0.375rem;
+            display: none;
+        }
+
+        /* FAQ */
+        .faq-item { border-bottom: 1px solid rgba(148,163,184,0.12); }
+        .faq-q { cursor: pointer; list-style: none; }
+        .faq-q::-webkit-details-marker { display: none; }
+        details[open] .faq-chevron { transform: rotate(180deg); }
+        .faq-chevron { transition: transform 0.25s ease; }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAV -->
+    <nav id="mainNav" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="https://bradfordcarlton.com" class="font-heading font-bold text-lg md:text-xl text-text-primary tracking-tight">Dr. Bradford Carlton</a>
+                <a href="#enroll" class="btn-premium inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-sm font-body font-medium">
+                    Enroll &mdash; $499
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+
+        <!-- HERO -->
+        <section class="section-dark relative overflow-hidden min-h-[78vh] flex flex-col items-center justify-center pt-28 pb-14 md:pt-32 md:pb-20">
+            <img class="hero-img" src="https://images.unsplash.com/photo-1526232761682-d26e03ac148e?auto=format&fit=crop&w=1920&q=70" alt="" aria-hidden="true" onerror="this.style.display='none'">
+            <div class="hero-overlay"></div>
+            <div class="max-w-4xl mx-auto px-5 sm:px-6 text-center relative z-10">
+                <p class="hero-a1 section-label">Social Media Training &middot; Student Athletes</p>
+                <h1 class="hero-a2 font-heading font-extrabold text-4xl sm:text-5xl md:text-6xl lg:text-[5rem] text-text-primary leading-[0.95] tracking-[-0.03em] mb-4 md:mb-6">
+                    Own Your Name.<br>Grow Your Game.
+                </h1>
+                <p class="hero-a3 font-heading font-bold text-lg sm:text-xl md:text-2xl lg:text-3xl text-text-secondary leading-tight tracking-[-0.02em] mb-6 md:mb-8">
+                    Build a Personal Brand That Gets You Noticed
+                </p>
+                <p class="hero-a4 font-body text-base sm:text-lg text-text-secondary max-w-2xl mx-auto leading-[1.8] mb-8 md:mb-10">
+                    A focused 4-week program for high school &amp; college athletes who want to <span class="highlight">stand out, grow a real following, and build a personal brand</span> that opens doors &mdash; on the field and off.
+                </p>
+                <a href="#enroll" class="hero-a4 btn-premium inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full text-base md:text-lg font-body font-semibold">
+                    Enroll Now &mdash; $499
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                </a>
+            </div>
+        </section>
+
+        <div class="section-break"></div>
+
+        <!-- WHY IT MATTERS -->
+        <section class="section-dark py-16 md:py-24">
+            <div class="max-w-3xl mx-auto px-5 sm:px-6">
+                <div class="text-center mb-10 reveal">
+                    <p class="section-label">Why This Matters Now</p>
+                    <h2 class="font-heading font-bold text-3xl md:text-4xl lg:text-5xl text-text-primary tracking-[-0.02em]">
+                        Talent Gets You In The Door. Your Brand Keeps It Open.
+                    </h2>
+                </div>
+                <div class="narrative">
+                    <div class="reveal">
+                        <p>Coaches, recruiters, and brands are watching social media before they ever watch you compete. In the NIL era, the athletes who get noticed aren't always the most talented &mdash; they're the ones who know how to <span class="highlight">show up, tell their story, and build an audience.</span></p>
+                        <p>Most athletes post randomly, copy what everyone else is doing, and wonder why nothing grows. There's a system to this &mdash; and it can be learned.</p>
+                        <p class="text-text-primary font-medium">In four weeks, you'll learn how to manage your platforms, grow a real following, and present yourself like a brand worth following.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-break"></div>
+
+        <!-- WHAT YOU'LL LEARN — 3 PILLARS -->
+        <section class="section-dark py-16 md:py-24">
+            <div class="max-w-6xl mx-auto px-5 sm:px-6">
+                <div class="text-center mb-12 reveal">
+                    <p class="section-label">What You'll Learn</p>
+                    <h2 class="font-heading font-bold text-3xl md:text-4xl text-text-primary tracking-[-0.02em]">
+                        Three Pillars, One Standout Presence
+                    </h2>
+                </div>
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="dash-card reveal">
+                        <p class="pillar-num mb-3">01</p>
+                        <h3 class="font-heading font-bold text-xl text-text-primary mb-3">Social Media &amp; Content Management</h3>
+                        <p class="font-body text-text-secondary text-sm leading-relaxed">Master the platforms that matter. Learn what to post, when to post, and how to manage your accounts consistently &mdash; turning scattered posting into a content system that builds momentum.</p>
+                    </div>
+                    <div class="dash-card reveal">
+                        <p class="pillar-num mb-3">02</p>
+                        <h3 class="font-heading font-bold text-xl text-text-primary mb-3">Basic Advertising for Exponential Growth</h3>
+                        <p class="font-body text-text-secondary text-sm leading-relaxed">Understand how to amplify your best content with simple, affordable advertising &mdash; reaching far beyond your current circle and growing your following faster than organic alone.</p>
+                    </div>
+                    <div class="dash-card reveal">
+                        <p class="pillar-num mb-3">03</p>
+                        <h3 class="font-heading font-bold text-xl text-text-primary mb-3">Brand Management</h3>
+                        <p class="font-body text-text-secondary text-sm leading-relaxed">Define who you are and protect it. Learn to shape a consistent image, handle your reputation, and present yourself in a way that attracts coaches, recruiters, sponsors, and fans.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-break"></div>
+
+        <!-- INSTRUCTOR AUTHORITY -->
+        <section class="section-dark py-16 md:py-24">
+            <div class="max-w-5xl mx-auto px-5 sm:px-6">
+                <div class="text-center mb-10 reveal">
+                    <p class="section-label">Your Instructor</p>
+                    <h2 class="font-heading font-bold text-3xl md:text-4xl text-text-primary tracking-[-0.02em]">
+                        Learn From Someone Who's Done It
+                    </h2>
+                </div>
+
+                <!-- Social-media stat row -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-10">
+                    <div class="dash-card text-center reveal">
+                        <p class="font-heading font-extrabold text-3xl md:text-4xl stat-inline mb-2">140K+</p>
+                        <p class="font-mono text-[10px] md:text-xs text-text-secondary uppercase tracking-wider">Facebook followers</p>
+                    </div>
+                    <div class="dash-card text-center reveal">
+                        <p class="font-heading font-extrabold text-3xl md:text-4xl stat-inline mb-2">12K+</p>
+                        <p class="font-mono text-[10px] md:text-xs text-text-secondary uppercase tracking-wider">YouTube subscribers</p>
+                    </div>
+                    <div class="dash-card text-center reveal">
+                        <p class="font-heading font-extrabold text-3xl md:text-4xl stat-inline mb-2">10M+</p>
+                        <p class="font-mono text-[10px] md:text-xs text-text-secondary uppercase tracking-wider">Views across platforms</p>
+                    </div>
+                    <div class="dash-card text-center reveal">
+                        <p class="font-heading font-extrabold text-3xl md:text-4xl stat-warm mb-2">10+ yrs</p>
+                        <p class="font-mono text-[10px] md:text-xs text-text-secondary uppercase tracking-wider">Training pros &amp; orgs</p>
+                    </div>
+                </div>
+
+                <div class="narrative reveal">
+                    <p>Dr. Bradford Carlton has spent <span class="highlight">over 10 years teaching social media</span> to professionals, organizations, and individuals &mdash; building an audience of <span class="highlight-warm">140,000+ Facebook followers</span>, <span class="highlight-warm">12,000+ YouTube subscribers</span>, and <span class="highlight-warm">10M+ views</span> across platforms along the way. He's also trained 12,000+ businesses and built 340+ systems across 24 industries. Now he's bringing that same playbook to student athletes ready to take their presence seriously.</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-break"></div>
+
+        <!-- SOCIAL PROOF — COMPANY ASSOCIATION (compliant) -->
+        <section class="section-dark py-14 md:py-20">
+            <div class="max-w-6xl mx-auto px-5 sm:px-6">
+                <div class="reveal">
+                    <p class="text-center text-sm font-body text-text-secondary mb-8">Dr. Bradford Carlton has trained professionals and built systems at organizations including:</p>
+                    <div class="relative overflow-hidden">
+                        <div class="absolute left-0 top-0 bottom-0 w-16 md:w-28 bg-gradient-to-r from-foundation to-transparent z-10 pointer-events-none"></div>
+                        <div class="absolute right-0 top-0 bottom-0 w-16 md:w-28 bg-gradient-to-l from-foundation to-transparent z-10 pointer-events-none"></div>
+                        <div class="marquee-track flex items-center gap-20 md:gap-24 w-max px-8">
+                            <img src="/brand_assets/optimized/Omnissa-224h.webp" alt="Omnissa" class="h-16 md:h-24 w-auto object-contain" loading="lazy" decoding="async">
+                            <img src="/brand_assets/optimized/HubSpot-224h.webp" alt="HubSpot" class="h-16 md:h-24 w-auto object-contain" loading="lazy" decoding="async">
+                            <img src="/brand_assets/optimized/Hewlett_Packard_Enterprise-224h.webp" alt="HPE" class="h-16 md:h-24 w-auto object-contain" loading="lazy" decoding="async">
+                            <img src="/brand_assets/optimized/The_Home_Depot-224h.webp" alt="Home Depot" class="h-16 md:h-24 w-auto object-contain" loading="lazy" decoding="async">
+                            <img src="/brand_assets/optimized/Tailored_Brands-224h.webp" alt="Tailored Brands" class="h-16 md:h-24 w-auto object-contain" loading="lazy" decoding="async">
+                            <img src="/brand_assets/optimized/ICT_Legal_Consulting-224h.webp" alt="ICT Legal" class="h-16 md:h-24 w-auto object-contain" loading="lazy" decoding="async">
+                            <img src="/brand_assets/optimized/Norfolk_Railroad-224h.webp" alt="Norfolk Railroad" class="h-16 md:h-24 w-auto object-contain" loading="lazy" decoding="async">
+                            <img src="/brand_assets/optimized/AEMO-224h.webp" alt="AEMO" class="h-16 md:h-24 w-auto object-contain" loading="lazy" decoding="async">
+                            <img src="/brand_assets/optimized/Maui_Life_Vacations-224h.webp" alt="Maui Life Vacations" class="h-16 md:h-24 w-auto object-contain" loading="lazy" decoding="async">
+                            <img src="/brand_assets/optimized/Paramount_Mortgage_Group-224h.webp" alt="Paramount Mortgage" class="h-16 md:h-24 w-auto object-contain" loading="lazy" decoding="async">
+                            <img src="/brand_assets/optimized/Armed_Forces_Chamber_Logo-224h.webp" alt="Armed Forces Chamber" class="h-16 md:h-24 w-auto object-contain" loading="lazy" decoding="async">
+                            <!-- duplicate set for seamless loop -->
+                            <img src="/brand_assets/optimized/Omnissa-224h.webp" alt="Omnissa" class="h-16 md:h-24 w-auto object-contain" loading="lazy" decoding="async">
+                            <img src="/brand_assets/optimized/HubSpot-224h.webp" alt="HubSpot" class="h-16 md:h-24 w-auto object-contain" loading="lazy" decoding="async">
+                            <img src="/brand_assets/optimized/Hewlett_Packard_Enterprise-224h.webp" alt="HPE" class="h-16 md:h-24 w-auto object-contain" loading="lazy" decoding="async">
+                            <img src="/brand_assets/optimized/The_Home_Depot-224h.webp" alt="Home Depot" class="h-16 md:h-24 w-auto object-contain" loading="lazy" decoding="async">
+                            <img src="/brand_assets/optimized/Tailored_Brands-224h.webp" alt="Tailored Brands" class="h-16 md:h-24 w-auto object-contain" loading="lazy" decoding="async">
+                            <img src="/brand_assets/optimized/ICT_Legal_Consulting-224h.webp" alt="ICT Legal" class="h-16 md:h-24 w-auto object-contain" loading="lazy" decoding="async">
+                            <img src="/brand_assets/optimized/Norfolk_Railroad-224h.webp" alt="Norfolk Railroad" class="h-16 md:h-24 w-auto object-contain" loading="lazy" decoding="async">
+                            <img src="/brand_assets/optimized/AEMO-224h.webp" alt="AEMO" class="h-16 md:h-24 w-auto object-contain" loading="lazy" decoding="async">
+                            <img src="/brand_assets/optimized/Maui_Life_Vacations-224h.webp" alt="Maui Life Vacations" class="h-16 md:h-24 w-auto object-contain" loading="lazy" decoding="async">
+                            <img src="/brand_assets/optimized/Paramount_Mortgage_Group-224h.webp" alt="Paramount Mortgage" class="h-16 md:h-24 w-auto object-contain" loading="lazy" decoding="async">
+                            <img src="/brand_assets/optimized/Armed_Forces_Chamber_Logo-224h.webp" alt="Armed Forces Chamber" class="h-16 md:h-24 w-auto object-contain" loading="lazy" decoding="async">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-break"></div>
+
+        <!-- PACKAGE + FORM (Two-Column) -->
+        <section id="enroll" class="cta-gradient py-16 md:py-24 scroll-mt-20">
+            <div class="max-w-6xl mx-auto px-5 sm:px-6">
+                <div class="lg:grid lg:grid-cols-2 lg:gap-12 xl:gap-16 items-start">
+
+                    <!-- LEFT: Package Details -->
+                    <div class="mb-12 lg:mb-0">
+                        <!-- Price card -->
+                        <div class="dash-card-lead dash-card mb-8 reveal">
+                            <div class="text-center">
+                                <p class="section-label mb-3">Investment</p>
+                                <p class="font-heading font-extrabold text-5xl md:text-6xl stat-warm mb-2">$499</p>
+                                <p class="font-body text-text-secondary text-base">One-time payment &middot; Full 4-week program</p>
+                            </div>
+                        </div>
+
+                        <!-- Deliverables -->
+                        <div class="dash-card mb-8 reveal">
+                            <p class="section-label mb-5">What You Get</p>
+                            <div class="space-y-4">
+                                <div class="flex items-start gap-3">
+                                    <svg class="w-5 h-5 text-accent mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <div>
+                                        <p class="font-body text-text-primary font-medium">4 Weekly Live Classes (1 hour each)</p>
+                                        <p class="font-body text-sm text-text-secondary">Four focused, hands-on sessions covering content, advertising, and brand building.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-3">
+                                    <svg class="w-5 h-5 text-accent mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <div>
+                                        <p class="font-body text-text-primary font-medium">Weekly Live Q&amp;A (1 hour each week)</p>
+                                        <p class="font-body text-sm text-text-secondary">Bring your questions and get direct answers about your own accounts and goals.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-3">
+                                    <svg class="w-5 h-5 text-accent mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <div>
+                                        <p class="font-body text-text-primary font-medium">Social Media Management Workbook</p>
+                                        <p class="font-body text-sm text-text-secondary">A practical workbook to plan your content, track growth, and apply what you learn.</p>
+                                    </div>
+                                </div>
+
+                                <div class="pt-3 mt-3 border-t border-white/5">
+                                    <div class="flex items-start gap-3">
+                                        <svg class="w-5 h-5 text-warm mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        <div>
+                                            <p class="font-body text-text-primary font-medium">1-on-1 15-Minute Strategy Call</p>
+                                            <p class="font-body text-sm text-text-secondary">A personal session to review your presence and map your next steps.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Terms callouts -->
+                        <div class="callout reveal">
+                            <p class="font-body text-text-primary font-medium text-sm">For high school &amp; college student athletes.</p>
+                            <p class="font-body text-text-secondary text-sm">No prior experience needed &mdash; just a willingness to show up and put the work in.</p>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: Form -->
+                    <div class="lg:sticky lg:top-28">
+                        <div class="dash-card reveal">
+                            <div class="mb-6">
+                                <p class="section-label">Reserve Your Spot</p>
+                                <h2 class="font-heading font-bold text-2xl md:text-3xl text-text-primary tracking-[-0.02em] mb-2">
+                                    Ready to Stand Out?
+                                </h2>
+                                <p class="font-body text-text-secondary text-sm">
+                                    Fill in your details below and proceed to secure checkout.
+                                </p>
+                            </div>
+
+                            <form id="checkoutForm" class="space-y-4" novalidate>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label for="firstName" class="form-label">First Name <span class="text-warm">*</span></label>
+                                        <input type="text" id="firstName" name="firstName" class="form-input" placeholder="First" required autocomplete="given-name">
+                                        <p class="form-error" id="firstNameError">Required.</p>
+                                    </div>
+                                    <div>
+                                        <label for="lastName" class="form-label">Last Name <span class="text-warm">*</span></label>
+                                        <input type="text" id="lastName" name="lastName" class="form-input" placeholder="Last" required autocomplete="family-name">
+                                        <p class="form-error" id="lastNameError">Required.</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="email" class="form-label">Email Address <span class="text-warm">*</span></label>
+                                    <input type="email" id="email" name="email" class="form-input" placeholder="you@example.com" required autocomplete="email">
+                                    <p class="form-error" id="emailError">Please enter a valid email address.</p>
+                                </div>
+                                <div>
+                                    <label for="phone" class="form-label">Phone Number</label>
+                                    <input type="tel" id="phone" name="phone" class="form-input" placeholder="+1 (555) 123-4567" autocomplete="tel">
+                                </div>
+
+                                <div class="pt-2">
+                                    <button type="submit" id="submitBtn" class="btn-premium w-full inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-full text-base md:text-lg font-body font-semibold">
+                                        <span id="btnText">Proceed to Checkout &mdash; $499</span>
+                                        <svg id="btnArrow" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                                        <svg id="btnSpinner" class="w-5 h-5 animate-spin hidden" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    </button>
+                                </div>
+
+                                <p id="formMessage" class="text-center font-body text-sm mt-2 hidden"></p>
+                            </form>
+
+                            <div class="mt-5 text-center">
+                                <div class="flex items-center justify-center gap-2 text-text-secondary">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+                                    <p class="font-body text-xs">Secure payment powered by Stripe</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <div class="section-break"></div>
+
+        <!-- FAQ -->
+        <section class="section-dark py-16 md:py-24">
+            <div class="max-w-3xl mx-auto px-5 sm:px-6">
+                <div class="text-center mb-10 reveal">
+                    <p class="section-label">Questions</p>
+                    <h2 class="font-heading font-bold text-3xl md:text-4xl text-text-primary tracking-[-0.02em]">
+                        Frequently Asked
+                    </h2>
+                </div>
+                <div class="reveal">
+                    <details class="faq-item py-5">
+                        <summary class="faq-q flex items-center justify-between gap-4">
+                            <span class="font-heading font-bold text-lg text-text-primary">Who is this program for?</span>
+                            <svg class="faq-chevron w-5 h-5 text-warm shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                        </summary>
+                        <p class="font-body text-text-secondary text-sm leading-relaxed mt-3">High school and college student athletes who want to grow their following and build a personal brand. No prior social media experience is required.</p>
+                    </details>
+                    <details class="faq-item py-5">
+                        <summary class="faq-q flex items-center justify-between gap-4">
+                            <span class="font-heading font-bold text-lg text-text-primary">How are the classes delivered?</span>
+                            <svg class="faq-chevron w-5 h-5 text-warm shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                        </summary>
+                        <p class="font-body text-text-secondary text-sm leading-relaxed mt-3">The program runs over four weeks with one 1-hour live class and one 1-hour live Q&amp;A each week. After enrolling, you'll receive the schedule and join links by email.</p>
+                    </details>
+                    <details class="faq-item py-5">
+                        <summary class="faq-q flex items-center justify-between gap-4">
+                            <span class="font-heading font-bold text-lg text-text-primary">What's included in the price?</span>
+                            <svg class="faq-chevron w-5 h-5 text-warm shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                        </summary>
+                        <p class="font-body text-text-secondary text-sm leading-relaxed mt-3">Your $499 covers all four live classes, the four weekly Q&amp;A sessions, the Social Media Management Workbook, and a 1-on-1 15-minute strategy call &mdash; everything you need to complete the program.</p>
+                    </details>
+                    <details class="faq-item py-5">
+                        <summary class="faq-q flex items-center justify-between gap-4">
+                            <span class="font-heading font-bold text-lg text-text-primary">Do I need to spend money on ads?</span>
+                            <svg class="faq-chevron w-5 h-5 text-warm shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                        </summary>
+                        <p class="font-body text-text-secondary text-sm leading-relaxed mt-3">No. The advertising module teaches the fundamentals so you understand how paid growth works. Any ad spend is optional and entirely up to you.</p>
+                    </details>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-white/5 py-10">
+        <div class="max-w-7xl mx-auto px-5 sm:px-6 text-center">
+            <p class="font-heading font-bold text-lg text-text-primary mb-1">Dr. Bradford Carlton</p>
+            <p class="font-body text-xs text-text-secondary mb-3">A Carlton Family Corporation Brand</p>
+            <p class="font-body text-xs text-text-secondary">6655 W. Sahara Ave., Suite B200, Las Vegas, NV 89146</p>
+            <p class="font-body text-xs text-text-secondary mt-1">
+                <a href="tel:+18446976169" class="hover:text-text-primary transition-colors">+1 844-697-6169</a>
+                &middot;
+                <a href="mailto:assistant@carltonaiservices.com" class="hover:text-text-primary transition-colors">assistant@carltonaiservices.com</a>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // ── Config ──
+        const WEBHOOK_URL = 'https://n8n.carltonaiservices.com/webhook/stripe-manage';
+        const OFFER_ID = 'OFFER_student_athlete_training';
+        const PRICE_CENTS = 49900;
+
+        // ── Capture referral code (?ref=, ?referrer=, ?aff=) and persist for the session ──
+        (function captureReferral() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const ref = (params.get('ref') || params.get('referrer') || params.get('aff') || '').trim().slice(0, 120);
+                if (ref) {
+                    sessionStorage.setItem('sa_referral_code', ref);
+                }
+            } catch (e) { /* sessionStorage may be unavailable; ignore */ }
+        })();
+
+        function getReferralCode() {
+            try { return sessionStorage.getItem('sa_referral_code') || ''; }
+            catch (e) { return ''; }
+        }
+
+        // Nav glass on scroll
+        const nav = document.getElementById('mainNav');
+        window.addEventListener('scroll', () => {
+            nav.classList.toggle('nav-glass', window.scrollY > 20);
+        }, { passive: true });
+
+        // Scroll reveal
+        const revealObs = new IntersectionObserver((entries) => {
+            entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); } });
+        }, { threshold: 0.18, rootMargin: '-60px 0px' });
+        document.querySelectorAll('.reveal, .reveal-punch').forEach(el => revealObs.observe(el));
+
+        // Form handling
+        document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Reset errors
+            document.querySelectorAll('.form-input').forEach(el => el.classList.remove('error'));
+            document.querySelectorAll('.form-error').forEach(el => el.style.display = 'none');
+            document.getElementById('formMessage').classList.add('hidden');
+
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+
+            // Validate
+            let valid = true;
+            if (!firstName) {
+                document.getElementById('firstName').classList.add('error');
+                document.getElementById('firstNameError').style.display = 'block';
+                valid = false;
+            }
+            if (!lastName) {
+                document.getElementById('lastName').classList.add('error');
+                document.getElementById('lastNameError').style.display = 'block';
+                valid = false;
+            }
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                document.getElementById('email').classList.add('error');
+                document.getElementById('emailError').style.display = 'block';
+                valid = false;
+            }
+            if (!valid) return;
+
+            const referralCode = getReferralCode();
+
+            // Loading state
+            const btn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const btnArrow = document.getElementById('btnArrow');
+            const btnSpinner = document.getElementById('btnSpinner');
+            btn.disabled = true;
+            btnText.textContent = 'Creating checkout session...';
+            btnArrow.classList.add('hidden');
+            btnSpinner.classList.remove('hidden');
+
+            try {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 15000);
+
+                const res = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        operation: 'create_checkout_session',
+                        product_name: 'Social Media Training for Student Athletes',
+                        amount: PRICE_CENTS,
+                        currency: 'usd',
+                        customer_email: email,
+                        customer_name: firstName + ' ' + lastName,
+                        first_name: firstName,
+                        last_name: lastName,
+                        customer_phone: phone,
+                        offer_type: 'student-athlete-training',
+                        offer_name: 'Social Media Training for Student Athletes',
+                        offer_id: OFFER_ID,
+                        referral_code: referralCode,
+                        success_url: 'https://bradfordcarlton.com/student-athletes/thank-you',
+                        cancel_url: 'https://bradfordcarlton.com/student-athletes',
+                        metadata: {
+                            offer_id: OFFER_ID,
+                            offer_type: 'student-athlete-training',
+                            referral_code: referralCode
+                        }
+                    }),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeout);
+                const data = await res.json();
+
+                if (data.checkout_url) {
+                    btnText.textContent = 'Redirecting to Stripe...';
+                    window.location.href = data.checkout_url;
+                } else {
+                    throw new Error(data.error || 'Failed to create checkout session');
+                }
+            } catch (err) {
+                btn.disabled = false;
+                btnText.textContent = 'Proceed to Checkout — $499';
+                btnArrow.classList.remove('hidden');
+                btnSpinner.classList.add('hidden');
+
+                const msg = document.getElementById('formMessage');
+                msg.textContent = err.name === 'AbortError'
+                    ? 'Request timed out. Please try again.'
+                    : 'Something went wrong. Please try again or contact us directly.';
+                msg.className = 'text-center font-body text-sm mt-3 text-red-400';
+                msg.classList.remove('hidden');
+            }
+        });
+    </script>
+
+</body>
+</html>
