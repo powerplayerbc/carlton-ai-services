@@ -319,7 +319,7 @@
 
         <!-- HERO -->
         <section class="section-dark relative overflow-hidden min-h-[78vh] flex flex-col items-center justify-center pt-28 pb-14 md:pt-32 md:pb-20">
-            <img class="hero-img" src="https://images.unsplash.com/photo-1526232761682-d26e03ac148e?auto=format&fit=crop&w=1920&q=70" alt="" aria-hidden="true" onerror="this.style.display='none'">
+            <img class="hero-img" src="https://images.unsplash.com/photo-1577471488278-16eec37ffcc2?auto=format&fit=crop&w=1920&q=70" alt="" aria-hidden="true" onerror="this.style.display='none'">
             <div class="hero-overlay"></div>
             <div class="max-w-4xl mx-auto px-5 sm:px-6 text-center relative z-10">
                 <p class="hero-a1 section-label">Social Media Training &middot; Student Athletes</p>
@@ -548,15 +548,19 @@
                             <form id="checkoutForm" class="space-y-4" novalidate>
                                 <div class="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label for="firstName" class="form-label">First Name <span class="text-warm">*</span></label>
+                                        <label for="firstName" class="form-label">Student First Name <span class="text-warm">*</span></label>
                                         <input type="text" id="firstName" name="firstName" class="form-input" placeholder="First" required autocomplete="given-name">
                                         <p class="form-error" id="firstNameError">Required.</p>
                                     </div>
                                     <div>
-                                        <label for="lastName" class="form-label">Last Name <span class="text-warm">*</span></label>
+                                        <label for="lastName" class="form-label">Student Last Name <span class="text-warm">*</span></label>
                                         <input type="text" id="lastName" name="lastName" class="form-input" placeholder="Last" required autocomplete="family-name">
                                         <p class="form-error" id="lastNameError">Required.</p>
                                     </div>
+                                </div>
+                                <div>
+                                    <label for="guardianName" class="form-label">Parent or Guardian Name <span class="text-text-secondary font-normal">(if applicable)</span></label>
+                                    <input type="text" id="guardianName" name="guardianName" class="form-input" placeholder="For student athletes under 18" autocomplete="name">
                                 </div>
                                 <div>
                                     <label for="email" class="form-label">Email Address <span class="text-warm">*</span></label>
@@ -645,9 +649,7 @@
             <p class="font-body text-xs text-text-secondary mb-3">A Carlton Family Corporation Brand</p>
             <p class="font-body text-xs text-text-secondary">6655 W. Sahara Ave., Suite B200, Las Vegas, NV 89146</p>
             <p class="font-body text-xs text-text-secondary mt-1">
-                <a href="tel:+18446976169" class="hover:text-text-primary transition-colors">+1 844-697-6169</a>
-                &middot;
-                <a href="mailto:assistant@carltonaiservices.com" class="hover:text-text-primary transition-colors">assistant@carltonaiservices.com</a>
+                <a href="mailto:bradford@bradfordcarlton.com" class="hover:text-text-primary transition-colors">bradford@bradfordcarlton.com</a>
             </p>
         </div>
     </footer>
@@ -697,6 +699,7 @@
 
             const firstName = document.getElementById('firstName').value.trim();
             const lastName = document.getElementById('lastName').value.trim();
+            const guardianName = document.getElementById('guardianName').value.trim();
             const email = document.getElementById('email').value.trim();
             const phone = document.getElementById('phone').value.trim();
 
@@ -747,17 +750,20 @@
                         customer_name: firstName + ' ' + lastName,
                         first_name: firstName,
                         last_name: lastName,
+                        guardian_name: guardianName,
                         customer_phone: phone,
                         offer_type: 'student-athlete-training',
                         offer_name: 'Social Media Training for Student Athletes',
                         offer_id: OFFER_ID,
                         referral_code: referralCode,
-                        success_url: 'https://bradfordcarlton.com/student-athletes/thank-you',
+                        success_url: 'https://bradfordcarlton.com/student-athletes/thank-you?session_id={CHECKOUT_SESSION_ID}',
                         cancel_url: 'https://bradfordcarlton.com/student-athletes',
                         metadata: {
                             offer_id: OFFER_ID,
                             offer_type: 'student-athlete-training',
-                            referral_code: referralCode
+                            referral_code: referralCode,
+                            student_name: firstName + ' ' + lastName,
+                            guardian_name: guardianName
                         }
                     }),
                     signal: controller.signal
