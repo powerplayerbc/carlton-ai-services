@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book a Call</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://n8n.carltonaiservices.com" crossorigin>
+<style>
+  body{font-family:'Outfit',system-ui,-apple-system,sans-serif;background:#0e1117;color:#1a1a1a;}
+  .wrap{background:#fff;}
+  .slot{border:1px solid #e2e8f0;border-radius:.5rem;padding:.5rem .25rem;font-size:.8rem;font-weight:600;cursor:pointer;transition:.12s;text-align:center;}
+  .slot:hover{border-color:#06D6A0;background:#f0fdf9;}
+  .slot.sel{background:#06D6A0;border-color:#06D6A0;color:#04231b;}
+  .daygroup{margin-bottom:1rem;}
+  .dayhdr{font-size:.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem;}
+  input,textarea{border:1px solid #cbd5e1;border-radius:.5rem;padding:.55rem .75rem;width:100%;font-size:.9rem;}
+  .btn{background:#06D6A0;color:#04231b;font-weight:700;padding:.6rem 1.2rem;border-radius:.5rem;border:none;cursor:pointer;width:100%;}
+  .btn:disabled{opacity:.5;}
+  .muted{color:#64748b;}
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+<div class="wrap w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden">
+  <div class="px-6 py-5" style="background:linear-gradient(135deg,#0e1117,#1a2332)">
+    <h1 class="text-white text-lg font-bold" id="hdr">Book a Call</h1>
+    <p class="text-xs mt-0.5" style="color:#94a3b8" id="sub">Pick a time that works for you.</p>
+  </div>
+
+  <div class="p-6">
+    <div id="loading" class="text-center py-10 muted text-sm">Loading available times…</div>
+
+    <div id="slotsView" class="hidden">
+      <div id="slots" class="max-h-80 overflow-y-auto pr-1"></div>
+      <div id="noslots" class="hidden text-center py-8 muted text-sm">No open times in the next few weeks. Please check back soon.</div>
+    </div>
+
+    <form id="formView" class="hidden space-y-3" onsubmit="return submitBooking(event)">
+      <div class="text-sm font-semibold" id="chosen"></div>
+      <div><label class="text-xs muted">Your name</label><input id="f_name" required></div>
+      <div><label class="text-xs muted">Email</label><input id="f_email" type="email" required></div>
+      <div><label class="text-xs muted">Phone (optional)</label><input id="f_phone"></div>
+      <div><label class="text-xs muted">What would you like to talk about?</label><textarea id="f_msg" rows="2"></textarea></div>
+      <div class="flex gap-2">
+        <button type="button" class="btn" style="background:#e2e8f0;color:#334155" onclick="back()">Back</button>
+        <button type="submit" class="btn" id="confirmBtn">Confirm Booking</button>
+      </div>
+    </form>
+
+    <div id="doneView" class="hidden text-center py-8">
+      <div class="text-4xl mb-2">✅</div>
+      <div class="font-bold text-lg">You're booked!</div>
+      <div class="muted text-sm mt-1" id="doneMsg"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BOOK='https://n8n.carltonaiservices.com/webhook/booking';
+const params=new URLSearchParams(location.search);
+const person=(params.get('person')|| (location.hostname.indexOf('dianna')>=0?'dianna':'bradford')).toLowerCase();
+const meeting_type=params.get('meeting_type')||null;
+let chosen=null, durLabel='';
+
+function fmtDay(iso){return new Date(iso).toLocaleDateString('en-US',{timeZone:'America/Los_Angeles',weekday:'long',month:'short',day:'numeric'});}
+function fmtTime(iso){return new Date(iso).toLocaleTimeString('en-US',{timeZone:'America/Los_Angeles',hour:'numeric',minute:'2-digit'});}
+
+async function loadSlots(){
+  try{
+    const r=await fetch(BOOK,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({operation:'get_availability',person,meeting_type})});
+    const d=await r.json();
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('slotsView').classList.remove('hidden');
+    document.getElementById('hdr').textContent='Book a '+(d.meeting_name||'Call');
+    document.getElementById('sub').textContent=(d.duration||30)+' minutes · '+(person==='dianna'?'with Dianna Carlton':'with Bradford Carlton');
+    durLabel=(d.meeting_name||'Call');
+    const slots=d.slots||[];
+    if(!slots.length){document.getElementById('noslots').classList.remove('hidden');return;}
+    const byDay={};
+    slots.forEach(s=>{const k=fmtDay(s.start);(byDay[k]=byDay[k]||[]).push(s);});
+    document.getElementById('slots').innerHTML=Object.entries(byDay).map(([day,arr])=>`
+      <div class="daygroup"><div class="dayhdr">${day}</div>
+        <div class="grid grid-cols-3 gap-2">
+          ${arr.map(s=>`<div class="slot" onclick='pick(${JSON.stringify(s).replace(/'/g,"&#39;")})'>${fmtTime(s.start)}</div>`).join('')}
+        </div></div>`).join('');
+  }catch(e){document.getElementById('loading').textContent='Could not load times. Please try again later.';}
+}
+function pick(s){chosen=s;document.getElementById('slotsView').classList.add('hidden');document.getElementById('formView').classList.remove('hidden');document.getElementById('chosen').textContent=durLabel+' — '+fmtDay(s.start)+' at '+fmtTime(s.start);}
+function back(){document.getElementById('formView').classList.add('hidden');document.getElementById('slotsView').classList.remove('hidden');}
+async function submitBooking(e){
+  e.preventDefault();
+  const btn=document.getElementById('confirmBtn');btn.disabled=true;btn.textContent='Booking…';
+  try{
+    const r=await fetch(BOOK,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      operation:'create_booking',person,meeting_type,start:chosen.start,
+      name:document.getElementById('f_name').value,email:document.getElementById('f_email').value,
+      phone:document.getElementById('f_phone').value,message:document.getElementById('f_msg').value})});
+    const d=await r.json();
+    document.getElementById('formView').classList.add('hidden');
+    document.getElementById('doneView').classList.remove('hidden');
+    document.getElementById('doneMsg').textContent=(d.message||'A calendar invite is on its way to your email.');
+  }catch(e){btn.disabled=false;btn.textContent='Confirm Booking';alert('Booking failed, please try again.');}
+  return false;
+}
+loadSlots();
+</script>
+</body>
+</html>
